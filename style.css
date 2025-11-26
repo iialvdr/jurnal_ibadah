@@ -8,6 +8,14 @@ html, body {
 
 body { font-family: 'Inter', sans-serif; }
 
+/* Custom Scrollbar untuk Desktop Area */
+@media (min-width: 768px) {
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+}
+
 /* Animasi Background Blob */
 .blob {
     position: absolute;

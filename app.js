@@ -1,12 +1,16 @@
-// --- IMPORT TAMPILAN ---
 import { profileViewHTML } from './view_profile.js';
 import { loginViewHTML } from './view_login.js';
+import { tasbihViewHTML } from './view_tasbih.js';
+import { homeViewHTML } from './view_home.js';
+import { qiblaViewHTML } from './view_qibla.js'; // <--- TAMBAHAN BARU
 
-// Inject HTML
 const appContainer = document.getElementById('appContainer');
 if(appContainer) {
     appContainer.insertAdjacentHTML('beforeend', profileViewHTML);
     appContainer.insertAdjacentHTML('afterbegin', loginViewHTML);
+    appContainer.insertAdjacentHTML('beforeend', tasbihViewHTML);
+    appContainer.insertAdjacentHTML('beforeend', qiblaViewHTML); // <--- TAMBAHAN BARU (Inject Kiblat)
+    appContainer.insertAdjacentHTML('afterbegin', homeViewHTML);
 }
 
 // --- FIREBASE CONFIG ---
@@ -49,54 +53,65 @@ const PRAYER_CONFIG = [
     { id: 'Tahajud', type: 'sunnah', icon: 'star' }
 ];
 
-// --- DOM ---
+// --- DOM ELEMENTS ---
 const appHeader = document.getElementById('appHeader');
 const mainContent = document.getElementById('mainContent');
-const profileView = document.getElementById('profileView');
 
-// --- AUTH ---
-const googleLoginBtn = document.getElementById('googleLoginBtn');
-if(googleLoginBtn) {
-    googleLoginBtn.addEventListener('click', async () => {
-        document.getElementById('loginStatus').classList.remove('hidden');
-        try { await signInWithPopup(auth, provider); } 
-        catch (error) { console.error(error); document.getElementById('loginStatus').classList.add('hidden'); }
-    });
+// --- HELPER: RESET TAMPILAN (PENTING!) ---
+// Fungsi ini menutup SEMUA tampilan agar tidak bertumpuk
+function hideAllViews() {
+    const views = [
+        document.getElementById('homeView'),
+        document.getElementById('profileView'),
+        document.getElementById('tasbihView'),
+        document.getElementById('qiblaView'), // <--- TAMBAHAN BARU
+        document.getElementById('appHeader'),
+        document.getElementById('mainContent')
+    ];
+    views.forEach(el => { if(el) el.classList.add('hidden-force'); });
 }
 
-onAuthStateChanged(auth, async (user) => {
-    const splash = document.getElementById('splashScreen');
-    const loginOverlay = document.getElementById('loginOverlay');
+// --- NAVIGATION LOGIC (DIPERBAIKI) ---
 
-    if (user) {
-        currentUser = user;
-        if(loginOverlay) loginOverlay.classList.add('hidden-force');
-        appHeader.classList.remove('hidden-force');
-        mainContent.classList.remove('hidden-force');
-        
-        document.getElementById('userName').innerText = user.displayName || "Hamba Allah";
-        document.getElementById('userPhoto').src = user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}`;
-        
-        initApp();
-    } else {
-        currentUser = null;
-        if(loginOverlay) loginOverlay.classList.remove('hidden-force');
-        appHeader.classList.add('hidden-force');
-        mainContent.classList.add('hidden-force');
-        if(profileView) profileView.classList.add('hidden-force');
+// 1. Buka Home (Dashboard)
+window.goHome = () => {
+    hideAllViews(); // Reset dulu
+    
+    const homeView = document.getElementById('homeView');
+    if(homeView) homeView.classList.remove('hidden-force');
+    
+    // Update Info
+    updateNextPrayer();
+    const locText = document.getElementById('homeLocationText');
+    if(locText) locText.innerText = window.lastCity || "Mencari...";
+    
+    if(currentUser) {
+        const hName = document.getElementById('homeUserName');
+        const hPhoto = document.getElementById('homeUserPhoto');
+        if(hName) hName.innerText = currentUser.displayName || "Hamba Allah";
+        if(hPhoto) hPhoto.src = currentUser.photoURL || `https://ui-avatars.com/api/?name=${currentUser.displayName}`;
     }
+    if(window.lucide) lucide.createIcons();
+};
 
-    if(splash) {
-        setTimeout(() => {
-            splash.classList.add('opacity-0');
-            setTimeout(() => splash.classList.add('hidden-force'), 500);
-        }, 500);
-    }
-});
+// 2. Buka Tracker (Jurnal Harian)
+window.openTracker = () => {
+    hideAllViews(); // Reset dulu
+    
+    if(appHeader) appHeader.classList.remove('hidden-force');
+    if(mainContent) mainContent.classList.remove('hidden-force');
+    if(window.lucide) lucide.createIcons();
+};
 
-// --- PROFILE ---
+// 3. Buka Profile
 window.openProfile = () => {
     if(!currentUser) return;
+    hideAllViews(); // Reset dulu
+
+    const profileView = document.getElementById('profileView');
+    if(profileView) profileView.classList.remove('hidden-force');
+
+    // Populate Data
     const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
     const imgEl = document.getElementById('profilePhotoLarge');
     if(imgEl) imgEl.src = currentUser.photoURL || `https://ui-avatars.com/api/?name=${currentUser.displayName}`;
@@ -116,39 +131,74 @@ window.openProfile = () => {
     PRAYER_CONFIG.forEach(p => { if(p.type === 'wajib' && currentRecords[p.id]) wajibDoneCount++; });
     setSafeText('statToday', `${wajibDoneCount}/5`);
 
-    if(appHeader) appHeader.classList.add('hidden-force');
-    if(mainContent) mainContent.classList.add('hidden-force');
-    if(profileView) {
-        profileView.classList.remove('hidden-force');
-        setTimeout(() => loadChartData(7), 100); 
-    }
+    setTimeout(() => loadChartData(7), 100); 
     if(window.lucide) lucide.createIcons();
 };
 
 window.closeProfile = () => {
-    if(profileView) profileView.classList.add('hidden-force');
-    if(appHeader) appHeader.classList.remove('hidden-force');
-    if(mainContent) mainContent.classList.remove('hidden-force');
+    window.goHome(); // Balik ke Home
 };
 
-const logoutBtnProfile = document.getElementById('logoutBtnProfile');
-if(logoutBtnProfile) {
-    logoutBtnProfile.addEventListener('click', () => { signOut(auth).then(() => location.reload()); });
+// 4. Buka Tasbih
+let tasbihCount = 0;
+let tasbihTarget = 33;
+let isVibroOn = true;
+
+window.openTasbih = () => {
+    hideAllViews(); // Reset dulu
+    const tasbihView = document.getElementById('tasbihView');
+    if(tasbihView) tasbihView.classList.remove('hidden-force');
+    if(window.lucide) lucide.createIcons();
+};
+
+window.closeTasbih = () => {
+    window.goHome(); // Balik ke Home
+};
+
+// --- AUTH ---
+const googleLoginBtn = document.getElementById('googleLoginBtn');
+if(googleLoginBtn) {
+    googleLoginBtn.addEventListener('click', async () => {
+        document.getElementById('loginStatus').classList.remove('hidden');
+        try { await signInWithPopup(auth, provider); } 
+        catch (error) { console.error(error); document.getElementById('loginStatus').classList.add('hidden'); }
+    });
 }
+
+onAuthStateChanged(auth, async (user) => {
+    const splash = document.getElementById('splashScreen');
+    const loginOverlay = document.getElementById('loginOverlay');
+
+    if (user) {
+        currentUser = user;
+        if(loginOverlay) loginOverlay.classList.add('hidden-force');
+        initApp(); // Init akan memanggil goHome() otomatis
+    } else {
+        currentUser = null;
+        if(loginOverlay) loginOverlay.classList.remove('hidden-force');
+        hideAllViews(); // Sembunyikan semua kalau logout
+    }
+
+    if(splash) {
+        setTimeout(() => {
+            splash.classList.add('opacity-0');
+            setTimeout(() => splash.classList.add('hidden-force'), 500);
+        }, 500);
+    }
+});
 
 // --- CHART ---
 window.loadChartData = async (days) => {
     if(!currentUser) return;
+    // Update Tombol UI
     const btn7 = document.getElementById('btn7Days');
     const btn14 = document.getElementById('btn14Days');
     if(btn7 && btn14) {
-        if(days === 7) {
-            btn7.className = "px-2 py-1 text-[10px] rounded-md font-medium transition bg-white dark:bg-slate-700 text-emerald-600 shadow-sm";
-            btn14.className = "px-2 py-1 text-[10px] rounded-md font-medium transition text-slate-500 hover:text-emerald-600";
-        } else {
-            btn14.className = "px-2 py-1 text-[10px] rounded-md font-medium transition bg-white dark:bg-slate-700 text-emerald-600 shadow-sm";
-            btn7.className = "px-2 py-1 text-[10px] rounded-md font-medium transition text-slate-500 hover:text-emerald-600";
-        }
+        const activeClass = "bg-white dark:bg-slate-700 text-emerald-600 shadow-sm";
+        const inactiveClass = "text-slate-500 hover:text-emerald-600";
+        // Reset base class dulu
+        btn7.className = "px-2 py-1 text-[10px] rounded-md font-medium transition " + (days===7 ? activeClass : inactiveClass);
+        btn14.className = "px-2 py-1 text-[10px] rounded-md font-medium transition " + (days===14 ? activeClass : inactiveClass);
     }
 
     const labels = [];
@@ -212,6 +262,58 @@ function renderChart(labels, data) {
     });
 }
 
+// --- LOGIC TASBIH ---
+window.countTasbih = () => {
+    tasbihCount++;
+    const countEl = document.getElementById('tasbihCount');
+    if(countEl) countEl.innerText = tasbihCount;
+    if(isVibroOn && navigator.vibrate) {
+        if(tasbihTarget > 0 && tasbihCount % tasbihTarget === 0) navigator.vibrate([50, 50, 50]);
+        else navigator.vibrate(15);
+    }
+};
+
+window.resetTasbih = () => {
+    tasbihCount = 0;
+    document.getElementById('tasbihCount').innerText = '0';
+    if(navigator.vibrate) navigator.vibrate(30);
+};
+
+window.setTasbihTarget = (target) => {
+    tasbihTarget = target;
+    document.getElementById('tasbihTargetDisplay').innerText = target === 0 ? "Target: ∞" : `Target: ${target}`;
+    const btn33 = document.getElementById('btnTarget33');
+    const btn100 = document.getElementById('btnTarget100');
+    const btnInf = document.getElementById('btnTargetInf');
+    // Update class active/inactive
+    [btn33, btn100, btnInf].forEach(btn => {
+        if(!btn) return;
+        btn.className = "px-4 py-2 text-xs font-bold rounded-lg transition text-slate-500 dark:text-slate-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30";
+    });
+    
+    const activeClass = "px-4 py-2 text-xs font-bold rounded-lg transition bg-emerald-500 text-white shadow-md";
+    if(target === 33 && btn33) btn33.className = activeClass;
+    if(target === 100 && btn100) btn100.className = activeClass;
+    if(target === 0 && btnInf) btnInf.className = activeClass;
+    
+    resetTasbih();
+};
+
+window.toggleVibro = () => {
+    isVibroOn = !isVibroOn;
+    const btn = document.getElementById('vibroBtn').firstElementChild;
+    const txt = document.getElementById('vibroText');
+    if(isVibroOn) {
+        btn.classList.add('bg-emerald-100/80', 'text-emerald-600');
+        btn.classList.remove('bg-slate-200', 'text-slate-500');
+        txt.innerText = "Getar On";
+    } else {
+        btn.classList.remove('bg-emerald-100/80', 'text-emerald-600');
+        btn.classList.add('bg-slate-200', 'dark:bg-slate-700', 'text-slate-500');
+        txt.innerText = "Getar Off";
+    }
+};
+
 // --- APP FUNCTIONS ---
 function formatDateKey(date) {
     const offset = date.getTimezoneOffset();
@@ -238,7 +340,8 @@ async function saveToFirestoreOnly(prayerId, status) {
 function initApp() {
     initTheme();
     updateDateUI();
-    getLocation(); 
+    getLocation();
+    window.goHome(); // Start at Home
 }
 
 window.changeDate = (days) => {
@@ -272,22 +375,40 @@ window.toggleDarkMode = () => {
 
 function initTheme() {
     const html = document.documentElement;
-    const btn = document.getElementById('themeBtn');
-    if(btn) {
-        if (isDarkMode) {
-            html.classList.add('dark');
-            btn.innerHTML = `<i data-lucide="sun" class="w-5 h-5 text-yellow-300 fill-yellow-300 animate-spin-slow"></i>`;
-        } else {
-            html.classList.remove('dark');
-            btn.innerHTML = `<i data-lucide="moon" class="w-5 h-5 text-yellow-200 fill-yellow-200/50"></i>`;
-        }
-    } else { isDarkMode ? html.classList.add('dark') : html.classList.remove('dark'); }
+    // Update tombol di Desktop & Mobile
+    const btns = document.querySelectorAll('button[onclick="toggleDarkMode()"]');
+    
+    if(isDarkMode) {
+        html.classList.add('dark');
+        btns.forEach(btn => {
+            // Cek jika tombol ikon saja (header) atau tombol menu (list)
+            if(btn.querySelector('i')) {
+               const icon = btn.querySelector('i');
+               // Ganti icon jadi sun
+               icon.setAttribute('data-lucide', 'sun');
+               icon.classList.add('text-yellow-300');
+            }
+        });
+    } else {
+        html.classList.remove('dark');
+        btns.forEach(btn => {
+            if(btn.querySelector('i')) {
+               const icon = btn.querySelector('i');
+               // Ganti icon jadi moon
+               icon.setAttribute('data-lucide', 'moon');
+               icon.classList.remove('text-yellow-300');
+            }
+        });
+    }
     if(window.lucide) lucide.createIcons();
 }
 
 window.getLocation = () => {
     const btnText = document.getElementById('locationText');
+    const homeLoc = document.getElementById('homeLocationText');
     if(btnText) btnText.innerText = "Mencari...";
+    if(homeLoc) homeLoc.innerText = "Mencari...";
+    
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (pos) => {
@@ -305,7 +426,10 @@ function useDefaultLocation() {
     window.lastLat = DEFAULT_COORDS.lat;
     window.lastLng = DEFAULT_COORDS.lng;
     window.lastCity = "Depok (Default)";
-    document.getElementById('locationText').innerText = window.lastCity;
+    const btnText = document.getElementById('locationText');
+    const homeLoc = document.getElementById('homeLocationText');
+    if(btnText) btnText.innerText = window.lastCity;
+    if(homeLoc) homeLoc.innerText = window.lastCity;
     fetchJadwal(window.lastLat, window.lastLng);
 }
 
@@ -314,8 +438,50 @@ async function fetchCityName(lat, lng) {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`);
         const data = await res.json();
         window.lastCity = data.address.city || data.address.town || "Indonesia"; 
-        document.getElementById('locationText').innerText = window.lastCity;
+        const btnText = document.getElementById('locationText');
+        const homeLoc = document.getElementById('homeLocationText');
+        if(btnText) btnText.innerText = window.lastCity;
+        if(homeLoc) homeLoc.innerText = window.lastCity;
     } catch (e) { document.getElementById('locationText').innerText = "Lokasi Aktif"; }
+}
+
+// Logic Update Next Prayer
+function updateNextPrayer() {
+    const nameEl = document.getElementById('nextPrayerName');
+    const timeEl = document.getElementById('nextPrayerTime');
+    if(!nameEl || !timeEl) return;
+
+    const now = new Date();
+    const curTime = now.getHours() * 60 + now.getMinutes();
+    
+    let nextP = null;
+    let minDiff = 9999;
+
+    const timesToCheck = [
+        { name: 'Subuh', time: prayerTimes.Subuh },
+        { name: 'Dzuhur', time: prayerTimes.Dzuhur },
+        { name: 'Ashar', time: prayerTimes.Ashar },
+        { name: 'Maghrib', time: prayerTimes.Maghrib },
+        { name: 'Isya', time: prayerTimes.Isya }
+    ];
+
+    for(let p of timesToCheck) {
+        if(p.time === '--:--') continue;
+        const [h, m] = p.time.split(':').map(Number);
+        const pTime = h * 60 + m;
+        if (pTime > curTime && (pTime - curTime) < minDiff) {
+            minDiff = pTime - curTime;
+            nextP = p;
+        }
+    }
+
+    if(nextP) {
+        nameEl.innerText = nextP.name;
+        timeEl.innerText = nextP.time;
+    } else {
+        nameEl.innerText = "Subuh";
+        timeEl.innerText = prayerTimes.Subuh || "Besok";
+    }
 }
 
 async function fetchJadwal(lat, lng) {
@@ -347,10 +513,14 @@ async function fetchJadwal(lat, lng) {
                 const dhuha = new Date(); dhuha.setHours(sh, sm + 20);
                 prayerTimes.Dhuha = dhuha.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', hour12:false}).replace('.',':');
             }
-            if (dayData.date.hijri) document.getElementById('hijriDisplay').innerText = `${dayData.date.hijri.day} ${dayData.date.hijri.month.en} ${dayData.date.hijri.year} H`;
+            if (dayData.date.hijri) {
+                const hEl = document.getElementById('hijriDisplay');
+                if(hEl) hEl.innerText = `${dayData.date.hijri.day} ${dayData.date.hijri.month.en} ${dayData.date.hijri.year} H`;
+            }
         }
     }
     renderPrayers(); 
+    updateNextPrayer();
     loadRecordsFromCloud();
 }
 
@@ -446,6 +616,114 @@ function renderPrayers() {
     container.innerHTML = html;
     if(window.lucide) lucide.createIcons();
     updateProgressBar();
+}
+
+// --- QIBLA LOGIC ---
+let compassWatchId = null;
+const KAABA_COORDS = { lat: 21.422487, lng: 39.826206 };
+
+window.openQibla = () => {
+    hideAllViews();
+    const qiblaView = document.getElementById('qiblaView');
+    if(qiblaView) qiblaView.classList.remove('hidden-force');
+    
+    // Hitung Sudut Kiblat
+    if(window.lastLat && window.lastLng) {
+        calculateQibla(window.lastLat, window.lastLng);
+    }
+    
+    // Mulai Kompas
+    startCompass();
+    
+    // Cek Izin iOS
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        document.getElementById('compassPermissionBtn').classList.remove('hidden');
+    }
+    
+    if(window.lucide) lucide.createIcons();
+};
+
+window.closeQibla = () => {
+    stopCompass();
+    window.goHome();
+};
+
+window.requestCompassPermission = async () => {
+    try {
+        const response = await DeviceOrientationEvent.requestPermission();
+        if (response === 'granted') {
+            document.getElementById('compassPermissionBtn').classList.add('hidden');
+            startCompass();
+        } else {
+            alert('Izin kompas ditolak.');
+        }
+    } catch (e) { console.error(e); }
+};
+
+function calculateQibla(lat, lng) {
+    const PI = Math.PI;
+    const lat1 = lat * (PI/180);
+    const lng1 = lng * (PI/180);
+    const lat2 = KAABA_COORDS.lat * (PI/180);
+    const lng2 = KAABA_COORDS.lng * (PI/180);
+
+    const y = Math.sin(lng2 - lng1) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lng2 - lng1);
+    let qiblaAngle = Math.atan2(y, x);
+    qiblaAngle = (qiblaAngle * 180 / PI + 360) % 360; // Normalisasi ke 0-360
+
+    // Putar Jarum Kiblat relatif terhadap Utara Piringan
+    const pointer = document.getElementById('qiblaPointer');
+    if(pointer) pointer.style.transform = `rotate(${qiblaAngle}deg)`;
+    
+    // Hitung Jarak (Haversine)
+    const R = 6371; // Radius Bumi km
+    const dLat = lat2 - lat1;
+    const dLon = lng2 - lng1;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const d = R * c;
+    
+    document.getElementById('qiblaDistance').innerText = `${Math.round(d).toLocaleString('id-ID')} km`;
+}
+
+function startCompass() {
+    if (window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', handleOrientation, true);
+    }
+}
+
+function stopCompass() {
+    window.removeEventListener('deviceorientation', handleOrientation, true);
+}
+
+function handleOrientation(event) {
+    let heading = 0;
+    
+    // Logika Heading (Beda Browser Beda Cara)
+    if (event.webkitCompassHeading) {
+        // iOS
+        heading = event.webkitCompassHeading;
+    } else if (event.alpha) {
+        // Android (Alpha biasanya terbalik arahnya)
+        heading = 360 - event.alpha;
+    }
+    
+    // Putar Piringan Kompas agar Utara selalu di Atas (relatif terhadap HP)
+    // Atau putar Piringan agar Utara-nya sesuai Utara Asli.
+    // Konsep: Piringan berputar berlawanan arah hadap HP.
+    const disc = document.getElementById('compassDisc');
+    if(disc) {
+        // Gunakan requestAnimationFrame agar smooth
+        requestAnimationFrame(() => {
+            disc.style.transform = `rotate(${-heading}deg)`;
+        });
+    }
+    
+    // Tampilkan Derajat Kiblat Relatif terhadap Arah Hadap User
+    // Ini opsional, bisa menampilkan heading user atau selisihnya.
+    // Di sini kita tampilkan sudut kiblat yang statis saja di teks.
 }
 
 initTheme();
