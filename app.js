@@ -1,3 +1,12 @@
+// --- IMPORT TAMPILAN PROFIL ---
+import { profileViewHTML } from './view_profile.js';
+
+// Inject HTML Profil ke dalam App Container
+const appContainer = document.getElementById('appContainer');
+if(appContainer) {
+    appContainer.insertAdjacentHTML('beforeend', profileViewHTML);
+}
+
 // --- 1. FIREBASE CONFIG & IMPORTS ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -83,25 +92,188 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 // --- 4. PROFILE LOGIC ---
+let myChart = null; // Variable global untuk menyimpan instance chart
+
 window.openProfile = () => {
     if(!currentUser) return;
-    document.getElementById('profilePhotoLarge').src = currentUser.photoURL || `https://ui-avatars.com/api/?name=${currentUser.displayName}`;
-    document.getElementById('profileNameLarge').innerText = currentUser.displayName;
-    document.getElementById('profileEmail').innerText = currentUser.email;
-    document.getElementById('joinDate').innerText = currentUser.metadata.creationTime ? new Date(currentUser.metadata.creationTime).toLocaleDateString('id-ID') : '-';
-    document.getElementById('lastLocation').innerText = window.lastCity || "Lokasi belum terdeteksi";
+    
+    // Helper & Basic Data Setup
+    const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
+    const imgEl = document.getElementById('profilePhotoLarge');
+    if(imgEl) imgEl.src = currentUser.photoURL || `https://ui-avatars.com/api/?name=${currentUser.displayName}`;
+    
+    setSafeText('profileNameLarge', currentUser.displayName);
+    setSafeText('profileEmail', currentUser.email);
+    
+    const joinDateObj = new Date(currentUser.metadata.creationTime);
+    setSafeText('joinDate', joinDateObj.toLocaleDateString('id-ID'));
+    setSafeText('lastLocation', window.lastCity || "Lokasi belum terdeteksi");
 
-    appHeader.classList.add('hidden-force');
-    mainContent.classList.add('hidden-force');
-    profileView.classList.remove('hidden-force');
+    // Statistik Summary Cards
+    const diffTime = Math.abs(new Date() - joinDateObj);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    setSafeText('statDays', `${diffDays} Hari`);
+
+    let wajibDoneCount = 0;
+    PRAYER_CONFIG.forEach(p => { if(p.type === 'wajib' && currentRecords[p.id]) wajibDoneCount++; });
+    setSafeText('statToday', `${wajibDoneCount}/5`);
+
+    // Tampilkan View
+    if(appHeader) appHeader.classList.add('hidden-force');
+    if(mainContent) mainContent.classList.add('hidden-force');
+    const pView = document.getElementById('profileView');
+    if(pView) {
+        pView.classList.remove('hidden-force');
+        // Load Default Chart (7 Hari) setelah view muncul
+        setTimeout(() => loadChartData(7), 100); 
+    }
+    
     if(window.lucide) lucide.createIcons();
 };
 
 window.closeProfile = () => {
-    profileView.classList.add('hidden-force');
-    appHeader.classList.remove('hidden-force');
-    mainContent.classList.remove('hidden-force');
+    const pView = document.getElementById('profileView');
+    if(pView) pView.classList.add('hidden-force');
+    if(appHeader) appHeader.classList.remove('hidden-force');
+    if(mainContent) mainContent.classList.remove('hidden-force');
 };
+
+// --- LOGIKA CHART (BARU) ---
+window.loadChartData = async (days) => {
+    if(!currentUser) return;
+
+    // 1. Update UI Tombol (Active State)
+    const btn7 = document.getElementById('btn7Days');
+    const btn14 = document.getElementById('btn14Days');
+    if(btn7 && btn14) {
+        if(days === 7) {
+            btn7.className = "px-2 py-1 text-[10px] rounded-md font-medium transition bg-white dark:bg-slate-700 text-emerald-600 shadow-sm";
+            btn14.className = "px-2 py-1 text-[10px] rounded-md font-medium transition text-slate-500 hover:text-emerald-600";
+        } else {
+            btn14.className = "px-2 py-1 text-[10px] rounded-md font-medium transition bg-white dark:bg-slate-700 text-emerald-600 shadow-sm";
+            btn7.className = "px-2 py-1 text-[10px] rounded-md font-medium transition text-slate-500 hover:text-emerald-600";
+        }
+    }
+
+    // 2. Siapkan Tanggal & Fetch Data
+    const labels = [];
+    const dataPoints = [];
+    const fetchPromises = [];
+
+    // Loop mundur dari H-days sampai Hari Ini
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateKey = formatDateKey(d); // Pakai fungsi format yg sudah ada
+        
+        // Label (Tgl/Bln)
+        labels.push(d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
+        
+        // Fetch Dokumen dari Firestore
+        const docRef = doc(db, "users", currentUser.uid, "daily_records", dateKey);
+        fetchPromises.push(getDoc(docRef));
+    }
+
+    // Tunggu semua data selesai diambil
+    try {
+        const snapshots = await Promise.all(fetchPromises);
+        
+        snapshots.forEach(snap => {
+            if(snap.exists()) {
+                const data = snap.data();
+                // Hitung berapa 'wajib' yang true
+                let count = 0;
+                PRAYER_CONFIG.forEach(p => {
+                    if(p.type === 'wajib' && data[p.id] === true) count++;
+                });
+                dataPoints.push(count);
+            } else {
+                dataPoints.push(0); // Belum ada data hari itu
+            }
+        });
+
+        renderChart(labels, dataPoints);
+
+    } catch (e) {
+        console.error("Gagal load chart:", e);
+    }
+};
+
+function renderChart(labels, data) {
+    const ctx = document.getElementById('activityChart');
+    if(!ctx) return;
+
+    // Hapus chart lama jika ada (biar gak numpuk)
+    if(myChart) {
+        myChart.destroy();
+    }
+
+    // Warna Grafik (Sesuai Dark/Light Mode sederhana)
+    const isDark = document.documentElement.classList.contains('dark');
+    const colorLine = '#10b981'; // Emerald-500
+    const colorGrid = isDark ? '#334155' : '#e2e8f0'; // Slate-700 / Slate-200
+
+    myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Sholat Wajib',
+                data: data,
+                borderColor: colorLine,
+                backgroundColor: (context) => {
+                    const ctx = context.chart.ctx;
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+                    gradient.addColorStop(0, "rgba(16, 185, 129, 0.4)");
+                    gradient.addColorStop(1, "rgba(16, 185, 129, 0)");
+                    return gradient;
+                },
+                borderWidth: 3,
+                tension: 0.4, // Membuat garis melengkung halus
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: colorLine,
+                pointBorderWidth: 2,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                    titleColor: isDark ? '#f1f5f9' : '#1e293b',
+                    bodyColor: isDark ? '#f1f5f9' : '#1e293b',
+                    borderColor: '#cbd5e1',
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 5, // Maksimal 5 waktu
+                    ticks: { stepSize: 1, color: isDark ? '#94a3b8' : '#64748b' },
+                    grid: { color: colorGrid, borderDash: [5, 5] }
+                },
+                x: {
+                    ticks: { 
+                        color: isDark ? '#94a3b8' : '#64748b',
+                        font: { size: 9 } // Font kecil biar muat
+                    },
+                    grid: { display: false }
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
+            }
+        }
+    });
+}
 
 const logoutBtnProfile = document.getElementById('logoutBtnProfile');
 if(logoutBtnProfile) {
