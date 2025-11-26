@@ -283,6 +283,11 @@ if(logoutBtnProfile) {
 }
 
 // --- 5. APP FUNCTIONS ---
+
+// GLOBAL VARIABLE BARU (Tambahkan/Pastikan ini ada di bagian Global Variables paling atas app.js)
+// let monthlyCache = {}; 
+// (Tapi biar aman, saya taruh logic inisialisasinya di dalam fetchJadwal di bawah)
+
 function formatDateKey(date) {
     const offset = date.getTimezoneOffset();
     const localDate = new Date(date.getTime() - (offset*60*1000));
@@ -291,7 +296,9 @@ function formatDateKey(date) {
 
 async function loadRecordsFromCloud() {
     if (!currentUser) return;
-    showLoading(true);
+    
+    // Kita TIDAK pakai showLoading(true) disini agar tidak menghalangi tampilan jadwal
+    // Biarkan jadwal muncul duluan, checklist menyusul (Asynchronous UI)
     
     const dateKey = formatDateKey(currentDate);
     const userDocRef = doc(db, "users", currentUser.uid, "daily_records", dateKey);
@@ -301,12 +308,11 @@ async function loadRecordsFromCloud() {
         currentRecords = docSnap.exists() ? docSnap.data() : {};
     } catch (e) { console.error(e); } 
     finally {
-        showLoading(false);
+        // Render ulang HANYA untuk update status checklist (tanpa kedip)
         renderPrayers(); 
     }
 }
 
-// FUNGSI BARU: Save tanpa Render Ulang (Seamless)
 async function saveToFirestoreOnly(prayerId, status) {
     if (!currentUser) return;
     const dateKey = formatDateKey(currentDate);
@@ -323,13 +329,22 @@ function initApp() {
 }
 
 window.changeDate = (days) => {
+    // 1. Reset Data Lokal (Optimistic)
+    currentRecords = {}; // Kosongkan checklist sementara biar tidak salah centang punya hari sebelumnya
+    
+    // 2. Ganti Tanggal
     currentDate.setDate(currentDate.getDate() + days);
     updateDateUI();
+    
+    // 3. Render Jadwal (Langsung ambil dari Cache jika ada, jadi INSTAN)
     if (window.lastLat) fetchJadwal(window.lastLat, window.lastLng);
+    
+    // 4. Fetch Status Checklist di Background
     loadRecordsFromCloud();
 };
 
 window.resetToToday = () => {
+    currentRecords = {}; 
     currentDate = new Date();
     updateDateUI();
     if (window.lastLat) fetchJadwal(window.lastLat, window.lastLng);
@@ -350,7 +365,6 @@ window.toggleDarkMode = () => {
     isDarkMode = !isDarkMode;
     localStorage.setItem('valdi_theme', isDarkMode ? 'dark' : 'light');
     initTheme();
-    // TIDAK PERLU renderPrayers() disini agar transisi smooth
 };
 
 function initTheme() {
@@ -413,54 +427,91 @@ async function fetchCityName(lat, lng) {
     }
 }
 
+// --- LOGIKA CACHE JADWAL BARU (RAHASIA KECEPATAN) ---
+// Variable Cache Disimpan di window agar persisten
+window.scheduleCache = {}; 
+
 async function fetchJadwal(lat, lng) {
-    try {
-        const d = currentDate.getDate();
-        const m = currentDate.getMonth() + 1;
-        const y = currentDate.getFullYear();
-        const url = `https://api.aladhan.com/v1/timings/${d}-${m}-${y}?latitude=${lat}&longitude=${lng}&method=20`;
-        
-        const res = await fetch(url);
-        const data = await res.json();
-        
-        if (data.data) {
-            const t = data.data.timings;
-            prayerTimes.Subuh = t.Fajr;
-            prayerTimes.Dzuhur = t.Dhuhr;
-            prayerTimes.Ashar = t.Asr;
-            prayerTimes.Maghrib = t.Maghrib;
-            prayerTimes.Isya = t.Isha;
+    // 1. Tentukan Key Cache (Berdasarkan Bulan & Lokasi)
+    // Jika user pindah bulan atau pindah kota > 10km, baru fetch ulang
+    const m = currentDate.getMonth() + 1;
+    const y = currentDate.getFullYear();
+    const latFix = lat.toFixed(1); // Pembulatan kasar lokasi
+    const lngFix = lng.toFixed(1);
+    const cacheKey = `sch_${y}_${m}_${latFix}_${lngFix}`;
+
+    let monthData = window.scheduleCache[cacheKey];
+
+    // 2. Jika Data Tidak Ada di Cache, Ambil Sebulan Penuh dari API
+    if (!monthData) {
+        try {
+            // Endpoint Calendar mengambil data 1 bulan sekaligus
+            const url = `https://api.aladhan.com/v1/calendar?latitude=${lat}&longitude=${lng}&method=20&month=${m}&year=${y}`;
+            const res = await fetch(url);
+            const result = await res.json();
+            
+            if (result.data) {
+                monthData = result.data;
+                window.scheduleCache[cacheKey] = monthData; // Simpan ke Memori
+                console.log("Jadwal didownload dari Internet");
+            }
+        } catch (e) { console.error("Gagal fetch jadwal:", e); }
+    } else {
+        // Debugging: Cek console, pasti muncul ini kalau ganti tanggal
+        console.log("Jadwal diambil dari Cache (Instan)");
+    }
+
+    // 3. Ambil Data Hari Ini dari Array Sebulan
+    if (monthData) {
+        const todayDate = currentDate.getDate();
+        // API Aladhan mengembalikan array, index dimulai dari 0 (tgl 1 = index 0)
+        const dayData = monthData[todayDate - 1]; 
+
+        if (dayData) {
+            const t = dayData.timings;
+            
+            // Format Waktu (Hapus '(WIB)' jika ada)
+            const cleanTime = (timeStr) => timeStr.split(' ')[0];
+
+            prayerTimes.Subuh = cleanTime(t.Fajr);
+            prayerTimes.Dzuhur = cleanTime(t.Dhuhr);
+            prayerTimes.Ashar = cleanTime(t.Asr);
+            prayerTimes.Maghrib = cleanTime(t.Maghrib);
+            prayerTimes.Isya = cleanTime(t.Isha);
+
+            // Hitung Dhuha Manual (Sunrise + 20 menit)
             if (t.Sunrise) {
-                const [sh, sm] = t.Sunrise.split(':').map(Number);
-                const dhuhaTime = new Date(); dhuhaTime.setHours(sh, sm + 20);
+                const [sh, sm] = cleanTime(t.Sunrise).split(':').map(Number);
+                const dhuhaTime = new Date(); 
+                dhuhaTime.setHours(sh, sm + 20);
                 prayerTimes.Dhuha = dhuhaTime.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', hour12:false}).replace('.',':');
             }
-            if (data.data.date && data.data.date.hijri) {
-                document.getElementById('hijriDisplay').innerText = `${data.data.date.hijri.day} ${data.data.date.hijri.month.en} ${data.data.date.hijri.year} H`;
+
+            // Update Tanggal Hijriyah
+            if (dayData.date && dayData.date.hijri) {
+                const h = dayData.date.hijri;
+                document.getElementById('hijriDisplay').innerText = `${h.day} ${h.month.en} ${h.year} H`;
             }
         }
-    } catch (e) { console.error(e); }
-    finally { loadRecordsFromCloud(); }
-}
+    }
 
-// --- LOGIKA UTAMA SEAMLESS (ANIMASI) ---
+    // 4. Render UI Langsung (Tanpa Menunggu Database)
+    // Checklist akan kosong sebentar, lalu terisi otomatis saat database selesai loading
+    renderPrayers(); 
+    
+    // 5. Panggil Database User (Background)
+    loadRecordsFromCloud();
+}
 
 window.togglePrayer = (id, locked) => {
     if (locked) return;
-    
-    // 1. Update State Local
     const newState = !currentRecords[id];
     currentRecords[id] = newState;
-
-    // 2. Animasi UI Langsung (Tanpa Reload)
     animatePrayerItem(id, newState);
     updateProgressBar();
-
-    // 3. Simpan ke Database (Background Process)
     saveToFirestoreOnly(id, newState);
 };
 
-// Fungsi Animasi Dom Manipulation
 function animatePrayerItem(id, isDone) {
     const card = document.getElementById(`card-${id}`);
     const title = document.getElementById(`title-${id}`);
@@ -469,51 +520,31 @@ function animatePrayerItem(id, isDone) {
 
     if(!card) return;
 
-    // A. Efek "Pop" pada Kartu (Scale)
     card.classList.add('scale-[0.98]');
     setTimeout(() => card.classList.remove('scale-[0.98]'), 150);
 
-    // B. Ubah Style Kartu
     if (isDone) {
-        // Style: DONE
         card.classList.remove('border-slate-100', 'dark:border-slate-700', 'hover:border-emerald-300');
         card.classList.add('border-emerald-500', 'bg-emerald-50/50', 'dark:bg-emerald-900/10');
-        
-        // Style: Title
         title.classList.add('text-emerald-700', 'line-through', 'decoration-emerald-500/50');
         title.classList.remove('dark:text-slate-200');
-
-        // Style: Icon Box
         iconBox.classList.remove('text-slate-400');
         iconBox.classList.add('text-emerald-600', 'dark:text-emerald-400');
-
-        // Style: Check Button (Icon Checklist)
         checkBtn.innerHTML = `<div class="bg-emerald-500 text-white rounded-lg p-1 animate-[zoomIn_0.3s_ease-out]"><i data-lucide="check" class="w-4 h-4"></i></div>`;
     } else {
-        // Style: UNDONE (Reset)
         card.classList.add('border-slate-100', 'dark:border-slate-700', 'hover:border-emerald-300');
         card.classList.remove('border-emerald-500', 'bg-emerald-50/50', 'dark:bg-emerald-900/10');
-        
-        // Style: Title
         title.classList.remove('text-emerald-700', 'line-through', 'decoration-emerald-500/50');
         title.classList.add('dark:text-slate-200');
-
-        // Style: Icon Box
         iconBox.classList.add('text-slate-400');
         iconBox.classList.remove('text-emerald-600', 'dark:text-emerald-400');
-
-        // Style: Check Button (Empty Box)
         checkBtn.innerHTML = `<div class="border-2 border-slate-200 dark:border-slate-600 rounded-lg w-6 h-6 transition-colors hover:border-emerald-400"></div>`;
     }
-    
-    // Refresh icon lucide yang baru di-inject
     if(window.lucide) lucide.createIcons();
 }
 
 function updateProgressBar() {
     let wajibTotal = 0, wajibDone = 0;
-    
-    // Hitung ulang progress
     PRAYER_CONFIG.forEach(p => {
         if(p.type === 'wajib') {
             wajibTotal++;
@@ -521,7 +552,6 @@ function updateProgressBar() {
         }
     });
 
-    // Update Bar UI
     const percent = wajibTotal === 0 ? 0 : Math.round((wajibDone / wajibTotal) * 100);
     document.getElementById('progressText').innerText = percent + '%';
     const pb = document.getElementById('progressBar');
@@ -530,10 +560,8 @@ function updateProgressBar() {
         pb.className = `h-full rounded-full transition-all duration-1000 ease-out ${percent === 100 ? 'bg-yellow-400 shadow-[0_0_10px_#facc15]' : 'bg-emerald-300'}`;
     }
 
-    // Handle "Sempurna" Message
     const congratsId = "congratsMessage";
     const existingMsg = document.getElementById(congratsId);
-    
     const isSubuhLocked = checkTimeAvailability(prayerTimes.Subuh).locked;
 
     if (wajibDone === wajibTotal && wajibTotal > 0 && !isSubuhLocked) {
@@ -575,13 +603,13 @@ function renderPrayers() {
         const time = prayerTimes[p.id];
         const status = checkTimeAvailability(time);
         
-        // CSS Logic (Initial Render)
+        // Style Kaca untuk Kartu Sholat
         let wrapperClass = status.locked 
-            ? 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-60 cursor-not-allowed grayscale' 
+            ? 'bg-slate-100/50 dark:bg-slate-800/50 border-white/20 dark:border-slate-700/30 opacity-60 cursor-not-allowed grayscale backdrop-blur-sm' 
             : (isDone 
-                ? 'cursor-pointer bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-500 shadow-md' 
-                : 'cursor-pointer bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-emerald-300 hover:shadow-md');
-
+                ? 'cursor-pointer bg-emerald-50/60 dark:bg-emerald-900/20 border-emerald-500/50 shadow-md backdrop-blur-sm' 
+                : 'cursor-pointer bg-white/60 dark:bg-slate-800/60 border-white/40 dark:border-slate-700/40 hover:border-emerald-300 hover:shadow-md backdrop-blur-sm');
+                
         let iconColor = isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400';
         let titleStyle = isDone ? 'text-emerald-700 line-through decoration-emerald-500/50' : 'dark:text-slate-200';
         
@@ -589,11 +617,13 @@ function renderPrayers() {
             ? `<div class="bg-emerald-500 text-white rounded-lg p-1"><i data-lucide="check" class="w-4 h-4"></i></div>`
             : (status.locked ? `<i data-lucide="lock" class="w-4 h-4 text-slate-300"></i>` : `<div class="border-2 border-slate-200 dark:border-slate-600 rounded-lg w-6 h-6 transition-colors hover:border-emerald-400"></div>`);
 
-        // Tambahkan ID unik: card-{id}, title-{id}, iconbox-{id}, checkbtn-{id}
+        // PERUBAHAN DI SINI:
+        // 1. Menghapus class 'slide-up'
+        // 2. Menghapus style="animation-delay: ..."
+        // Hasilnya: List muncul instan (snappy) tanpa gerak-gerak
         html += `
         <div id="card-${p.id}" onclick="togglePrayer('${p.id}', ${status.locked})" 
-             class="slide-up flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 mb-3 ${wrapperClass}" 
-             style="animation-delay: ${idx * 50}ms">
+             class="flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 mb-3 ${wrapperClass}">
             <div class="flex items-center gap-4">
                 <div id="iconbox-${p.id}" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-700/50 ${iconColor}">
                     <i data-lucide="${p.icon}" class="w-5 h-5"></i>
@@ -613,8 +643,6 @@ function renderPrayers() {
 
     container.innerHTML = html;
     if(window.lucide) lucide.createIcons();
-    
-    // Hitung progress awal tanpa animasi pop
     updateProgressBar();
 }
 

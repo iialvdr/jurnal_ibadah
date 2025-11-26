@@ -36,3 +36,19 @@ i, svg {
 #progressBar {
     transition: width 1s ease-out, background-color 0.3s;
 }
+
+/* Animasi Background Blob */
+.blob {
+    position: absolute;
+    filter: blur(40px);
+    z-index: 0;
+    opacity: 0.6;
+    animation: float 10s infinite ease-in-out;
+}
+@keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+}
+.delay-2000 { animation-delay: 2s; }
+.delay-4000 { animation-delay: 4s; }
