@@ -695,13 +695,13 @@ function calculateQibla(lat, lng) {
     document.getElementById('qiblaDistance').innerText = `${Math.round(d).toLocaleString('id-ID')} km`;
 }
 
-// --- LOGIKA SENSOR KOMPAS (DIPERBAIKI) ---
+// --- LOGIKA SENSOR KOMPAS (ANTI-SPIN) ---
+let currentDiscRotation = 0; // Simpan posisi putaran terakhir
+
 function startCompass() {
-    // Coba event Absolute (Android Modern) dulu
     if ('ondeviceorientationabsolute' in window) {
         window.addEventListener('deviceorientationabsolute', handleOrientation, true);
     } else if (window.DeviceOrientationEvent) {
-        // Fallback ke event biasa (iOS / Android Lama)
         window.addEventListener('deviceorientation', handleOrientation, true);
     }
 }
@@ -716,35 +716,43 @@ function stopCompass() {
 function handleOrientation(event) {
     let heading = null;
     
-    // 1. Coba baca Absolute (Android)
+    // 1. Deteksi Heading (Arah Mata Angin)
     if (event.absolute && event.alpha !== null) {
-        // Alpha di Android = 0 saat Utara? Tidak selalu.
-        // Rumus umum: 360 - alpha
         heading = 360 - event.alpha;
-    } 
-    // 2. Coba baca iOS Webkit
-    else if (event.webkitCompassHeading) {
+    } else if (event.webkitCompassHeading) {
         heading = event.webkitCompassHeading;
-    } 
-    // 3. Fallback biasa
-    else if (event.alpha !== null) {
+    } else if (event.alpha !== null) {
         heading = 360 - event.alpha; 
     }
 
     if (heading !== null) {
-        // Normalisasi Heading 0-360
-        heading = (heading + 360) % 360; 
-
-        // Update Text Debugging
+        // Tampilkan angka debug (0-360 normal)
+        const debugHead = (heading + 360) % 360;
         const headText = document.getElementById('compassHeading');
-        if(headText) headText.innerText = `${Math.round(heading)}°`;
+        if(headText) headText.innerText = `${Math.round(debugHead)}°`;
 
-        // Putar Piringan Kompas
-        // Piringan berputar BERLAWANAN arah hadap HP agar "U" selalu menunjuk Utara Bumi.
+        // --- ALGORITMA PINTAR: JALUR TERPENDEK (SHORTEST PATH) ---
+        // Target kita adalah memutar piringan ke arah berlawanan (-heading)
+        const targetRotation = -heading;
+        
+        // Hitung selisih antara target baru dengan posisi sekarang
+        let delta = targetRotation - currentDiscRotation;
+        
+        // Normalisasi selisih agar selalu mengambil jalan terdekat (-180 sampai 180)
+        // Contoh: Kalau selisihnya -350 derajat (muter balik jauh), 
+        // ubah jadi +10 derajat (maju dikit).
+        while (delta < -180) delta += 360;
+        while (delta > 180) delta -= 360;
+        
+        // Tambahkan selisih pendek itu ke posisi sekarang
+        currentDiscRotation += delta;
+
+        // Terapkan ke CSS
         const disc = document.getElementById('compassDisc');
         if(disc) {
+            // Gunakan requestAnimationFrame agar animasi frame-by-frame halus
             requestAnimationFrame(() => {
-                disc.style.transform = `rotate(${-heading}deg)`;
+                disc.style.transform = `rotate(${currentDiscRotation}deg)`;
             });
         }
     }
