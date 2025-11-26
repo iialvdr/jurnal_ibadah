@@ -1,0 +1,24 @@
+export const loginViewHTML = `
+<div id="loginOverlay" class="absolute inset-0 z-50 flex flex-col items-center justify-center p-8 transition-all duration-500 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
+    <div class="w-full bg-white/70 dark:bg-slate-900/70 border border-white/50 dark:border-slate-700/50 shadow-xl rounded-3xl p-8 flex flex-col items-center text-center">
+        <span class="text-[10px] font-bold tracking-widest text-emerald-600 dark:text-emerald-400 uppercase mb-6 bg-emerald-100/50 dark:bg-emerald-900/30 px-3 py-1 rounded-full border border-emerald-200/50">
+            Assalamu'alaikum
+        </span>
+        <div class="relative mb-6 group">
+            <div class="absolute inset-0 bg-emerald-500 blur-xl opacity-20 group-hover:opacity-40 transition duration-500 rounded-full"></div>
+            <div class="relative bg-gradient-to-br from-emerald-500 to-teal-600 p-5 rounded-2xl shadow-lg transform group-hover:scale-110 transition duration-300">
+                <i data-lucide="mosque" class="w-10 h-10 text-white"></i>
+            </div>
+        </div>
+        <h1 class="text-3xl font-bold text-slate-800 dark:text-white mb-2">Jurnal Ibadah</h1>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mb-8 leading-relaxed">"Catat ibadahmu, raih keberkahan-Nya."</p>
+        
+        <button id="googleLoginBtn" class="w-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 text-slate-700 dark:text-slate-200 font-bold py-3.5 px-4 rounded-xl transition-all shadow-sm hover:shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-3">
+            <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/></svg>
+            <span>Masuk dengan Google</span>
+        </button>
+        <p id="loginStatus" class="mt-4 text-xs text-emerald-600 animate-pulse hidden">Menghubungkan...</p>
+        <p id="errorMsg" class="mt-2 text-xs text-red-500 hidden"></p>
+    </div>
+</div>
+`;

@@ -1,18 +1,19 @@
-// --- IMPORT TAMPILAN PROFIL ---
+// --- IMPORT TAMPILAN ---
 import { profileViewHTML } from './view_profile.js';
+import { loginViewHTML } from './view_login.js';
 
-// Inject HTML Profil ke dalam App Container
+// Inject HTML
 const appContainer = document.getElementById('appContainer');
 if(appContainer) {
     appContainer.insertAdjacentHTML('beforeend', profileViewHTML);
+    appContainer.insertAdjacentHTML('afterbegin', loginViewHTML);
 }
 
-// --- 1. FIREBASE CONFIG & IMPORTS ---
+// --- FIREBASE CONFIG ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// KONFIGURASI FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyDX2VOndgMEIHOGnRA2O1dDa1AKmNV3H08",
     authDomain: "jurnalibadah.firebaseapp.com",
@@ -27,17 +28,17 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-// --- GLOBAL VARIABLES ---
+// --- GLOBALS ---
 let currentUser = null;
 let currentDate = new Date();
 let currentRecords = {}; 
 let prayerTimes = { Subuh: '--:--', Dhuha: '--:--', Dzuhur: '--:--', Ashar: '--:--', Maghrib: '--:--', Isya: '--:--', Tahajud: '03:00' };
-
-// Default Setup
-const DEFAULT_COORDS = { lat: -6.4025, lng: 106.7942 }; // Depok
-let isDarkMode = localStorage.getItem('valdi_theme') === 'dark';
+window.scheduleCache = {};
 window.lastCity = "Menunggu GPS...";
+let isDarkMode = localStorage.getItem('valdi_theme') === 'dark';
+let myChart = null;
 
+const DEFAULT_COORDS = { lat: -6.4025, lng: 106.7942 };
 const PRAYER_CONFIG = [
     { id: 'Subuh', type: 'wajib', icon: 'sunrise' },
     { id: 'Dhuha', type: 'sunnah', icon: 'sun' },
@@ -48,33 +49,28 @@ const PRAYER_CONFIG = [
     { id: 'Tahajud', type: 'sunnah', icon: 'star' }
 ];
 
-// --- 2. DOM ELEMENTS ---
-const loginOverlay = document.getElementById('loginOverlay');
+// --- DOM ---
 const appHeader = document.getElementById('appHeader');
 const mainContent = document.getElementById('mainContent');
 const profileView = document.getElementById('profileView');
-const googleLoginBtn = document.getElementById('googleLoginBtn');
-const loginStatus = document.getElementById('loginStatus');
-const errorMsg = document.getElementById('errorMsg');
 
-// --- 3. AUTH LOGIC ---
-googleLoginBtn.addEventListener('click', async () => {
-    loginStatus.classList.remove('hidden');
-    errorMsg.classList.add('hidden');
-    try {
-        await signInWithPopup(auth, provider);
-    } catch (error) {
-        console.error(error);
-        loginStatus.classList.add('hidden');
-        errorMsg.innerText = "Error: " + error.code;
-        errorMsg.classList.remove('hidden');
-    }
-});
+// --- AUTH ---
+const googleLoginBtn = document.getElementById('googleLoginBtn');
+if(googleLoginBtn) {
+    googleLoginBtn.addEventListener('click', async () => {
+        document.getElementById('loginStatus').classList.remove('hidden');
+        try { await signInWithPopup(auth, provider); } 
+        catch (error) { console.error(error); document.getElementById('loginStatus').classList.add('hidden'); }
+    });
+}
 
 onAuthStateChanged(auth, async (user) => {
+    const splash = document.getElementById('splashScreen');
+    const loginOverlay = document.getElementById('loginOverlay');
+
     if (user) {
         currentUser = user;
-        loginOverlay.classList.add('hidden-force');
+        if(loginOverlay) loginOverlay.classList.add('hidden-force');
         appHeader.classList.remove('hidden-force');
         mainContent.classList.remove('hidden-force');
         
@@ -84,20 +80,23 @@ onAuthStateChanged(auth, async (user) => {
         initApp();
     } else {
         currentUser = null;
-        loginOverlay.classList.remove('hidden-force');
+        if(loginOverlay) loginOverlay.classList.remove('hidden-force');
         appHeader.classList.add('hidden-force');
         mainContent.classList.add('hidden-force');
         if(profileView) profileView.classList.add('hidden-force');
     }
+
+    if(splash) {
+        setTimeout(() => {
+            splash.classList.add('opacity-0');
+            setTimeout(() => splash.classList.add('hidden-force'), 500);
+        }, 500);
+    }
 });
 
-// --- 4. PROFILE LOGIC ---
-let myChart = null; // Variable global untuk menyimpan instance chart
-
+// --- PROFILE ---
 window.openProfile = () => {
     if(!currentUser) return;
-    
-    // Helper & Basic Data Setup
     const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
     const imgEl = document.getElementById('profilePhotoLarge');
     if(imgEl) imgEl.src = currentUser.photoURL || `https://ui-avatars.com/api/?name=${currentUser.displayName}`;
@@ -109,7 +108,6 @@ window.openProfile = () => {
     setSafeText('joinDate', joinDateObj.toLocaleDateString('id-ID'));
     setSafeText('lastLocation', window.lastCity || "Lokasi belum terdeteksi");
 
-    // Statistik Summary Cards
     const diffTime = Math.abs(new Date() - joinDateObj);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
     setSafeText('statDays', `${diffDays} Hari`);
@@ -118,31 +116,29 @@ window.openProfile = () => {
     PRAYER_CONFIG.forEach(p => { if(p.type === 'wajib' && currentRecords[p.id]) wajibDoneCount++; });
     setSafeText('statToday', `${wajibDoneCount}/5`);
 
-    // Tampilkan View
     if(appHeader) appHeader.classList.add('hidden-force');
     if(mainContent) mainContent.classList.add('hidden-force');
-    const pView = document.getElementById('profileView');
-    if(pView) {
-        pView.classList.remove('hidden-force');
-        // Load Default Chart (7 Hari) setelah view muncul
+    if(profileView) {
+        profileView.classList.remove('hidden-force');
         setTimeout(() => loadChartData(7), 100); 
     }
-    
     if(window.lucide) lucide.createIcons();
 };
 
 window.closeProfile = () => {
-    const pView = document.getElementById('profileView');
-    if(pView) pView.classList.add('hidden-force');
+    if(profileView) profileView.classList.add('hidden-force');
     if(appHeader) appHeader.classList.remove('hidden-force');
     if(mainContent) mainContent.classList.remove('hidden-force');
 };
 
-// --- LOGIKA CHART (BARU) ---
+const logoutBtnProfile = document.getElementById('logoutBtnProfile');
+if(logoutBtnProfile) {
+    logoutBtnProfile.addEventListener('click', () => { signOut(auth).then(() => location.reload()); });
+}
+
+// --- CHART ---
 window.loadChartData = async (days) => {
     if(!currentUser) return;
-
-    // 1. Update UI Tombol (Active State)
     const btn7 = document.getElementById('btn7Days');
     const btn14 = document.getElementById('btn14Days');
     if(btn7 && btn14) {
@@ -155,72 +151,46 @@ window.loadChartData = async (days) => {
         }
     }
 
-    // 2. Siapkan Tanggal & Fetch Data
     const labels = [];
     const dataPoints = [];
     const fetchPromises = [];
 
-    // Loop mundur dari H-days sampai Hari Ini
     for (let i = days - 1; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
-        const dateKey = formatDateKey(d); // Pakai fungsi format yg sudah ada
-        
-        // Label (Tgl/Bln)
+        const dateKey = formatDateKey(d);
         labels.push(d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
-        
-        // Fetch Dokumen dari Firestore
-        const docRef = doc(db, "users", currentUser.uid, "daily_records", dateKey);
-        fetchPromises.push(getDoc(docRef));
+        fetchPromises.push(getDoc(doc(db, "users", currentUser.uid, "daily_records", dateKey)));
     }
 
-    // Tunggu semua data selesai diambil
     try {
         const snapshots = await Promise.all(fetchPromises);
-        
         snapshots.forEach(snap => {
             if(snap.exists()) {
                 const data = snap.data();
-                // Hitung berapa 'wajib' yang true
                 let count = 0;
-                PRAYER_CONFIG.forEach(p => {
-                    if(p.type === 'wajib' && data[p.id] === true) count++;
-                });
+                PRAYER_CONFIG.forEach(p => { if(p.type === 'wajib' && data[p.id] === true) count++; });
                 dataPoints.push(count);
-            } else {
-                dataPoints.push(0); // Belum ada data hari itu
-            }
+            } else { dataPoints.push(0); }
         });
-
         renderChart(labels, dataPoints);
-
-    } catch (e) {
-        console.error("Gagal load chart:", e);
-    }
+    } catch (e) { console.error("Gagal load chart:", e); }
 };
 
 function renderChart(labels, data) {
     const ctx = document.getElementById('activityChart');
     if(!ctx) return;
-
-    // Hapus chart lama jika ada (biar gak numpuk)
-    if(myChart) {
-        myChart.destroy();
-    }
-
-    // Warna Grafik (Sesuai Dark/Light Mode sederhana)
+    if(myChart) myChart.destroy();
+    
     const isDark = document.documentElement.classList.contains('dark');
-    const colorLine = '#10b981'; // Emerald-500
-    const colorGrid = isDark ? '#334155' : '#e2e8f0'; // Slate-700 / Slate-200
-
+    const colorLine = '#10b981';
+    
     myChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
             datasets: [{
-                label: 'Sholat Wajib',
-                data: data,
-                borderColor: colorLine,
+                label: 'Sholat Wajib', data: data, borderColor: colorLine,
                 backgroundColor: (context) => {
                     const ctx = context.chart.ctx;
                     const gradient = ctx.createLinearGradient(0, 0, 0, 200);
@@ -228,66 +198,21 @@ function renderChart(labels, data) {
                     gradient.addColorStop(1, "rgba(16, 185, 129, 0)");
                     return gradient;
                 },
-                borderWidth: 3,
-                tension: 0.4, // Membuat garis melengkung halus
-                pointBackgroundColor: '#ffffff',
-                pointBorderColor: colorLine,
-                pointBorderWidth: 2,
-                fill: true
+                borderWidth: 3, tension: 0.4, pointBackgroundColor: '#ffffff', pointBorderColor: colorLine, fill: true
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                    titleColor: isDark ? '#f1f5f9' : '#1e293b',
-                    bodyColor: isDark ? '#f1f5f9' : '#1e293b',
-                    borderColor: '#cbd5e1',
-                    borderWidth: 1
-                }
-            },
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 5, // Maksimal 5 waktu
-                    ticks: { stepSize: 1, color: isDark ? '#94a3b8' : '#64748b' },
-                    grid: { color: colorGrid, borderDash: [5, 5] }
-                },
-                x: {
-                    ticks: { 
-                        color: isDark ? '#94a3b8' : '#64748b',
-                        font: { size: 9 } // Font kecil biar muat
-                    },
-                    grid: { display: false }
-                }
-            },
-            interaction: {
-                mode: 'nearest',
-                axis: 'x',
-                intersect: false
+                y: { beginAtZero: true, max: 5, ticks: { stepSize: 1, color: isDark ? '#94a3b8' : '#64748b' }, grid: { display: false } },
+                x: { ticks: { color: isDark ? '#94a3b8' : '#64748b', font: { size: 9 } }, grid: { display: false } }
             }
         }
     });
 }
 
-const logoutBtnProfile = document.getElementById('logoutBtnProfile');
-if(logoutBtnProfile) {
-    logoutBtnProfile.addEventListener('click', () => {
-        signOut(auth).then(() => location.reload());
-    });
-}
-
-// --- 5. APP FUNCTIONS ---
-
-// GLOBAL VARIABLE BARU (Tambahkan/Pastikan ini ada di bagian Global Variables paling atas app.js)
-// let monthlyCache = {}; 
-// (Tapi biar aman, saya taruh logic inisialisasinya di dalam fetchJadwal di bawah)
-
+// --- APP FUNCTIONS ---
 function formatDateKey(date) {
     const offset = date.getTimezoneOffset();
     const localDate = new Date(date.getTime() - (offset*60*1000));
@@ -296,30 +221,18 @@ function formatDateKey(date) {
 
 async function loadRecordsFromCloud() {
     if (!currentUser) return;
-    
-    // Kita TIDAK pakai showLoading(true) disini agar tidak menghalangi tampilan jadwal
-    // Biarkan jadwal muncul duluan, checklist menyusul (Asynchronous UI)
-    
     const dateKey = formatDateKey(currentDate);
-    const userDocRef = doc(db, "users", currentUser.uid, "daily_records", dateKey);
-    
     try {
-        const docSnap = await getDoc(userDocRef);
+        const docSnap = await getDoc(doc(db, "users", currentUser.uid, "daily_records", dateKey));
         currentRecords = docSnap.exists() ? docSnap.data() : {};
     } catch (e) { console.error(e); } 
-    finally {
-        // Render ulang HANYA untuk update status checklist (tanpa kedip)
-        renderPrayers(); 
-    }
+    finally { renderPrayers(); }
 }
 
 async function saveToFirestoreOnly(prayerId, status) {
     if (!currentUser) return;
     const dateKey = formatDateKey(currentDate);
-    const userDocRef = doc(db, "users", currentUser.uid, "daily_records", dateKey);
-    try {
-        await setDoc(userDocRef, { [prayerId]: status, last_updated: new Date() }, { merge: true });
-    } catch (e) { console.error("Error saving:", e); }
+    try { await setDoc(doc(db, "users", currentUser.uid, "daily_records", dateKey), { [prayerId]: status, last_updated: new Date() }, { merge: true }); } catch (e) { console.error("Error saving:", e); }
 }
 
 function initApp() {
@@ -329,17 +242,10 @@ function initApp() {
 }
 
 window.changeDate = (days) => {
-    // 1. Reset Data Lokal (Optimistic)
-    currentRecords = {}; // Kosongkan checklist sementara biar tidak salah centang punya hari sebelumnya
-    
-    // 2. Ganti Tanggal
+    currentRecords = {}; 
     currentDate.setDate(currentDate.getDate() + days);
     updateDateUI();
-    
-    // 3. Render Jadwal (Langsung ambil dari Cache jika ada, jadi INSTAN)
     if (window.lastLat) fetchJadwal(window.lastLat, window.lastLng);
-    
-    // 4. Fetch Status Checklist di Background
     loadRecordsFromCloud();
 };
 
@@ -352,11 +258,8 @@ window.resetToToday = () => {
 };
 
 function updateDateUI() {
-    const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-    document.getElementById('dateDisplay').innerText = currentDate.toLocaleDateString('id-ID', options);
-    
-    const today = new Date();
-    const isToday = currentDate.getDate() === today.getDate() && currentDate.getMonth() === today.getMonth();
+    document.getElementById('dateDisplay').innerText = currentDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const isToday = currentDate.getDate() === new Date().getDate() && currentDate.getMonth() === new Date().getMonth();
     const resetBtn = document.getElementById('resetDateBtn');
     isToday ? resetBtn.classList.add('hidden') : resetBtn.classList.remove('hidden');
 }
@@ -378,16 +281,13 @@ function initTheme() {
             html.classList.remove('dark');
             btn.innerHTML = `<i data-lucide="moon" class="w-5 h-5 text-yellow-200 fill-yellow-200/50"></i>`;
         }
-    } else {
-        isDarkMode ? html.classList.add('dark') : html.classList.remove('dark');
-    }
+    } else { isDarkMode ? html.classList.add('dark') : html.classList.remove('dark'); }
     if(window.lucide) lucide.createIcons();
 }
 
 window.getLocation = () => {
     const btnText = document.getElementById('locationText');
     if(btnText) btnText.innerText = "Mencari...";
-    
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (pos) => {
@@ -405,101 +305,52 @@ function useDefaultLocation() {
     window.lastLat = DEFAULT_COORDS.lat;
     window.lastLng = DEFAULT_COORDS.lng;
     window.lastCity = "Depok (Default)";
-    const btnText = document.getElementById('locationText');
-    if(btnText) btnText.innerText = window.lastCity;
+    document.getElementById('locationText').innerText = window.lastCity;
     fetchJadwal(window.lastLat, window.lastLng);
 }
 
 async function fetchCityName(lat, lng) {
     try {
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`;
-        const res = await fetch(url);
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`);
         const data = await res.json();
-        const addr = data.address;
-        const city = addr.city || addr.town || addr.village || addr.county || "Indonesia";
-        window.lastCity = city; 
-        const btnText = document.getElementById('locationText');
-        if(btnText) btnText.innerText = city;
-    } catch (e) {
-        window.lastCity = "Lokasi Terdeteksi";
-        const btnText = document.getElementById('locationText');
-        if(btnText) btnText.innerText = "Lokasi Aktif";
-    }
+        window.lastCity = data.address.city || data.address.town || "Indonesia"; 
+        document.getElementById('locationText').innerText = window.lastCity;
+    } catch (e) { document.getElementById('locationText').innerText = "Lokasi Aktif"; }
 }
 
-// --- LOGIKA CACHE JADWAL BARU (RAHASIA KECEPATAN) ---
-// Variable Cache Disimpan di window agar persisten
-window.scheduleCache = {}; 
-
 async function fetchJadwal(lat, lng) {
-    // 1. Tentukan Key Cache (Berdasarkan Bulan & Lokasi)
-    // Jika user pindah bulan atau pindah kota > 10km, baru fetch ulang
     const m = currentDate.getMonth() + 1;
     const y = currentDate.getFullYear();
-    const latFix = lat.toFixed(1); // Pembulatan kasar lokasi
-    const lngFix = lng.toFixed(1);
-    const cacheKey = `sch_${y}_${m}_${latFix}_${lngFix}`;
-
+    const cacheKey = `sch_${y}_${m}_${lat.toFixed(1)}_${lng.toFixed(1)}`;
     let monthData = window.scheduleCache[cacheKey];
 
-    // 2. Jika Data Tidak Ada di Cache, Ambil Sebulan Penuh dari API
     if (!monthData) {
         try {
-            // Endpoint Calendar mengambil data 1 bulan sekaligus
-            const url = `https://api.aladhan.com/v1/calendar?latitude=${lat}&longitude=${lng}&method=20&month=${m}&year=${y}`;
-            const res = await fetch(url);
+            const res = await fetch(`https://api.aladhan.com/v1/calendar?latitude=${lat}&longitude=${lng}&method=20&month=${m}&year=${y}`);
             const result = await res.json();
-            
             if (result.data) {
                 monthData = result.data;
-                window.scheduleCache[cacheKey] = monthData; // Simpan ke Memori
-                console.log("Jadwal didownload dari Internet");
+                window.scheduleCache[cacheKey] = monthData;
             }
-        } catch (e) { console.error("Gagal fetch jadwal:", e); }
-    } else {
-        // Debugging: Cek console, pasti muncul ini kalau ganti tanggal
-        console.log("Jadwal diambil dari Cache (Instan)");
+        } catch (e) { console.error(e); }
     }
 
-    // 3. Ambil Data Hari Ini dari Array Sebulan
     if (monthData) {
-        const todayDate = currentDate.getDate();
-        // API Aladhan mengembalikan array, index dimulai dari 0 (tgl 1 = index 0)
-        const dayData = monthData[todayDate - 1]; 
-
+        const dayData = monthData[currentDate.getDate() - 1]; 
         if (dayData) {
             const t = dayData.timings;
+            const clean = (s) => s.split(' ')[0];
+            prayerTimes = { Subuh: clean(t.Fajr), Dzuhur: clean(t.Dhuhr), Ashar: clean(t.Asr), Maghrib: clean(t.Maghrib), Isya: clean(t.Isha), Tahajud: '03:00', Dhuha: '--:--' };
             
-            // Format Waktu (Hapus '(WIB)' jika ada)
-            const cleanTime = (timeStr) => timeStr.split(' ')[0];
-
-            prayerTimes.Subuh = cleanTime(t.Fajr);
-            prayerTimes.Dzuhur = cleanTime(t.Dhuhr);
-            prayerTimes.Ashar = cleanTime(t.Asr);
-            prayerTimes.Maghrib = cleanTime(t.Maghrib);
-            prayerTimes.Isya = cleanTime(t.Isha);
-
-            // Hitung Dhuha Manual (Sunrise + 20 menit)
             if (t.Sunrise) {
-                const [sh, sm] = cleanTime(t.Sunrise).split(':').map(Number);
-                const dhuhaTime = new Date(); 
-                dhuhaTime.setHours(sh, sm + 20);
-                prayerTimes.Dhuha = dhuhaTime.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', hour12:false}).replace('.',':');
+                const [sh, sm] = clean(t.Sunrise).split(':').map(Number);
+                const dhuha = new Date(); dhuha.setHours(sh, sm + 20);
+                prayerTimes.Dhuha = dhuha.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', hour12:false}).replace('.',':');
             }
-
-            // Update Tanggal Hijriyah
-            if (dayData.date && dayData.date.hijri) {
-                const h = dayData.date.hijri;
-                document.getElementById('hijriDisplay').innerText = `${h.day} ${h.month.en} ${h.year} H`;
-            }
+            if (dayData.date.hijri) document.getElementById('hijriDisplay').innerText = `${dayData.date.hijri.day} ${dayData.date.hijri.month.en} ${dayData.date.hijri.year} H`;
         }
     }
-
-    // 4. Render UI Langsung (Tanpa Menunggu Database)
-    // Checklist akan kosong sebentar, lalu terisi otomatis saat database selesai loading
     renderPrayers(); 
-    
-    // 5. Panggil Database User (Background)
     loadRecordsFromCloud();
 }
 
@@ -517,23 +368,22 @@ function animatePrayerItem(id, isDone) {
     const title = document.getElementById(`title-${id}`);
     const iconBox = document.getElementById(`iconbox-${id}`);
     const checkBtn = document.getElementById(`checkbtn-${id}`);
-
     if(!card) return;
 
     card.classList.add('scale-[0.98]');
     setTimeout(() => card.classList.remove('scale-[0.98]'), 150);
 
     if (isDone) {
-        card.classList.remove('border-slate-100', 'dark:border-slate-700', 'hover:border-emerald-300');
-        card.classList.add('border-emerald-500', 'bg-emerald-50/50', 'dark:bg-emerald-900/10');
+        card.classList.remove('border-white/40', 'dark:border-slate-700/40', 'hover:border-emerald-300');
+        card.classList.add('border-emerald-500/50', 'bg-emerald-50/60', 'dark:bg-emerald-900/20');
         title.classList.add('text-emerald-700', 'line-through', 'decoration-emerald-500/50');
         title.classList.remove('dark:text-slate-200');
         iconBox.classList.remove('text-slate-400');
         iconBox.classList.add('text-emerald-600', 'dark:text-emerald-400');
         checkBtn.innerHTML = `<div class="bg-emerald-500 text-white rounded-lg p-1 animate-[zoomIn_0.3s_ease-out]"><i data-lucide="check" class="w-4 h-4"></i></div>`;
     } else {
-        card.classList.add('border-slate-100', 'dark:border-slate-700', 'hover:border-emerald-300');
-        card.classList.remove('border-emerald-500', 'bg-emerald-50/50', 'dark:bg-emerald-900/10');
+        card.classList.add('border-white/40', 'dark:border-slate-700/40', 'hover:border-emerald-300');
+        card.classList.remove('border-emerald-500/50', 'bg-emerald-50/60', 'dark:bg-emerald-900/20');
         title.classList.remove('text-emerald-700', 'line-through', 'decoration-emerald-500/50');
         title.classList.add('dark:text-slate-200');
         iconBox.classList.add('text-slate-400');
@@ -544,49 +394,27 @@ function animatePrayerItem(id, isDone) {
 }
 
 function updateProgressBar() {
-    let wajibTotal = 0, wajibDone = 0;
-    PRAYER_CONFIG.forEach(p => {
-        if(p.type === 'wajib') {
-            wajibTotal++;
-            if(currentRecords[p.id]) wajibDone++;
-        }
-    });
-
-    const percent = wajibTotal === 0 ? 0 : Math.round((wajibDone / wajibTotal) * 100);
-    document.getElementById('progressText').innerText = percent + '%';
+    let wT = 0, wD = 0;
+    PRAYER_CONFIG.forEach(p => { if(p.type === 'wajib') { wT++; if(currentRecords[p.id]) wD++; } });
+    const pct = wT === 0 ? 0 : Math.round((wD/wT)*100);
+    document.getElementById('progressText').innerText = pct + '%';
     const pb = document.getElementById('progressBar');
-    if(pb) {
-        pb.style.width = percent + '%';
-        pb.className = `h-full rounded-full transition-all duration-1000 ease-out ${percent === 100 ? 'bg-yellow-400 shadow-[0_0_10px_#facc15]' : 'bg-emerald-300'}`;
-    }
-
-    const congratsId = "congratsMessage";
-    const existingMsg = document.getElementById(congratsId);
+    if(pb) { pb.style.width = pct + '%'; pb.className = `h-full rounded-full transition-all duration-1000 ease-out ${pct === 100 ? 'bg-yellow-400 shadow-[0_0_10px_#facc15]' : 'bg-emerald-300'}`; }
+    
+    const msg = document.getElementById("congratsMessage");
     const isSubuhLocked = checkTimeAvailability(prayerTimes.Subuh).locked;
-
-    if (wajibDone === wajibTotal && wajibTotal > 0 && !isSubuhLocked) {
-        if (!existingMsg) {
-            const msgHTML = `
-            <div id="${congratsId}" class="mt-6 p-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl text-center shadow-lg animate-[slideUp_0.5s_ease-out]">
-                <p class="font-bold">✨ Alhamdulillah Sempurna! ✨</p>
-                <p class="text-xs opacity-90">Pertahankan terus ya, Valdi!</p>
-            </div>`;
-            document.getElementById('prayerList').insertAdjacentHTML('beforeend', msgHTML);
-        }
-    } else {
-        if (existingMsg) existingMsg.remove();
-    }
+    if (wD === wT && wT > 0 && !isSubuhLocked) {
+        if (!msg) document.getElementById('prayerList').insertAdjacentHTML('beforeend', `<div id="congratsMessage" class="mt-6 p-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl text-center shadow-lg animate-[slideUp_0.5s_ease-out]"><p class="font-bold">✨ Alhamdulillah Sempurna! ✨</p><p class="text-xs opacity-90">Pertahankan terus ya, Valdi!</p></div>`);
+    } else { if (msg) msg.remove(); }
 }
 
 function checkTimeAvailability(timeStr) {
     const now = new Date();
     const todayStart = new Date(); todayStart.setHours(0,0,0,0);
     const checkDate = new Date(currentDate); checkDate.setHours(0,0,0,0);
-
     if (checkDate > todayStart) return { locked: true, reason: 'Belum waktunya' };
     if (checkDate < todayStart) return { locked: false };
     if (timeStr === '--:--') return { locked: true, reason: 'Loading...' };
-
     const [h, m] = timeStr.split(':').map(Number);
     const pTime = new Date(); pTime.setHours(h, m, 0);
     return now >= pTime ? { locked: false } : { locked: true, reason: 'Belum masuk waktu' };
@@ -595,60 +423,29 @@ function checkTimeAvailability(timeStr) {
 function renderPrayers() {
     const container = document.getElementById('prayerList');
     if(!container) return;
-    
     let html = '';
-
-    PRAYER_CONFIG.forEach((p, idx) => {
+    PRAYER_CONFIG.forEach((p) => {
         const isDone = currentRecords[p.id] || false;
         const time = prayerTimes[p.id];
         const status = checkTimeAvailability(time);
         
-        // Style Kaca untuk Kartu Sholat
         let wrapperClass = status.locked 
             ? 'bg-slate-100/50 dark:bg-slate-800/50 border-white/20 dark:border-slate-700/30 opacity-60 cursor-not-allowed grayscale backdrop-blur-sm' 
             : (isDone 
                 ? 'cursor-pointer bg-emerald-50/60 dark:bg-emerald-900/20 border-emerald-500/50 shadow-md backdrop-blur-sm' 
                 : 'cursor-pointer bg-white/60 dark:bg-slate-800/60 border-white/40 dark:border-slate-700/40 hover:border-emerald-300 hover:shadow-md backdrop-blur-sm');
-                
+
         let iconColor = isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400';
         let titleStyle = isDone ? 'text-emerald-700 line-through decoration-emerald-500/50' : 'dark:text-slate-200';
-        
         let checkIcon = isDone 
             ? `<div class="bg-emerald-500 text-white rounded-lg p-1"><i data-lucide="check" class="w-4 h-4"></i></div>`
             : (status.locked ? `<i data-lucide="lock" class="w-4 h-4 text-slate-300"></i>` : `<div class="border-2 border-slate-200 dark:border-slate-600 rounded-lg w-6 h-6 transition-colors hover:border-emerald-400"></div>`);
 
-        // PERUBAHAN DI SINI:
-        // 1. Menghapus class 'slide-up'
-        // 2. Menghapus style="animation-delay: ..."
-        // Hasilnya: List muncul instan (snappy) tanpa gerak-gerak
-        html += `
-        <div id="card-${p.id}" onclick="togglePrayer('${p.id}', ${status.locked})" 
-             class="flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 mb-3 ${wrapperClass}">
-            <div class="flex items-center gap-4">
-                <div id="iconbox-${p.id}" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-700/50 ${iconColor}">
-                    <i data-lucide="${p.icon}" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h3 id="title-${p.id}" class="font-bold text-base transition-all duration-200 ${titleStyle}">${p.id}</h3>
-                    <div class="flex items-center gap-2 text-xs mt-1">
-                        <span class="font-mono bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-400">${time}</span>
-                        <span class="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${p.type === 'wajib' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${p.type}</span>
-                        ${status.locked && status.reason ? `<span class="text-red-400 italic">${status.reason}</span>` : ''}
-                    </div>
-                </div>
-            </div>
-            <div id="checkbtn-${p.id}">${checkIcon}</div>
-        </div>`;
+        html += `<div id="card-${p.id}" onclick="togglePrayer('${p.id}', ${status.locked})" class="flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 mb-3 ${wrapperClass}"><div class="flex items-center gap-4"><div id="iconbox-${p.id}" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-700/50 ${iconColor}"><i data-lucide="${p.icon}" class="w-5 h-5"></i></div><div><h3 id="title-${p.id}" class="font-bold text-base transition-all duration-200 ${titleStyle}">${p.id}</h3><div class="flex items-center gap-2 text-xs mt-1"><span class="font-mono bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-400">${time}</span><span class="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${p.type === 'wajib' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${p.type}</span>${status.locked && status.reason ? `<span class="text-red-400 italic">${status.reason}</span>` : ''}</div></div></div><div id="checkbtn-${p.id}">${checkIcon}</div></div>`;
     });
-
     container.innerHTML = html;
     if(window.lucide) lucide.createIcons();
     updateProgressBar();
-}
-
-function showLoading(show) {
-    const el = document.getElementById('dataLoading');
-    if(el) show ? el.classList.remove('hidden') : el.classList.add('hidden');
 }
 
 initTheme();

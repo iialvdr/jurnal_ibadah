@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Jurnal Ibadah</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -23,17 +24,22 @@
     <link rel="stylesheet" href="style.css">
     
     <style>
-        /* Memastikan scroll lancar di iOS */
-        #mainContent {
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none; /* Sembunyikan scrollbar biar bersih */
-        }
-        #mainContent::-webkit-scrollbar {
-            display: none;
-        }
+        #mainContent { -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        #mainContent::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 flex justify-center h-[100dvh] text-slate-800 dark:text-slate-200 transition-colors duration-300 overflow-hidden relative">
+
+    <div id="splashScreen" class="fixed inset-0 z-[100] bg-slate-100 dark:bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="relative">
+            <div class="w-16 h-16 border-4 border-slate-200 dark:border-slate-800 rounded-full"></div>
+            <div class="absolute top-0 w-16 h-16 border-4 border-emerald-500 rounded-full border-t-transparent animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <i data-lucide="mosque" class="w-6 h-6 text-emerald-500"></i>
+            </div>
+        </div>
+        <p class="mt-4 text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse tracking-widest">MEMUAT...</p>
+    </div>
 
     <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div class="blob w-96 h-96 bg-emerald-400/20 rounded-full top-[-10%] right-[-20%] delay-2000 blur-3xl"></div>
@@ -44,28 +50,6 @@
     <div id="appContainer" class="relative z-10 w-full max-w-md h-[100dvh] sm:h-auto sm:min-h-[90vh] sm:rounded-[2.5rem] sm:my-8 flex flex-col overflow-hidden transition-all duration-300
         bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-slate-700/30 shadow-2xl">
         
-        <div id="loginOverlay" class="absolute inset-0 z-50 flex flex-col items-center justify-center p-8 transition-all duration-500 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
-            <div class="w-full bg-white/70 dark:bg-slate-900/70 border border-white/50 dark:border-slate-700/50 shadow-xl rounded-3xl p-8 flex flex-col items-center text-center">
-                <span class="text-[10px] font-bold tracking-widest text-emerald-600 dark:text-emerald-400 uppercase mb-6 bg-emerald-100/50 dark:bg-emerald-900/30 px-3 py-1 rounded-full border border-emerald-200/50">
-                    Assalamu'alaikum
-                </span>
-                <div class="relative mb-6 group">
-                    <div class="absolute inset-0 bg-emerald-500 blur-xl opacity-20 group-hover:opacity-40 transition duration-500 rounded-full"></div>
-                    <div class="relative bg-gradient-to-br from-emerald-500 to-teal-600 p-5 rounded-2xl shadow-lg transform group-hover:scale-110 transition duration-300">
-                        <i data-lucide="mosque" class="w-10 h-10 text-white"></i>
-                    </div>
-                </div>
-                <h1 class="text-3xl font-bold text-slate-800 dark:text-white mb-2">Jurnal Ibadah</h1>
-                <p class="text-slate-500 dark:text-slate-400 text-sm mb-8 leading-relaxed">"Catat ibadahmu, raih keberkahan-Nya."</p>
-                <button id="googleLoginBtn" class="w-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 text-slate-700 dark:text-slate-200 font-bold py-3.5 px-4 rounded-xl transition-all shadow-sm hover:shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-3">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/></svg>
-                    <span>Masuk dengan Google</span>
-                </button>
-                <p id="loginStatus" class="mt-4 text-xs text-emerald-600 animate-pulse hidden">Menghubungkan...</p>
-                <p id="errorMsg" class="mt-2 text-xs text-red-500 hidden"></p>
-            </div>
-        </div>
-
         <div id="appHeader" class="bg-gradient-to-br from-emerald-600/90 to-teal-700/90 dark:from-emerald-900/90 dark:to-teal-950/90 backdrop-blur-md text-white p-6 pb-8 rounded-b-[2.5rem] shadow-lg z-20 relative shrink-0 transition-all duration-300 hidden-force">
             <div class="flex justify-between items-center mb-6">
                 <div onclick="openProfile()" class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition group">
@@ -117,7 +101,6 @@
             <div id="dataLoading" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm hidden">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
             </div>
-            
             <div id="prayerList" class="space-y-3 pb-32"></div>
         </div>
     </div>

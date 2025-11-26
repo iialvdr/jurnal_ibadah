@@ -1,42 +1,5 @@
 body { font-family: 'Inter', sans-serif; }
 
-/* Animasi Slide Up untuk List */
-.slide-up { animation: slideUp 0.5s ease-out; }
-@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Animasi Spin */
-.animate-spin-slow { animation: spin 3s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-/* Animasi Zoom In (untuk checklist) */
-@keyframes zoomIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-/* Custom Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-.dark ::-webkit-scrollbar-thumb { background: #475569; }
-
-/* Utility */
-.hidden-force { display: none !important; }
-
-/* GLOBAL TRANSITION: Bikin perubahan tema jadi smooth */
-body, 
-div, 
-button, 
-span, 
-h1, h2, h3, p, 
-i, svg {
-    transition-property: background-color, border-color, color, fill, stroke, shadow;
-    transition-duration: 300ms;
-    transition-timing-function: ease-in-out;
-}
-
-/* Transisi Progress Bar */
-#progressBar {
-    transition: width 1s ease-out, background-color 0.3s;
-}
-
 /* Animasi Background Blob */
 .blob {
     position: absolute;
@@ -52,3 +15,20 @@ i, svg {
 }
 .delay-2000 { animation-delay: 2s; }
 .delay-4000 { animation-delay: 4s; }
+
+/* Animasi Lainnya */
+.animate-spin-slow { animation: spin 3s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes zoomIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Global Transition */
+body, div, button, span, h1, h2, h3, p, i, svg {
+    transition-property: background-color, border-color, color, fill, stroke, shadow;
+    transition-duration: 300ms;
+    transition-timing-function: ease-in-out;
+}
+#progressBar { transition: width 1s ease-out, background-color 0.3s; }
+
+/* Utility */
+.hidden-force { display: none !important; }
