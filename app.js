@@ -3,7 +3,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// KONFIGURASI FIREBASE (Ganti dengan config kamu jika berbeda)
+// KONFIGURASI FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyDX2VOndgMEIHOGnRA2O1dDa1AKmNV3H08",
     authDomain: "jurnalibadah.firebaseapp.com",
@@ -130,7 +130,6 @@ async function loadRecordsFromCloud() {
     } catch (e) { console.error(e); } 
     finally {
         showLoading(false);
-        // Render ulang total saat data baru diload (pindah tanggal)
         renderPrayers(); 
     }
 }
@@ -179,7 +178,7 @@ window.toggleDarkMode = () => {
     isDarkMode = !isDarkMode;
     localStorage.setItem('valdi_theme', isDarkMode ? 'dark' : 'light');
     initTheme();
-    renderPrayers(); // Render ulang diperlukan saat ganti tema untuk reset class
+    // TIDAK PERLU renderPrayers() disini agar transisi smooth
 };
 
 function initTheme() {
@@ -363,7 +362,6 @@ function updateProgressBar() {
     const congratsId = "congratsMessage";
     const existingMsg = document.getElementById(congratsId);
     
-    // Cek apakah subuh sudah lewat (biar gak muncul pas subuh belum mulai)
     const isSubuhLocked = checkTimeAvailability(prayerTimes.Subuh).locked;
 
     if (wajibDone === wajibTotal && wajibTotal > 0 && !isSubuhLocked) {
