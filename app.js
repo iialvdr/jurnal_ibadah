@@ -618,26 +618,31 @@ function renderPrayers() {
     updateProgressBar();
 }
 
-// --- QIBLA LOGIC ---
-let compassWatchId = null;
+// --- QIBLA LOGIC (REVISED) ---
 const KAABA_COORDS = { lat: 21.422487, lng: 39.826206 };
+let qiblaAngleGlobal = 0;
 
 window.openQibla = () => {
     hideAllViews();
     const qiblaView = document.getElementById('qiblaView');
     if(qiblaView) qiblaView.classList.remove('hidden-force');
     
-    // Hitung Sudut Kiblat
     if(window.lastLat && window.lastLng) {
         calculateQibla(window.lastLat, window.lastLng);
     }
     
-    // Mulai Kompas
     startCompass();
     
-    // Cek Izin iOS
+    // Cek Izin iOS (Wajib klik tombol)
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
         document.getElementById('compassPermissionBtn').classList.remove('hidden');
+    }
+    
+    // Tampilkan peringatan kalibrasi sebentar
+    const calib = document.getElementById('calibrationWarning');
+    if(calib) {
+        calib.classList.remove('hidden');
+        setTimeout(() => calib.classList.add('hidden'), 8000);
     }
     
     if(window.lucide) lucide.createIcons();
@@ -654,9 +659,7 @@ window.requestCompassPermission = async () => {
         if (response === 'granted') {
             document.getElementById('compassPermissionBtn').classList.add('hidden');
             startCompass();
-        } else {
-            alert('Izin kompas ditolak.');
-        }
+        } else { alert('Izin kompas ditolak.'); }
     } catch (e) { console.error(e); }
 };
 
@@ -670,60 +673,81 @@ function calculateQibla(lat, lng) {
     const y = Math.sin(lng2 - lng1) * Math.cos(lat2);
     const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lng2 - lng1);
     let qiblaAngle = Math.atan2(y, x);
-    qiblaAngle = (qiblaAngle * 180 / PI + 360) % 360; // Normalisasi ke 0-360
+    qiblaAngle = (qiblaAngle * 180 / PI + 360) % 360; 
+    qiblaAngleGlobal = qiblaAngle;
 
-    // Putar Jarum Kiblat relatif terhadap Utara Piringan
+    document.getElementById('qiblaDegree').innerText = `${Math.round(qiblaAngle)}°`;
+
+    // Putar Jarum Kiblat pada Piringan
+    // Jarum ini fix di piringan sesuai sudut geografis. 
+    // Nanti piringannya yang diputar sensor.
     const pointer = document.getElementById('qiblaPointer');
     if(pointer) pointer.style.transform = `rotate(${qiblaAngle}deg)`;
     
-    // Hitung Jarak (Haversine)
-    const R = 6371; // Radius Bumi km
+    // Hitung Jarak
+    const R = 6371; 
     const dLat = lat2 - lat1;
     const dLon = lng2 - lng1;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
               Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     const d = R * c;
-    
     document.getElementById('qiblaDistance').innerText = `${Math.round(d).toLocaleString('id-ID')} km`;
 }
 
+// --- LOGIKA SENSOR KOMPAS (DIPERBAIKI) ---
 function startCompass() {
-    if (window.DeviceOrientationEvent) {
+    // Coba event Absolute (Android Modern) dulu
+    if ('ondeviceorientationabsolute' in window) {
+        window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+    } else if (window.DeviceOrientationEvent) {
+        // Fallback ke event biasa (iOS / Android Lama)
         window.addEventListener('deviceorientation', handleOrientation, true);
     }
 }
 
 function stopCompass() {
+    if ('ondeviceorientationabsolute' in window) {
+        window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
+    }
     window.removeEventListener('deviceorientation', handleOrientation, true);
 }
 
 function handleOrientation(event) {
-    let heading = 0;
+    let heading = null;
     
-    // Logika Heading (Beda Browser Beda Cara)
-    if (event.webkitCompassHeading) {
-        // iOS
-        heading = event.webkitCompassHeading;
-    } else if (event.alpha) {
-        // Android (Alpha biasanya terbalik arahnya)
+    // 1. Coba baca Absolute (Android)
+    if (event.absolute && event.alpha !== null) {
+        // Alpha di Android = 0 saat Utara? Tidak selalu.
+        // Rumus umum: 360 - alpha
         heading = 360 - event.alpha;
+    } 
+    // 2. Coba baca iOS Webkit
+    else if (event.webkitCompassHeading) {
+        heading = event.webkitCompassHeading;
+    } 
+    // 3. Fallback biasa
+    else if (event.alpha !== null) {
+        heading = 360 - event.alpha; 
     }
-    
-    // Putar Piringan Kompas agar Utara selalu di Atas (relatif terhadap HP)
-    // Atau putar Piringan agar Utara-nya sesuai Utara Asli.
-    // Konsep: Piringan berputar berlawanan arah hadap HP.
-    const disc = document.getElementById('compassDisc');
-    if(disc) {
-        // Gunakan requestAnimationFrame agar smooth
-        requestAnimationFrame(() => {
-            disc.style.transform = `rotate(${-heading}deg)`;
-        });
+
+    if (heading !== null) {
+        // Normalisasi Heading 0-360
+        heading = (heading + 360) % 360; 
+
+        // Update Text Debugging
+        const headText = document.getElementById('compassHeading');
+        if(headText) headText.innerText = `${Math.round(heading)}°`;
+
+        // Putar Piringan Kompas
+        // Piringan berputar BERLAWANAN arah hadap HP agar "U" selalu menunjuk Utara Bumi.
+        const disc = document.getElementById('compassDisc');
+        if(disc) {
+            requestAnimationFrame(() => {
+                disc.style.transform = `rotate(${-heading}deg)`;
+            });
+        }
     }
-    
-    // Tampilkan Derajat Kiblat Relatif terhadap Arah Hadap User
-    // Ini opsional, bisa menampilkan heading user atau selisihnya.
-    // Di sini kita tampilkan sudut kiblat yang statis saja di teks.
 }
 
 initTheme();

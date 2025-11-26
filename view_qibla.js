@@ -12,51 +12,57 @@ export const qiblaViewHTML = `
     <div class="flex-1 flex flex-col items-center justify-center p-6 pb-[calc(6rem+env(safe-area-inset-bottom))] relative">
         
         <div class="relative w-72 h-72 flex items-center justify-center">
-            
-            <div class="absolute -top-6 z-20 flex flex-col items-center">
-                <div class="w-1 h-4 bg-red-500 rounded-full mb-1"></div>
-                <i data-lucide="smartphone" class="w-4 h-4 text-slate-400"></i>
+            <div class="absolute -top-8 z-20 flex flex-col items-center">
+                <div class="w-1 h-4 bg-red-500 rounded-full mb-1 shadow-sm"></div>
+                <i data-lucide="smartphone" class="w-5 h-5 text-slate-500 dark:text-slate-400"></i>
             </div>
 
-            <div id="compassDisc" class="w-full h-full rounded-full bg-white/60 dark:bg-slate-800/60 shadow-2xl border-4 border-white/40 dark:border-slate-700/40 backdrop-blur-sm relative transition-transform duration-100 ease-linear will-change-transform">
+            <div id="compassDisc" class="w-full h-full rounded-full bg-white/60 dark:bg-slate-800/60 shadow-2xl border-[6px] border-white/40 dark:border-slate-700/40 backdrop-blur-sm relative transition-transform duration-75 ease-linear will-change-transform">
                 
-                <span class="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-bold text-red-500">U</span>
-                <span class="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-400">S</span>
-                <span class="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">B</span>
-                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">T</span>
+                <span class="absolute top-3 left-1/2 -translate-x-1/2 text-sm font-bold text-red-500">U</span>
+                <span class="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-400">S</span>
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">B</span>
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">T</span>
 
-                <div id="qiblaPointer" class="absolute inset-0 transition-transform duration-500">
-                    <div class="absolute top-8 left-1/2 -translate-x-1/2 flex flex-col items-center">
+                <div id="qiblaPointer" class="absolute inset-0 transition-transform duration-700 ease-out">
+                    <div class="absolute top-6 left-1/2 -translate-x-1/2 flex flex-col items-center">
                         <div class="relative group">
                             <div class="absolute inset-0 bg-emerald-500 blur-md opacity-50 rounded-full animate-pulse"></div>
-                            <img src="https://img.icons8.com/fluency/48/kaaba.png" class="relative w-10 h-10 drop-shadow-md z-10" alt="Kaaba">
+                            <img src="https://img.icons8.com/fluency/48/kaaba.png" class="relative w-12 h-12 drop-shadow-md z-10" alt="Kaaba">
                         </div>
-                        <div class="w-0.5 h-12 bg-gradient-to-b from-emerald-500 to-transparent mt-1"></div>
+                        <div class="w-1 h-16 bg-gradient-to-b from-emerald-500 to-transparent mt-1 rounded-full opacity-80"></div>
                     </div>
                 </div>
-
             </div>
         </div>
 
         <div class="mt-12 text-center space-y-2 z-10">
-            <div class="flex items-center justify-center gap-2">
-                <h3 id="qiblaDegree" class="text-4xl font-bold text-slate-800 dark:text-white font-mono tracking-tighter">--°</h3>
-                <span class="text-sm text-slate-400 mt-2">ke Kiblat</span>
+            <div class="flex flex-col items-center justify-center">
+                <span class="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">Sudut Kiblat</span>
+                <h3 id="qiblaDegree" class="text-5xl font-bold text-slate-800 dark:text-white font-mono tracking-tighter mt-1">--°</h3>
             </div>
-            <p class="text-xs text-slate-500 dark:text-slate-400 bg-white/30 dark:bg-black/30 px-3 py-1 rounded-full inline-block">
-                Jarak: <span id="qiblaDistance" class="font-medium text-slate-700 dark:text-slate-200">- km</span>
-            </p>
             
-            <div id="compassPermissionBtn" class="hidden pt-4">
-                <button onclick="requestCompassPermission()" class="px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-medium shadow-lg hover:bg-emerald-700 transition">
-                    Izinkan Akses Kompas
+            <div class="flex gap-3 justify-center mt-4">
+                <p class="text-xs text-slate-500 dark:text-slate-400 bg-white/40 dark:bg-slate-800/40 border border-white/20 px-3 py-1.5 rounded-lg">
+                    Jarak: <span id="qiblaDistance" class="font-medium text-emerald-600 dark:text-emerald-400">- km</span>
+                </p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 bg-white/40 dark:bg-slate-800/40 border border-white/20 px-3 py-1.5 rounded-lg">
+                    Kompas: <span id="compassHeading" class="font-medium text-blue-600 dark:text-blue-400">--°</span>
+                </p>
+            </div>
+            
+            <div id="compassPermissionBtn" class="hidden pt-6">
+                <button onclick="requestCompassPermission()" class="px-6 py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold shadow-lg hover:bg-emerald-700 transition flex items-center gap-2 mx-auto">
+                    <i data-lucide="compass" class="w-4 h-4"></i> Izinkan Kompas
                 </button>
             </div>
         </div>
         
-        <p class="absolute bottom-8 text-[10px] text-slate-400/70 text-center px-8 leading-relaxed">
-            Akurasi bergantung pada sensor HP.<br>Gerakkan HP membentuk angka 8 untuk kalibrasi.
-        </p>
+        <div id="calibrationWarning" class="absolute bottom-8 left-0 right-0 px-8 text-center hidden">
+            <p class="text-xs text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-4 py-2 rounded-lg border border-amber-200 inline-block animate-pulse">
+                ⚠ Kompas tidak akurat? Gerakkan HP angka 8.
+            </p>
+        </div>
     </div>
 </div>
 `;
