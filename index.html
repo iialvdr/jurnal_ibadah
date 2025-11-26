@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Jurnal Ibadah</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,13 +19,18 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#10b981">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/mosque.png">
     
     <link rel="stylesheet" href="style.css">
     
     <style>
+        /* Scroll lancar & sembunyikan scrollbar */
         #mainContent { -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         #mainContent::-webkit-scrollbar { display: none; }
+        
+        /* HAPUS padding safe-area dari body agar full screen */
+        body { margin: 0; padding: 0; }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 flex justify-center h-[100dvh] text-slate-800 dark:text-slate-200 transition-colors duration-300 overflow-hidden relative">
@@ -47,10 +52,14 @@
         <div class="blob w-64 h-64 bg-yellow-300/10 rounded-full top-[40%] left-[20%] blur-3xl"></div>
     </div>
 
-    <div id="appContainer" class="relative z-10 w-full max-w-md h-[100dvh] sm:h-auto sm:min-h-[90vh] sm:rounded-[2.5rem] sm:my-8 flex flex-col overflow-hidden transition-all duration-300
-        bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-slate-700/30 shadow-2xl">
+    <div id="appContainer" class="relative z-10 w-full sm:max-w-md h-[100dvh] sm:h-auto sm:min-h-[90vh] sm:rounded-[2.5rem] sm:my-8 flex flex-col overflow-hidden transition-all duration-300
+        bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl 
+        sm:border sm:border-white/40 sm:dark:border-slate-700/30 sm:shadow-2xl">
         
-        <div id="appHeader" class="bg-gradient-to-br from-emerald-600/90 to-teal-700/90 dark:from-emerald-900/90 dark:to-teal-950/90 backdrop-blur-md text-white p-6 pb-8 rounded-b-[2.5rem] shadow-lg z-20 relative shrink-0 transition-all duration-300 hidden-force">
+        <div id="appHeader" class="bg-gradient-to-br from-emerald-600/90 to-teal-700/90 dark:from-emerald-900/90 dark:to-teal-950/90 backdrop-blur-md text-white 
+            pt-[calc(1.5rem+env(safe-area-inset-top))] px-6 pb-8 
+            sm:rounded-b-[2.5rem] rounded-b-3xl shadow-lg z-20 relative shrink-0 transition-all duration-300 hidden-force">
+            
             <div class="flex justify-between items-center mb-6">
                 <div onclick="openProfile()" class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition group">
                     <img id="userPhoto" src="" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white/30 shadow-sm bg-white/20 group-hover:scale-105 transition">
@@ -101,7 +110,8 @@
             <div id="dataLoading" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm hidden">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
             </div>
-            <div id="prayerList" class="space-y-3 pb-32"></div>
+            
+            <div id="prayerList" class="space-y-3 pb-[calc(8rem+env(safe-area-inset-bottom))]"></div>
         </div>
     </div>
 
