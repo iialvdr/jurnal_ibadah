@@ -4,11 +4,11 @@ export const trackerViewHTML = `
     <div class="px-6 pb-4 pt-[calc(2rem+env(safe-area-inset-top))] shrink-0 relative z-20">
         
         <div class="flex justify-between items-center mb-6">
-            <button onclick="goHome()" class="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-emerald-600 transition group p-2 -ml-2 rounded-xl hover:bg-white/20">
+            <button onclick="goHome()" class="flex items-center gap-2 group p-2 -ml-2 rounded-xl hover:bg-white/20 transition">
                 <div class="bg-white/40 dark:bg-slate-700/40 p-2 rounded-full backdrop-blur-md shadow-sm border border-white/20 group-hover:border-emerald-500/30 transition">
-                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    <i data-lucide="arrow-left" class="w-5 h-5 text-slate-600 dark:text-slate-300"></i>
                 </div>
-                <span class="text-sm font-bold tracking-wide">Kembali</span>
+                <span class="text-sm font-bold tracking-wide text-slate-600 dark:text-slate-300">Kembali</span>
             </button>
             <h2 class="text-lg font-bold text-slate-800 dark:text-white tracking-tight">Jurnal Harian</h2>
         </div>
@@ -23,7 +23,7 @@ export const trackerViewHTML = `
                 <button onclick="changeDate(1)" class="p-2 hover:bg-white/30 rounded-xl transition text-slate-600 dark:text-slate-300"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
             </div>
             
-            <button id="resetDateBtn" onclick="resetToToday()" class="hidden mx-auto text-[10px] bg-emerald-100/80 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 py-1.5 px-4 rounded-full border border-emerald-200/50 backdrop-blur-sm font-medium shadow-sm">
+            <button id="resetDateBtn" onclick="resetToToday()" class="hidden mx-auto text-[10px] bg-emerald-100/80 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 py-1.5 px-4 rounded-full border border-emerald-200/50 backdrop-blur-sm font-medium shadow-sm hover:scale-105 transition">
                 Kembali ke Hari Ini
             </button>
         </div>

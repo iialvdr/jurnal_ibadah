@@ -16,7 +16,7 @@ export const profileViewHTML = `
         <div class="flex flex-col items-center text-center mb-8 mt-2">
             <div class="relative mb-4 group">
                 <div class="absolute inset-0 bg-emerald-500 blur-xl opacity-20 rounded-full group-hover:opacity-40 transition"></div>
-                <img id="profilePhotoLarge" src="" class="relative w-28 h-28 rounded-full border-4 border-white/50 dark:border-slate-700/50 shadow-2xl object-cover">
+                <img id="profilePhotoLarge" src="" referrerpolicy="no-referrer" class="relative w-28 h-28 rounded-full border-4 border-white/50 dark:border-slate-700/50 shadow-2xl object-cover">
                 <div class="absolute bottom-1 right-1 bg-emerald-500 text-white p-1.5 rounded-full border-2 border-white dark:border-slate-800 shadow-lg">
                     <i data-lucide="shield-check" class="w-4 h-4"></i>
                 </div>

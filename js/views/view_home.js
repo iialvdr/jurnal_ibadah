@@ -15,7 +15,7 @@ export const homeViewHTML = `
 
                 <div onclick="openProfile()" class="relative group cursor-pointer">
                     <div class="absolute inset-0 bg-emerald-500/20 dark:bg-white/20 rounded-full blur-md group-hover:blur-lg transition"></div>
-                    <img id="homeUserPhoto" src="" class="relative w-10 h-10 rounded-full border-2 border-white/50 dark:border-white/30 object-cover shadow-sm">
+                    <img id="homeUserPhoto" src="" referrerpolicy="no-referrer" class="relative w-10 h-10 rounded-full border-2 border-white/50 dark:border-white/30 object-cover shadow-sm">
                 </div>
             </div>
         </div>
@@ -40,7 +40,7 @@ export const homeViewHTML = `
 
     <div class="px-6 grid grid-cols-2 gap-3">
         
-        <button onclick="openTracker()" class="text-left bg-white/60 dark:bg-slate-800/60 backdrop-blur-md p-4 rounded-3xl border border-white/40 dark:border-slate-700/30 shadow-sm hover:bg-white/80 transition active:scale-95 group">
+        <button onclick="openTracker()" class="text-left bg-white dark:bg-slate-800/60 p-4 rounded-3xl border border-slate-200 dark:border-slate-700/30 shadow-sm hover:shadow-md hover:scale-[1.02] transition active:scale-95 group">
             <div class="bg-emerald-100 dark:bg-emerald-900/30 w-10 h-10 rounded-xl flex items-center justify-center text-emerald-600 mb-3 group-hover:rotate-6 transition">
                 <i data-lucide="list-checks" class="w-5 h-5"></i>
             </div>
@@ -48,7 +48,7 @@ export const homeViewHTML = `
             <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Catatan Harian</p>
         </button>
 
-        <button onclick="openTasbih()" class="text-left bg-white/60 dark:bg-slate-800/60 backdrop-blur-md p-4 rounded-3xl border border-white/40 dark:border-slate-700/30 shadow-sm hover:bg-white/80 transition active:scale-95 group">
+        <button onclick="openTasbih()" class="text-left bg-white dark:bg-slate-800/60 p-4 rounded-3xl border border-slate-200 dark:border-slate-700/30 shadow-sm hover:shadow-md hover:scale-[1.02] transition active:scale-95 group">
             <div class="bg-blue-100 dark:bg-blue-900/30 w-10 h-10 rounded-xl flex items-center justify-center text-blue-600 mb-3 group-hover:rotate-6 transition">
                 <i data-lucide="grip" class="w-5 h-5"></i>
             </div>
@@ -56,7 +56,7 @@ export const homeViewHTML = `
             <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Counter Dzikir</p>
         </button>
 
-        <button onclick="openQibla()" class="text-left bg-white/60 dark:bg-slate-800/60 backdrop-blur-md p-4 rounded-3xl border border-white/40 dark:border-slate-700/30 shadow-sm hover:bg-white/80 transition active:scale-95 group">
+        <button onclick="openQibla()" class="text-left bg-white dark:bg-slate-800/60 p-4 rounded-3xl border border-slate-200 dark:border-slate-700/30 shadow-sm hover:shadow-md hover:scale-[1.02] transition active:scale-95 group">
             <div class="bg-teal-100 dark:bg-teal-900/30 w-10 h-10 rounded-xl flex items-center justify-center text-teal-600 mb-3 group-hover:rotate-6 transition">
                 <i data-lucide="compass" class="w-5 h-5"></i>
             </div>
@@ -64,7 +64,7 @@ export const homeViewHTML = `
             <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Cari Ka'bah</p>
         </button>
 
-        <button onclick="openProfile()" class="text-left bg-white/60 dark:bg-slate-800/60 backdrop-blur-md p-4 rounded-3xl border border-white/40 dark:border-slate-700/30 shadow-sm hover:bg-white/80 transition active:scale-95 group">
+        <button onclick="openProfile()" class="text-left bg-white dark:bg-slate-800/60 p-4 rounded-3xl border border-slate-200 dark:border-slate-700/30 shadow-sm hover:shadow-md hover:scale-[1.02] transition active:scale-95 group">
             <div class="bg-amber-100 dark:bg-amber-900/30 w-10 h-10 rounded-xl flex items-center justify-center text-amber-600 mb-3 group-hover:rotate-6 transition">
                 <i data-lucide="user" class="w-5 h-5"></i>
             </div>
