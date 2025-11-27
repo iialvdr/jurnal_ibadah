@@ -1,77 +1,142 @@
 /* --- PROTEKSI & NATIVE FEEL --- */
 * {
-    /* Matikan seleksi teks (biar gak bisa diblok) */
-    -webkit-user-select: none; /* Safari/Chrome */
-    -moz-user-select: none;    /* Firefox */
-    -ms-user-select: none;     /* IE/Edge */
-    user-select: none;         /* Standar */
-    
-    /* Matikan highlight biru saat tap di HP */
-    -webkit-tap-highlight-color: transparent;
-    
-    /* Matikan kemampuan drag gambar (biar gambar gak bisa diseret) */
-    -webkit-user-drag: none;
+  /* Matikan seleksi teks (biar gak bisa diblok) */
+  -webkit-user-select: none; /* Safari/Chrome */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE/Edge */
+  user-select: none; /* Standar */
+
+  /* Matikan highlight biru saat tap di HP */
+  -webkit-tap-highlight-color: transparent;
+
+  /* Matikan kemampuan drag gambar (biar gambar gak bisa diseret) */
+  -webkit-user-drag: none;
 }
 
 /* Pengecualian: Izinkan seleksi hanya di kolom input (jika nanti ada) */
-input, textarea {
-    user-select: text;
-    -webkit-user-select: text;
+input,
+textarea {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
-html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overscroll-behavior: none; /* Mencegah efek pantul di iPhone */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overscroll-behavior: none; /* Mencegah efek pantul di iPhone */
 }
 
-body { font-family: 'Inter', sans-serif; }
+body {
+  font-family: "Inter", sans-serif;
+}
 
 /* Custom Scrollbar untuk Desktop Area */
 @media (min-width: 768px) {
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: #475569;
+  }
 }
 
 /* Animasi Background Blob */
 .blob {
-    position: absolute;
-    filter: blur(40px);
-    z-index: 0;
-    opacity: 0.6;
-    animation: float 10s infinite ease-in-out;
+  position: absolute;
+  filter: blur(40px);
+  z-index: 0;
+  opacity: 0.6;
+  animation: float 10s infinite ease-in-out;
 }
 @keyframes float {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(30px, -50px) scale(1.1); }
-    66% { transform: translate(-20px, 20px) scale(0.9); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
 }
-.delay-2000 { animation-delay: 2s; }
-.delay-4000 { animation-delay: 4s; }
+.delay-2000 {
+  animation-delay: 2s;
+}
+.delay-4000 {
+  animation-delay: 4s;
+}
 
 /* Animasi Lainnya */
-.animate-spin-slow { animation: spin 3s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@keyframes zoomIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.animate-spin-slow {
+  animation: spin 3s linear infinite;
+}
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes zoomIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 /* Global Transition */
-body, div, button, span, h1, h2, h3, p, i, svg {
-    transition-property: background-color, border-color, color, fill, stroke, shadow;
-    transition-duration: 300ms;
-    transition-timing-function: ease-in-out;
+body,
+div,
+button,
+span,
+h1,
+h2,
+h3,
+p,
+i,
+svg {
+  transition-property: background-color, border-color, color, fill, stroke,
+    shadow;
+  transition-duration: 300ms;
+  transition-timing-function: ease-in-out;
 }
-#progressBar { transition: width 1s ease-out, background-color 0.3s; }
+#progressBar {
+  transition: width 1s ease-out, background-color 0.3s;
+}
 
 /* Utility */
-.hidden-force { display: none !important; }
+.hidden-force {
+  display: none !important;
+}
 
 /* Font Khusus Arab - Update Lebih Kuat */
 .font-quran {
-    font-family: 'Scheherazade New', 'Amiri', serif; /* Prioritas Scheherazade */
-    font-feature-settings: "cv01", "cv02", "ss01"; /* Fitur tambahan font */
+  font-family: "Scheherazade New", serif; /* Prioritas Scheherazade */
+  font-feature-settings: "cv01", "cv02", "ss01"; /* Fitur tambahan font */
 }
