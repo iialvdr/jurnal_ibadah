@@ -551,19 +551,34 @@ function useDefaultLocation() {
 
 async function fetchCityName(lat, lng) {
     try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`);
+        // Kita ganti pakai API BigDataCloud (Gratis & Lebih Stabil)
+        const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=id`);
         const data = await res.json();
-        window.lastCity = data.address.city || data.address.town || "Lokasi Terdeteksi"; 
+        
+        console.log("Data Lokasi:", data); // Cek di console kalau mau liat isinya
+
+        // Prioritas pengambilan nama daerah yang lebih rapi
+        // data.locality = Kecamatan/Kelurahan (Lebih detail)
+        // data.city = Kota/Kabupaten
+        // data.principalSubdivision = Provinsi
+        window.lastCity = data.locality || data.city || data.principalSubdivision || "Lokasi Anda";
+        
+        // Update Teks di UI
         const t1 = document.getElementById('locationText');
         const t2 = document.getElementById('homeLocationText');
         if(t1) t1.innerText = window.lastCity;
         if(t2) t2.innerText = window.lastCity;
+        
     } catch (e) { 
-        window.lastCity = "Lokasi Aktif";
+        console.error("Gagal ambil nama kota:", e);
+        
+        // FALLBACK: Kalau gagal total, tampilin teks sopan (JANGAN ANGKA LAGI)
+        window.lastCity = "Lokasi Terdeteksi";
+        
         const t1 = document.getElementById('locationText');
         const t2 = document.getElementById('homeLocationText');
-        if(t1) t1.innerText = "Lokasi Aktif";
-        if(t2) t2.innerText = "Lokasi Aktif";
+        if(t1) t1.innerText = window.lastCity;
+        if(t2) t2.innerText = window.lastCity;
     }
 }
 
