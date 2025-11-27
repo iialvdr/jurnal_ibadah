@@ -54,7 +54,7 @@ window.lastCity = "Menunggu GPS...";
 let isDarkMode = localStorage.getItem('valdi_theme') === 'dark';
 let myChart = null;
 
-const DEFAULT_COORDS = { lat: -6.4025, lng: 106.7942 }; // Depok
+const DEFAULT_COORDS = { lat: -6.4025, lng: 106.7942 }; 
 const PRAYER_CONFIG = [
     { id: 'Subuh', type: 'wajib', icon: 'sunrise' },
     { id: 'Dhuha', type: 'sunnah', icon: 'sun' },
@@ -292,7 +292,6 @@ function updateDhikrDisplay() {
     }
 }
 
-// --- CHART ---
 window.loadChartData = async (days) => {
     if(!currentUser) return;
     const btn7 = document.getElementById('btn7Days');
@@ -335,7 +334,7 @@ function renderChart(labels, data) {
 }
 
 // ==========================================
-// 7. QIBLA
+// 7. QIBLA & LOCATION
 // ==========================================
 const KAABA_COORDS = { lat: 21.422487, lng: 39.826206 };
 let currentDiscRotation = 0;
@@ -406,84 +405,7 @@ function handleOrientation(event) {
     }
 }
 
-// ==========================================
-// 8. CORE FUNCTIONS
-// ==========================================
-function formatDateKey(date) { const offset = date.getTimezoneOffset(); const localDate = new Date(date.getTime() - (offset*60*1000)); return localDate.toISOString().split('T')[0]; }
-
-async function loadRecordsFromCloud() {
-    if (!currentUser) return;
-    const dateKey = formatDateKey(currentDate);
-    try {
-        const docSnap = await getDoc(doc(db, "users", currentUser.uid, "daily_records", dateKey));
-        currentRecords = docSnap.exists() ? docSnap.data() : {};
-    } catch (e) { console.error(e); } 
-    finally { renderPrayers(); }
-}
-
-async function saveToFirestoreOnly(prayerId, status) {
-    if (!currentUser) return;
-    const dateKey = formatDateKey(currentDate);
-    try { await setDoc(doc(db, "users", currentUser.uid, "daily_records", dateKey), { [prayerId]: status, last_updated: new Date() }, { merge: true }); } catch (e) { console.error("Error saving:", e); }
-}
-
-async function initApp() {
-    initTheme();
-    updateDateUI();
-    getLocation();
-    
-    // Start Notification Check
-    startPrayerCheckTimer();
-    checkNotificationStatus();
-
-    // Default open Home
-    window.goHome();
-}
-
-window.changeDate = (days) => {
-    currentRecords = {}; 
-    currentDate.setDate(currentDate.getDate() + days);
-    updateDateUI();
-    if (window.lastLat) fetchJadwal(window.lastLat, window.lastLng);
-    loadRecordsFromCloud();
-};
-
-window.resetToToday = () => {
-    currentRecords = {}; 
-    currentDate = new Date();
-    updateDateUI();
-    if (window.lastLat) fetchJadwal(window.lastLat, window.lastLng);
-    loadRecordsFromCloud();
-};
-
-function updateDateUI() {
-    const elDate = document.getElementById('dateDisplay');
-    if(elDate) elDate.innerText = currentDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    const isToday = currentDate.getDate() === new Date().getDate() && currentDate.getMonth() === new Date().getMonth();
-    const resetBtn = document.getElementById('resetDateBtn');
-    if(resetBtn) isToday ? resetBtn.classList.add('hidden') : resetBtn.classList.remove('hidden');
-}
-
-window.toggleDarkMode = () => {
-    isDarkMode = !isDarkMode;
-    localStorage.setItem('valdi_theme', isDarkMode ? 'dark' : 'light');
-    initTheme();
-};
-
-function initTheme() {
-    const html = document.documentElement;
-    const btns = document.querySelectorAll('button[onclick="toggleDarkMode()"]');
-    if(isDarkMode) {
-        html.classList.add('dark');
-        btns.forEach(btn => { if(btn.querySelector('i')) { btn.querySelector('i').setAttribute('data-lucide', 'sun'); btn.querySelector('i').classList.add('text-yellow-300'); } });
-    } else {
-        html.classList.remove('dark');
-        btns.forEach(btn => { if(btn.querySelector('i')) { btn.querySelector('i').setAttribute('data-lucide', 'moon'); btn.querySelector('i').classList.remove('text-yellow-300'); } });
-    }
-    if(window.lucide) lucide.createIcons();
-}
-
-// LOKASI (MANUAL REFRESH)
+// LOKASI MANUAL & CORE
 window.refreshLocation = () => {
     const btn = document.getElementById('locationBtn');
     const text = document.getElementById('homeLocationText');
@@ -549,32 +471,18 @@ function useDefaultLocation() {
     fetchJadwal(window.lastLat, window.lastLng);
 }
 
+// [PENTING] Pakai BigDataCloud (Gratis & Stabil)
 async function fetchCityName(lat, lng) {
     try {
-        // Kita ganti pakai API BigDataCloud (Gratis & Lebih Stabil)
         const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=id`);
         const data = await res.json();
-        
-        console.log("Data Lokasi:", data); // Cek di console kalau mau liat isinya
-
-        // Prioritas pengambilan nama daerah yang lebih rapi
-        // data.locality = Kecamatan/Kelurahan (Lebih detail)
-        // data.city = Kota/Kabupaten
-        // data.principalSubdivision = Provinsi
         window.lastCity = data.locality || data.city || data.principalSubdivision || "Lokasi Anda";
-        
-        // Update Teks di UI
         const t1 = document.getElementById('locationText');
         const t2 = document.getElementById('homeLocationText');
         if(t1) t1.innerText = window.lastCity;
         if(t2) t2.innerText = window.lastCity;
-        
     } catch (e) { 
-        console.error("Gagal ambil nama kota:", e);
-        
-        // FALLBACK: Kalau gagal total, tampilin teks sopan (JANGAN ANGKA LAGI)
         window.lastCity = "Lokasi Terdeteksi";
-        
         const t1 = document.getElementById('locationText');
         const t2 = document.getElementById('homeLocationText');
         if(t1) t1.innerText = window.lastCity;
@@ -582,23 +490,88 @@ async function fetchCityName(lat, lng) {
     }
 }
 
+function formatDateKey(date) { const offset = date.getTimezoneOffset(); const localDate = new Date(date.getTime() - (offset*60*1000)); return localDate.toISOString().split('T')[0]; }
+
+async function loadRecordsFromCloud() {
+    if (!currentUser) return;
+    const dateKey = formatDateKey(currentDate);
+    try {
+        const docSnap = await getDoc(doc(db, "users", currentUser.uid, "daily_records", dateKey));
+        currentRecords = docSnap.exists() ? docSnap.data() : {};
+    } catch (e) { console.error(e); } 
+    finally { renderPrayers(); }
+}
+
+async function saveToFirestoreOnly(prayerId, status) {
+    if (!currentUser) return;
+    const dateKey = formatDateKey(currentDate);
+    try { await setDoc(doc(db, "users", currentUser.uid, "daily_records", dateKey), { [prayerId]: status, last_updated: new Date() }, { merge: true }); } catch (e) { console.error("Error saving:", e); }
+}
+
+async function initApp() {
+    initTheme();
+    updateDateUI();
+    getLocation();
+    startPrayerCheckTimer();
+    checkNotificationStatus();
+    window.goHome();
+}
+
+window.changeDate = (days) => {
+    currentRecords = {}; 
+    currentDate.setDate(currentDate.getDate() + days);
+    updateDateUI();
+    if (window.lastLat) fetchJadwal(window.lastLat, window.lastLng);
+    loadRecordsFromCloud();
+};
+
+window.resetToToday = () => {
+    currentRecords = {}; 
+    currentDate = new Date();
+    updateDateUI();
+    if (window.lastLat) fetchJadwal(window.lastLat, window.lastLng);
+    loadRecordsFromCloud();
+};
+
+function updateDateUI() {
+    const elDate = document.getElementById('dateDisplay');
+    if(elDate) elDate.innerText = currentDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const isToday = currentDate.getDate() === new Date().getDate() && currentDate.getMonth() === new Date().getMonth();
+    const resetBtn = document.getElementById('resetDateBtn');
+    if(resetBtn) isToday ? resetBtn.classList.add('hidden') : resetBtn.classList.remove('hidden');
+}
+
+window.toggleDarkMode = () => {
+    isDarkMode = !isDarkMode;
+    localStorage.setItem('valdi_theme', isDarkMode ? 'dark' : 'light');
+    initTheme();
+};
+
+function initTheme() {
+    const html = document.documentElement;
+    const btns = document.querySelectorAll('button[onclick="toggleDarkMode()"]');
+    if(isDarkMode) {
+        html.classList.add('dark');
+        btns.forEach(btn => { btn.innerHTML = `<i data-lucide="sun" class="w-5 h-5 text-yellow-300"></i>`; });
+    } else {
+        html.classList.remove('dark');
+        btns.forEach(btn => { btn.innerHTML = `<i data-lucide="moon" class="w-5 h-5"></i>`; });
+    }
+    if(window.lucide) lucide.createIcons();
+}
+
 async function fetchJadwal(lat, lng) {
     const m = currentDate.getMonth() + 1;
     const y = currentDate.getFullYear();
     const cacheKey = `sch_${y}_${m}_${lat.toFixed(1)}_${lng.toFixed(1)}`;
     let monthData = window.scheduleCache[cacheKey];
-
     if (!monthData) {
         try {
             const res = await fetch(`https://api.aladhan.com/v1/calendar?latitude=${lat}&longitude=${lng}&method=20&month=${m}&year=${y}`);
             const result = await res.json();
-            if (result.data) {
-                monthData = result.data;
-                window.scheduleCache[cacheKey] = monthData;
-            }
+            if (result.data) { monthData = result.data; window.scheduleCache[cacheKey] = monthData; }
         } catch (e) { console.error(e); }
     }
-
     if (monthData) {
         const dayData = monthData[currentDate.getDate() - 1]; 
         if (dayData) {
@@ -625,41 +598,19 @@ function updateNextPrayer() {
     const nameEl = document.getElementById('nextPrayerName');
     const timeEl = document.getElementById('nextPrayerTime');
     if(!nameEl || !timeEl) return;
-
     const now = new Date();
     const curTime = now.getHours() * 60 + now.getMinutes();
     let nextP = null;
     let minDiff = 9999;
-
-    const timesToCheck = [
-        { name: 'Subuh', time: prayerTimes.Subuh },
-        { name: 'Dzuhur', time: prayerTimes.Dzuhur },
-        { name: 'Ashar', time: prayerTimes.Ashar },
-        { name: 'Maghrib', time: prayerTimes.Maghrib },
-        { name: 'Isya', time: prayerTimes.Isya }
-    ];
-
+    const timesToCheck = [ { name: 'Subuh', time: prayerTimes.Subuh }, { name: 'Dzuhur', time: prayerTimes.Dzuhur }, { name: 'Ashar', time: prayerTimes.Ashar }, { name: 'Maghrib', time: prayerTimes.Maghrib }, { name: 'Isya', time: prayerTimes.Isya } ];
     for(let p of timesToCheck) {
-        if(!p.time || p.time === '--:--' || typeof p.time !== 'string') continue;
-        try {
-            const parts = p.time.split(':');
-            if(parts.length < 2) continue;
-            const [h, m] = parts.map(Number);
-            const pTime = h * 60 + m;
-            if (pTime > curTime && (pTime - curTime) < minDiff) {
-                minDiff = pTime - curTime;
-                nextP = p;
-            }
-        } catch(e) { continue; }
+        if(!p.time || p.time === '--:--') continue;
+        const parts = p.time.split(':');
+        const [h, m] = parts.map(Number);
+        const pTime = h * 60 + m;
+        if (pTime > curTime && (pTime - curTime) < minDiff) { minDiff = pTime - curTime; nextP = p; }
     }
-
-    if(nextP) {
-        nameEl.innerText = nextP.name;
-        timeEl.innerText = nextP.time;
-    } else {
-        nameEl.innerText = "Subuh";
-        timeEl.innerText = prayerTimes.Subuh || "Besok";
-    }
+    if(nextP) { nameEl.innerText = nextP.name; timeEl.innerText = nextP.time; } else { nameEl.innerText = "Subuh"; timeEl.innerText = prayerTimes.Subuh || "Besok"; }
 }
 
 window.togglePrayer = (id, locked) => {
@@ -677,10 +628,8 @@ function animatePrayerItem(id, isDone) {
     const iconBox = document.getElementById(`iconbox-${id}`);
     const checkBtn = document.getElementById(`checkbtn-${id}`);
     if(!card) return;
-
     card.classList.add('scale-[0.98]');
     setTimeout(() => card.classList.remove('scale-[0.98]'), 150);
-
     if (isDone) {
         card.classList.remove('border-white/40', 'dark:border-slate-700/40', 'hover:border-emerald-300');
         card.classList.add('border-emerald-500/50', 'bg-emerald-50/60', 'dark:bg-emerald-900/20');
@@ -709,7 +658,6 @@ function updateProgressBar() {
     const pb = document.getElementById('progressBar');
     if(pbText) pbText.innerText = pct + '%';
     if(pb) { pb.style.width = pct + '%'; pb.className = `h-full rounded-full transition-all duration-1000 ease-out ${pct === 100 ? 'bg-yellow-400 shadow-[0_0_10px_#facc15]' : 'bg-emerald-300'}`; }
-    
     const msg = document.getElementById("congratsMessage");
     const isSubuhLocked = checkTimeAvailability(prayerTimes.Subuh).locked;
     if (wD === wT && wT > 0 && !isSubuhLocked) {
@@ -723,40 +671,17 @@ function updateProgressBar() {
 function renderPrayers() {
     const container = document.getElementById('prayerList');
     if(!container || prayerTimes.Subuh === '--:--') return;
-
     let html = '';
     PRAYER_CONFIG.forEach((p) => {
         const isDone = currentRecords[p.id] || false;
         const time = prayerTimes[p.id];
         const status = checkTimeAvailability(time);
-        
-        let wrapperClass = status.locked 
-            ? 'bg-slate-100/50 dark:bg-slate-800/50 border-white/20 dark:border-slate-700/30 opacity-60 cursor-not-allowed grayscale backdrop-blur-sm' 
-            : (isDone 
-                ? 'cursor-pointer bg-emerald-50/60 dark:bg-emerald-900/20 border-emerald-500/50 shadow-md backdrop-blur-sm' 
-                : 'cursor-pointer bg-white/60 dark:bg-slate-800/60 border-white/40 dark:border-slate-700/40 hover:border-emerald-300 hover:shadow-md backdrop-blur-sm');
-
+        let wrapperClass = status.locked ? 'bg-slate-100/50 dark:bg-slate-800/50 border-white/20 dark:border-slate-700/30 opacity-60 cursor-not-allowed grayscale backdrop-blur-sm' : (isDone ? 'cursor-pointer bg-emerald-50/60 dark:bg-emerald-900/20 border-emerald-500/50 shadow-md backdrop-blur-sm' : 'cursor-pointer bg-white/60 dark:bg-slate-800/60 border-white/40 dark:border-slate-700/40 hover:border-emerald-300 hover:shadow-md backdrop-blur-sm');
         let iconColor = isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400';
         let titleStyle = isDone ? 'text-emerald-700 line-through decoration-emerald-500/50' : 'dark:text-slate-200';
-        
-        let checkIcon = isDone 
-            ? `<div class="bg-emerald-500 text-white rounded-lg p-1"><i data-lucide="check" class="w-4 h-4"></i></div>`
-            : (status.locked ? `<i data-lucide="lock" class="w-4 h-4 text-slate-300"></i>` : `<div class="border-2 border-slate-200 dark:border-slate-600 rounded-lg w-6 h-6 transition-colors hover:border-emerald-400"></div>`);
-
+        let checkIcon = isDone ? `<div class="bg-emerald-500 text-white rounded-lg p-1"><i data-lucide="check" class="w-4 h-4"></i></div>` : (status.locked ? `<i data-lucide="lock" class="w-4 h-4 text-slate-300"></i>` : `<div class="border-2 border-slate-200 dark:border-slate-600 rounded-lg w-6 h-6 transition-colors hover:border-emerald-400"></div>`);
         html += `<div id="card-${p.id}" onclick="togglePrayer('${p.id}', ${status.locked})" class="flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 mb-3 ${wrapperClass}">
-                    <div class="flex items-center gap-4">
-                        <div id="iconbox-${p.id}" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-700/50 ${iconColor}"><i data-lucide="${p.icon}" class="w-5 h-5"></i></div>
-                        <div>
-                            <h3 id="title-${p.id}" class="font-bold text-base transition-all duration-200 ${titleStyle}">${p.id}</h3>
-                            <div class="flex items-center gap-2 text-xs mt-1">
-                                <span class="font-mono bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-400">${time}</span>
-                                <span class="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${p.type === 'wajib' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${p.type}</span>
-                                ${status.locked && status.reason ? `<span class="text-red-400 italic">${status.reason}</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <div id="checkbtn-${p.id}">${checkIcon}</div>
-                </div>`;
+            <div class="flex items-center gap-4"><div id="iconbox-${p.id}" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-700/50 ${iconColor}"><i data-lucide="${p.icon}" class="w-5 h-5"></i></div><div><h3 id="title-${p.id}" class="font-bold text-base transition-all duration-200 ${titleStyle}">${p.id}</h3><div class="flex items-center gap-2 text-xs mt-1"><span class="font-mono bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-400">${time}</span><span class="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${p.type === 'wajib' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${p.type}</span>${status.locked && status.reason ? `<span class="text-red-400 italic">${status.reason}</span>` : ''}</div></div></div><div id="checkbtn-${p.id}">${checkIcon}</div></div>`;
     });
     container.innerHTML = html;
     if(window.lucide) lucide.createIcons();
@@ -775,7 +700,6 @@ function checkTimeAvailability(prayerTimeStr) {
 }
 
 initTheme();
-
 document.addEventListener('contextmenu', event => { event.preventDefault(); });
 document.addEventListener('keydown', event => { if (event.key === 'F12' || (event.ctrlKey && (event.key === 'u' || event.key === 's')) || (event.ctrlKey && event.shiftKey && event.key === 'i')) { event.preventDefault(); } });
 
@@ -978,7 +902,7 @@ function renderAyahs(ayatList) {
 }
 
 // ==========================================
-// 12. NOTIFICATION
+// 12. NOTIFICATION (UPDATED COLORS)
 // ==========================================
 let notificationInterval = null;
 let isNotifEnabled = localStorage.getItem('valdi_notif_enabled') === 'true';
@@ -1010,17 +934,30 @@ function enableNotif() {
 
 function checkNotificationStatus() {
     const btn = document.getElementById('notifBtn');
-    if(btn) {
-        btn.classList.remove('text-emerald-600', 'bg-emerald-100/50', 'text-slate-600', 'dark:text-white');
-        if(isNotifEnabled && Notification.permission === 'granted') {
-            btn.classList.add('text-emerald-600', 'bg-emerald-100/50');
-            btn.innerHTML = `<i data-lucide="bell-ring" class="w-5 h-5"></i>`;
-        } else {
-            btn.classList.add('text-slate-600', 'dark:text-white');
-            btn.innerHTML = `<i data-lucide="bell-off" class="w-5 h-5"></i>`;
-        }
-        if(window.lucide) lucide.createIcons();
+    if(!btn) return;
+
+    // Reset warna lama
+    btn.classList.remove(
+        'text-emerald-600', 'dark:text-emerald-400', 
+        'bg-emerald-100/50', 'dark:bg-emerald-900/30',
+        'text-slate-600', 'dark:text-white', 
+        'bg-slate-200/50', 'dark:bg-white/10'
+    );
+    
+    // HTML Badge
+    const badgeHTML = `<span id="notifBadge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>`;
+
+    if(isNotifEnabled && Notification.permission === 'granted') {
+        // [UPDATE] Warna Hijau Terang di Dark Mode
+        btn.classList.add('text-emerald-600', 'dark:text-emerald-400', 'bg-emerald-100/50', 'dark:bg-emerald-900/30');
+        btn.innerHTML = `<i data-lucide="bell-ring" class="w-5 h-5"></i>` + badgeHTML;
+    } else {
+        // Warna Default
+        btn.classList.add('text-slate-600', 'dark:text-white', 'bg-slate-200/50', 'dark:bg-white/10');
+        btn.innerHTML = `<i data-lucide="bell-off" class="w-5 h-5"></i>` + badgeHTML;
     }
+    
+    setTimeout(() => { if(window.lucide) lucide.createIcons(); }, 50);
 }
 
 function startPrayerCheckTimer() {
