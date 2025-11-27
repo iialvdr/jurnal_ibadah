@@ -211,45 +211,69 @@ if(logoutBtnProfile) {
 // ==========================================
 // 6. FEATURES (TASBIH, QIBLA, CHART)
 // ==========================================
-// --- TASBIH LOGIC ---
+const DHIKR_DATA = [
+    { id: 0, title: "Tasbih", arabic: "سُبْحَانَ الله", latin: "Subhanallah", target: 33 },
+    { id: 1, title: "Tahmid", arabic: "الْحَمْدُ لِلَّهِ", latin: "Alhamdulillah", target: 33 },
+    { id: 2, title: "Takbir", arabic: "اللهُ أَكْبَرُ", latin: "Allahu Akbar", target: 33 },
+    { id: 3, title: "Tahlil", arabic: "لَا إِلَهَ إِلَّا اللهُ", latin: "Laa ilaaha illallah", target: 33 },
+    { id: 4, title: "Istighfar", arabic: "أَسْتَغْفِرُ اللهَ", latin: "Astaghfirullah", target: 100 },
+    { id: 5, title: "Sholawat", arabic: "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ", latin: "Allahumma sholli 'ala Muhammad", target: 100 },
+    { id: 6, title: "Hauqolah", arabic: "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللهِ", latin: "Laa haula wa laa quwwata illa billah", target: 0 }
+];
+
 let tasbihCount = 0;
 let tasbihTarget = 33;
 let isVibroOn = true;
+let currentDhikrIndex = -1; // -1 artinya mode bebas (kosong)
 
 window.openTasbih = () => {
     hideAllViews();
     const tasbihView = document.getElementById('tasbihView');
     if(tasbihView) tasbihView.classList.remove('hidden-force');
     if(window.lucide) lucide.createIcons();
+    
+    // Default: Reset tampilan bacaan kalau baru buka
+    updateDhikrDisplay(); 
 };
+
 window.closeTasbih = () => { window.goHome(); };
+
 window.countTasbih = () => {
     tasbihCount++;
     const countEl = document.getElementById('tasbihCount');
     if(countEl) countEl.innerText = tasbihCount;
+    
+    // Efek Getar
     if(isVibroOn && navigator.vibrate) {
         if(tasbihTarget > 0 && tasbihCount % tasbihTarget === 0) navigator.vibrate([50, 50, 50]);
         else navigator.vibrate(15);
     }
 };
+
 window.resetTasbih = () => {
     tasbihCount = 0;
     document.getElementById('tasbihCount').innerText = '0';
     if(navigator.vibrate) navigator.vibrate(30);
 };
+
 window.setTasbihTarget = (target) => {
     tasbihTarget = target;
     document.getElementById('tasbihTargetDisplay').innerText = target === 0 ? "Target: ∞" : `Target: ${target}`;
+    
+    // Update style tombol target
     const btn33 = document.getElementById('btnTarget33');
     const btn100 = document.getElementById('btnTarget100');
     const btnInf = document.getElementById('btnTargetInf');
     [btn33, btn100, btnInf].forEach(btn => { if(btn) btn.className = "px-4 py-2 text-xs font-bold rounded-xl transition text-slate-500 dark:text-slate-400 hover:bg-white/20"; });
-    const active = "px-4 py-2 text-xs font-bold rounded-xl transition bg-white dark:bg-slate-600 text-emerald-600 shadow-sm";
-    if(target===33 && btn33) btn33.className = active;
-    if(target===100 && btn100) btn100.className = active;
-    if(target===0 && btnInf) btnInf.className = active;
+    
+    const activeClass = "px-4 py-2 text-xs font-bold rounded-xl transition bg-white dark:bg-slate-600 text-emerald-600 shadow-sm";
+    if(target===33 && btn33) btn33.className = activeClass;
+    if(target===100 && btn100) btn100.className = activeClass;
+    if(target===0 && btnInf) btnInf.className = activeClass;
+    
     resetTasbih();
 };
+
 window.toggleVibro = () => {
     isVibroOn = !isVibroOn;
     const btn = document.getElementById('vibroBtn').firstElementChild;
@@ -264,6 +288,71 @@ window.toggleVibro = () => {
         txt.innerText = "Getar Off";
     }
 };
+
+// --- LOGIKA MENU BACAAN (BARU) ---
+window.openDhikrMenu = () => {
+    const modal = document.getElementById('dhikrMenuModal');
+    const listContainer = document.getElementById('dhikrListContainer');
+    
+    if(!modal || !listContainer) return;
+    
+    // Render list bacaan
+    let html = '';
+    DHIKR_DATA.forEach((item, index) => {
+        const isSelected = index === currentDhikrIndex;
+        html += `
+        <div onclick="chooseDhikr(${index})" class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition ${isSelected ? 'bg-emerald-50 border-emerald-500 dark:bg-emerald-900/20 dark:border-emerald-500/50' : 'bg-slate-50 dark:bg-slate-800/50 border-transparent hover:bg-emerald-50 dark:hover:bg-slate-800'}">
+            <div>
+                <h4 class="font-bold text-slate-800 dark:text-white">${item.title}</h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${item.latin}</p>
+            </div>
+            ${isSelected ? '<div class="bg-emerald-500 text-white p-1 rounded-full"><i data-lucide="check" class="w-4 h-4"></i></div>' : ''}
+        </div>`;
+    });
+    
+    // Tambah opsi "Mode Bebas" (Tanpa bacaan)
+    html += `
+        <button onclick="chooseDhikr(-1)" class="w-full p-3 text-sm font-bold text-red-500 border border-red-200 dark:border-red-900 rounded-xl mt-4 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+            Hapus Bacaan (Mode Bebas)
+        </button>
+    `;
+
+    listContainer.innerHTML = html;
+    modal.classList.remove('hidden');
+    if(window.lucide) lucide.createIcons();
+};
+
+window.closeDhikrMenu = () => {
+    document.getElementById('dhikrMenuModal').classList.add('hidden');
+};
+
+window.chooseDhikr = (index) => {
+    currentDhikrIndex = index;
+    
+    if(index >= 0) {
+        // Set target otomatis sesuai data dzikir
+        setTasbihTarget(DHIKR_DATA[index].target);
+    }
+    
+    updateDhikrDisplay();
+    closeDhikrMenu();
+    resetTasbih(); // Reset hitungan biar mulai dari 0
+};
+
+function updateDhikrDisplay() {
+    const displayArea = document.getElementById('dhikrDisplayArea');
+    const arabicEl = document.getElementById('dhikrArabicDisplay');
+    const latinEl = document.getElementById('dhikrLatinDisplay');
+    
+    if (currentDhikrIndex >= 0) {
+        const data = DHIKR_DATA[currentDhikrIndex];
+        displayArea.classList.remove('hidden');
+        arabicEl.innerText = data.arabic;
+        latinEl.innerText = data.latin;
+    } else {
+        displayArea.classList.add('hidden');
+    }
+}
 
 // --- QIBLA LOGIC ---
 const KAABA_COORDS = { lat: 21.422487, lng: 39.826206 };
