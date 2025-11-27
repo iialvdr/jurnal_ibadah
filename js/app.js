@@ -7,6 +7,7 @@ import { tasbihViewHTML } from './views/view_tasbih.js';
 import { homeViewHTML } from './views/view_home.js';
 import { qiblaViewHTML } from './views/view_qibla.js';
 import { trackerViewHTML } from './views/view_tracker.js';
+import { quranViewHTML } from './views/view_quran.js';
 
 // Inject HTML ke dalam Container utama
 const appContainer = document.getElementById('appContainer');
@@ -19,6 +20,7 @@ if(appContainer) {
     appContainer.insertAdjacentHTML('beforeend', qiblaViewHTML);
     appContainer.insertAdjacentHTML('beforeend', trackerViewHTML);
     appContainer.insertAdjacentHTML('afterbegin', homeViewHTML);
+    appContainer.insertAdjacentHTML('beforeend', quranViewHTML);
 }
 
 // ==========================================
@@ -70,7 +72,7 @@ const PRAYER_CONFIG = [
 // ==========================================
 
 function hideAllViews() {
-    const views = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView'];
+    const views = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView'];
     views.forEach(id => {
         const el = document.getElementById(id);
         if(el) el.classList.add('hidden-force');
@@ -829,3 +831,133 @@ document.addEventListener('keydown', event => {
         event.preventDefault();
     }
 });
+
+// ==========================================
+// 11. FITUR AL-QURAN (EQURAN.ID API)
+// ==========================================
+let surahDataCache = null;
+let currentSurahId = null;
+
+window.openQuran = async () => {
+    hideAllViews();
+    const quranView = document.getElementById('quranView');
+    if(quranView) quranView.classList.remove('hidden-force');
+    
+    // Reset tampilan ke List Surat
+    document.getElementById('surahListContainer').classList.remove('-translate-x-full');
+    document.getElementById('ayahListContainer').classList.add('translate-x-full');
+    document.getElementById('quranTitle').innerText = "Al-Qur'an";
+    currentSurahId = null;
+
+    if(!surahDataCache) {
+        await fetchSurahList();
+    }
+    if(window.lucide) lucide.createIcons();
+};
+
+window.handleQuranBack = () => {
+    // Kalau sedang di detail surat, balik ke list
+    if(currentSurahId) {
+        document.getElementById('surahListContainer').classList.remove('-translate-x-full');
+        document.getElementById('ayahListContainer').classList.add('translate-x-full');
+        document.getElementById('quranTitle').innerText = "Al-Qur'an";
+        currentSurahId = null;
+    } else {
+        // Kalau di list surat, balik ke Home
+        window.goHome();
+    }
+};
+
+async function fetchSurahList() {
+    const loading = document.getElementById('quranLoading');
+    const container = document.getElementById('surahListContainer');
+    
+    if(loading) loading.classList.remove('hidden');
+    
+    try {
+        const res = await fetch('https://equran.id/api/v2/surat');
+        const json = await res.json();
+        
+        if(json.code === 200) {
+            surahDataCache = json.data;
+            renderSurahList(surahDataCache);
+        }
+    } catch (e) {
+        console.error("Gagal ambil data surat:", e);
+        container.innerHTML = `<p class="text-center text-red-500 mt-10">Gagal memuat data. Cek koneksi internet.</p>`;
+    } finally {
+        if(loading) loading.classList.add('hidden');
+    }
+}
+
+function renderSurahList(data) {
+    const container = document.getElementById('surahListContainer');
+    let html = '';
+    
+    data.forEach(s => {
+        html += `
+        <div onclick="openSurahDetail(${s.nomor}, '${s.namaLatin}')" class="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm cursor-pointer hover:border-emerald-500 transition">
+            <div class="w-10 h-10 flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/30 rounded-full text-emerald-600 font-bold text-sm relative">
+                ${s.nomor}
+            </div>
+            <div class="flex-1">
+                <h3 class="font-bold text-slate-800 dark:text-white">${s.namaLatin}</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">${s.arti} • ${s.jumlahAyat} Ayat</p>
+            </div>
+            <div class="text-right">
+                <span class="font-serif text-lg text-slate-800 dark:text-emerald-400">${s.nama}</span>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+window.openSurahDetail = async (nomor, namaLatin) => {
+    currentSurahId = nomor;
+    const loading = document.getElementById('quranLoading');
+    const ayahsContent = document.getElementById('ayahsContent');
+    
+    // Animasi transisi slide
+    document.getElementById('surahListContainer').classList.add('-translate-x-full');
+    document.getElementById('ayahListContainer').classList.remove('translate-x-full');
+    document.getElementById('quranTitle').innerText = `QS. ${namaLatin}`;
+    
+    ayahsContent.innerHTML = ""; // Bersihkan dulu
+    if(loading) loading.classList.remove('hidden');
+
+    try {
+        const res = await fetch(`https://equran.id/api/v2/surat/${nomor}`);
+        const json = await res.json();
+        
+        if(json.code === 200) {
+            renderAyahs(json.data.ayat);
+        }
+    } catch (e) {
+        console.error(e);
+        ayahsContent.innerHTML = `<p class="text-center text-red-500">Gagal memuat ayat.</p>`;
+    } finally {
+        if(loading) loading.classList.add('hidden');
+    }
+};
+
+function renderAyahs(ayatList) {
+    const container = document.getElementById('ayahsContent');
+    let html = '';
+    
+    ayatList.forEach(a => {
+        html += `
+        <div class="border-b border-slate-100 dark:border-slate-800 pb-6 last:border-0">
+            <div class="flex justify-between items-center mb-4 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
+                <span class="text-xs font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-1 rounded-md">Ayat ${a.nomorAyat}</span>
+                </div>
+            
+            <p class="text-right font-serif text-3xl leading-[2.5] text-slate-800 dark:text-white mb-4 dir-rtl" style="direction: rtl;">
+                ${a.teksArab}
+            </p>
+            
+            <p class="text-sm text-emerald-600 dark:text-emerald-400 font-medium mb-1">${a.teksLatin}</p>
+            <p class="text-sm text-slate-600 dark:text-slate-300 italic">"${a.teksIndonesia}"</p>
+        </div>`;
+    });
+    container.innerHTML = html;
+}

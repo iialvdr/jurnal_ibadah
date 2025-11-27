@@ -56,6 +56,14 @@ export const homeViewHTML = `
             <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Counter Dzikir</p>
         </button>
 
+        <button onclick="openQuran()" class="text-left bg-white dark:bg-slate-800/60 p-4 rounded-3xl border border-slate-200 dark:border-slate-700/30 shadow-sm hover:shadow-md hover:scale-[1.02] transition active:scale-95 group">
+            <div class="bg-purple-100 dark:bg-purple-900/30 w-10 h-10 rounded-xl flex items-center justify-center text-purple-600 mb-3 group-hover:rotate-6 transition">
+                <i data-lucide="book-open" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Al-Qur'an</h3>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Baca & Terjemah</p>
+        </button>
+
         <button onclick="openQibla()" class="text-left bg-white dark:bg-slate-800/60 p-4 rounded-3xl border border-slate-200 dark:border-slate-700/30 shadow-sm hover:shadow-md hover:scale-[1.02] transition active:scale-95 group">
             <div class="bg-teal-100 dark:bg-teal-900/30 w-10 h-10 rounded-xl flex items-center justify-center text-teal-600 mb-3 group-hover:rotate-6 transition">
                 <i data-lucide="compass" class="w-5 h-5"></i>
@@ -64,12 +72,17 @@ export const homeViewHTML = `
             <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Cari Ka'bah</p>
         </button>
 
-        <button onclick="openProfile()" class="text-left bg-white dark:bg-slate-800/60 p-4 rounded-3xl border border-slate-200 dark:border-slate-700/30 shadow-sm hover:shadow-md hover:scale-[1.02] transition active:scale-95 group">
-            <div class="bg-amber-100 dark:bg-amber-900/30 w-10 h-10 rounded-xl flex items-center justify-center text-amber-600 mb-3 group-hover:rotate-6 transition">
+        <button onclick="openProfile()" class="col-span-2 flex items-center gap-4 text-left bg-white dark:bg-slate-800/60 p-4 rounded-3xl border border-slate-200 dark:border-slate-700/30 shadow-sm hover:shadow-md hover:scale-[1.01] transition active:scale-95 group">
+            <div class="bg-amber-100 dark:bg-amber-900/30 w-10 h-10 rounded-xl flex items-center justify-center text-amber-600 group-hover:rotate-6 transition shrink-0">
                 <i data-lucide="user" class="w-5 h-5"></i>
             </div>
-            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Profil</h3>
-            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Statistik Saya</p>
+            <div>
+                <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Profil Saya</h3>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Lihat statistik ibadahmu</p>
+            </div>
+            <div class="ml-auto bg-slate-100 dark:bg-slate-700/50 p-2 rounded-full text-slate-400">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </div>
         </button>
 
     </div>
