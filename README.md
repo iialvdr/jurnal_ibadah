@@ -1,3 +1,4 @@
+
 <p align="center">
   <img src="assets/favicon/android-chrome-192x192.png" alt="Logo Jurnal Ibadah" width="120" />
 </p>
@@ -33,8 +34,10 @@ Aplikasi ini memuat berbagai fitur interaktif:
     * Daftar 114 Surat lengkap dengan terjemahan.
     * Fitur pencarian surat (*Search*).
     * Bacaan per ayat (Arab, Latin, Terjemahan).
+    * **Audio Murottal:** Pemutar audio per ayat.
     * Navigasi mudah (Next/Prev Surah).
 * **⏰ Jadwal Sholat Otomatis:** Menyesuaikan dengan lokasi GPS pengguna secara *real-time*.
+* **🔔 Notifikasi Adzan:** Pengingat otomatis saat masuk waktu sholat.
 * **📿 Tasbih Digital:**
     * Counter dzikir dengan target (33, 100, atau ∞).
     * Pilihan bacaan dzikir (Tasbih, Tahmid, Takbir, dll) beserta teks Arab/Latin.
@@ -42,7 +45,7 @@ Aplikasi ini memuat berbagai fitur interaktif:
 * **🧭 Arah Kiblat:** Kompas visual yang menunjuk ke Ka'bah disertai estimasi jarak.
 * **📊 Profil & Statistik:** Grafik tren ibadah dalam 7-14 hari terakhir menggunakan *Chart.js*.
 * **🌓 Dark Mode:** Dukungan tema terang dan gelap sesuai preferensi mata.
-* **📱 PWA Support:** Bisa diinstal di HP selayaknya aplikasi native (Android/iOS).
+* **📱 PWA Support:** Bisa diinstal di HP selayaknya aplikasi native (Android/iOS) dan mendukung akses offline.
 
 ## 🛠️ Teknologi yang Digunakan
 
@@ -60,8 +63,29 @@ Project ini dibangun menggunakan *Vanilla JavaScript* dengan arsitektur modern:
 Terima kasih kepada penyedia API terbuka yang membuat aplikasi ini dapat berjalan:
 
 1.  **[Aladhan API](https://aladhan.com/):** Untuk data jadwal sholat & kalender Hijriah.
-2.  **[EQuran.id API](https://equran.id/apidev):** Untuk data Surat dan Ayat Al-Qur'an.
-3.  **[Nominatim (OpenStreetMap)](https://nominatim.org/):** Untuk mendeteksi nama kota berdasarkan koordinat GPS.
+2.  **[EQuran.id API](https://equran.id/apidev):** Untuk data Surat, Ayat, dan Audio Al-Qur'an.
+3.  **[BigDataCloud](https://www.bigdatacloud.com/):** Untuk mendeteksi nama kota/daerah berdasarkan koordinat GPS (Reverse Geocoding).
+
+## 🚀 Cara Menjalankan (Local Development)
+
+Karena aplikasi ini menggunakan **ES Modules** (`type="module"`) dan **Service Worker**, aplikasi tidak bisa dijalankan hanya dengan klik ganda pada `index.html`. Kamu memerlukan *local server*.
+
+### Opsi 1: Menggunakan VS Code Live Server (Disarankan)
+1.  Install ekstensi **Live Server** di VS Code.
+2.  Buka folder project di VS Code.
+3.  Klik kanan pada `index.html` lalu pilih **"Open with Live Server"**.
+
+### Opsi 2: Menggunakan Python
+Jika kamu memiliki Python terinstal:
+```bash
+# Masuk ke folder project
+cd jurnal-ibadah
+
+# Jalankan server HTTP sederhana
+python -m http.server 8000
+````
+
+Buka browser dan akses `http://localhost:8000`.
 
 ## 📂 Struktur Folder
 
