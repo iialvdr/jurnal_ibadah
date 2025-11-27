@@ -1103,7 +1103,7 @@ function renderAyahs(ayatList) {
                 </div>
             </div>
             
-            <p lang="ar" dir="rtl" class="text-right font-quran text-4xl text-slate-800 dark:text-white mb-4">
+            <p lang="ar" dir="rtl" class="text-right font-quran text-3xl text-slate-800 dark:text-white mb-4">
                 ${a.teksArab}
             </p>
             
