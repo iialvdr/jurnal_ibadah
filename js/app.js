@@ -692,4 +692,25 @@ function renderPrayers() {
     updateProgressBar();
 }
 
+// ==========================================
+// 10. SECURITY & UX PROTECTION
+// ==========================================
+
+// Matikan Klik Kanan (Context Menu)
+document.addEventListener('contextmenu', event => {
+    event.preventDefault();
+});
+
+// Matikan Shortcut Keyboard tertentu (Opsional: Ctrl+U, Ctrl+S, F12)
+document.addEventListener('keydown', event => {
+    // Cegah F12, Ctrl+U (View Source), Ctrl+S (Save), Ctrl+Shift+I (Inspect)
+    if (
+        event.key === 'F12' || 
+        (event.ctrlKey && (event.key === 'u' || event.key === 's')) ||
+        (event.ctrlKey && event.shiftKey && event.key === 'i')
+    ) {
+        event.preventDefault();
+    }
+});
+
 initTheme();
