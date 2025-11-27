@@ -1,0 +1,79 @@
+export const profileViewHTML = `
+<div id="profileView" class="hidden-force flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-hidden">
+    
+    <div class="px-6 pb-4 pt-[calc(2rem+env(safe-area-inset-top))] flex justify-between items-center relative shrink-0 z-20">
+        <button onclick="closeProfile()" class="p-2 -ml-2 rounded-xl hover:bg-white/20 transition group">
+            <div class="bg-white/40 dark:bg-slate-700/40 p-2 rounded-full backdrop-blur-md shadow-sm border border-white/20 group-hover:border-emerald-500/30 transition">
+                <i data-lucide="arrow-left" class="w-5 h-5 text-slate-600 dark:text-slate-300"></i>
+            </div>
+        </button>
+        <h2 class="text-lg font-bold text-slate-800 dark:text-white tracking-tight">Profil Saya</h2>
+        <div class="w-9"></div>
+    </div>
+
+    <div class="flex-1 px-6 py-2 overflow-y-auto pb-32">
+        
+        <div class="flex flex-col items-center text-center mb-8 mt-2">
+            <div class="relative mb-4 group">
+                <div class="absolute inset-0 bg-emerald-500 blur-xl opacity-20 rounded-full group-hover:opacity-40 transition"></div>
+                <img id="profilePhotoLarge" src="" class="relative w-28 h-28 rounded-full border-4 border-white/50 dark:border-slate-700/50 shadow-2xl object-cover">
+                <div class="absolute bottom-1 right-1 bg-emerald-500 text-white p-1.5 rounded-full border-2 border-white dark:border-slate-800 shadow-lg">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <h2 id="profileNameLarge" class="text-2xl font-bold text-slate-800 dark:text-white">Nama Pengguna</h2>
+            <p id="profileEmail" class="text-sm text-slate-500 dark:text-slate-400">email@example.com</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="p-5 rounded-3xl flex flex-col items-center justify-center bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/40 dark:border-slate-700/30 shadow-sm">
+                <div class="bg-emerald-100/50 dark:bg-emerald-900/30 p-2 rounded-full mb-2 text-emerald-600"><i data-lucide="hourglass" class="w-5 h-5"></i></div>
+                <h4 class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">Perjalanan</h4>
+                <p id="statDays" class="text-lg font-black text-slate-800 dark:text-white mt-0.5">0 Hari</p>
+            </div>
+            <div class="p-5 rounded-3xl flex flex-col items-center justify-center bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/40 dark:border-slate-700/30 shadow-sm">
+                <div class="bg-blue-100/50 dark:bg-blue-900/30 p-2 rounded-full mb-2 text-blue-600"><i data-lucide="bar-chart-2" class="w-5 h-5"></i></div>
+                <h4 class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">Hari Ini</h4>
+                <p id="statToday" class="text-lg font-black text-slate-800 dark:text-white mt-0.5">0/5</p>
+            </div>
+        </div>
+
+        <div class="rounded-3xl p-5 shadow-sm bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/40 dark:border-slate-700/30 mb-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Tren Ibadah</h3>
+                <div class="flex bg-slate-100/50 dark:bg-slate-700/50 rounded-lg p-1 gap-1 backdrop-blur-sm">
+                    <button onclick="loadChartData(7)" id="btn7Days" class="px-2 py-1 text-[10px] rounded-md font-medium transition shadow-sm bg-white dark:bg-slate-600 text-emerald-600">7 Hari</button>
+                    <button onclick="loadChartData(14)" id="btn14Days" class="px-2 py-1 text-[10px] rounded-md font-medium transition text-slate-500 hover:text-emerald-600">14 Hari</button>
+                </div>
+            </div>
+            <div class="relative h-48 w-full"><canvas id="activityChart"></canvas></div>
+        </div>
+
+        <div class="rounded-3xl p-5 shadow-sm bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/40 dark:border-slate-700/30 mb-6">
+            <h3 class="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-4">Informasi Akun</h3>
+            <div class="space-y-4">
+                <div class="flex items-center gap-4">
+                    <div class="bg-white/50 dark:bg-slate-700/50 p-2 rounded-xl text-emerald-600"><i data-lucide="calendar" class="w-5 h-5"></i></div>
+                    <div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Bergabung Sejak</p>
+                        <p id="joinDate" class="font-medium text-slate-800 dark:text-white text-sm">-</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="bg-white/50 dark:bg-slate-700/50 p-2 rounded-xl text-blue-600"><i data-lucide="map-pin" class="w-5 h-5"></i></div>
+                    <div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Lokasi Terakhir</p>
+                        <p id="lastLocation" class="font-medium text-slate-800 dark:text-white text-sm">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button id="logoutBtnProfile" class="w-full mt-2 p-4 rounded-2xl font-bold border transition flex items-center justify-center gap-2 bg-red-50/50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-100/50 dark:border-red-900/30 hover:bg-red-100/50 backdrop-blur-sm hover:scale-[1.02] active:scale-95">
+            <i data-lucide="log-out" class="w-5 h-5"></i> Keluar Aplikasi
+        </button>
+        
+        <p class="text-center text-[10px] text-slate-400 mt-6 pb-8">Jurnal Ibadah v1.0 • By Valdi</p>
+    </div>
+</div>
+`;

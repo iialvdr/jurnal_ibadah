@@ -1,9 +1,15 @@
-const CACHE_NAME = 'jurnal-ibadah-v1';
+const CACHE_NAME = 'jurnal-ibadah-v2'; // Naikkan versi cache biar refresh
 const urlsToCache = [
   './',
   './index.html',
-  './style.css',
-  './app.js',
+  './css/style.css',
+  './js/app.js',
+  './js/views/view_login.js',
+  './js/views/view_profile.js',
+  './js/views/view_tasbih.js',
+  './js/views/view_home.js',
+  './js/views/view_qibla.js',
+  './assets/logo.png',
   './manifest.json'
 ];
 

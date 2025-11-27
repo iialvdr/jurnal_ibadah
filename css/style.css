@@ -1,3 +1,24 @@
+/* --- PROTEKSI & NATIVE FEEL --- */
+* {
+    /* Matikan seleksi teks (biar gak bisa diblok) */
+    -webkit-user-select: none; /* Safari/Chrome */
+    -moz-user-select: none;    /* Firefox */
+    -ms-user-select: none;     /* IE/Edge */
+    user-select: none;         /* Standar */
+    
+    /* Matikan highlight biru saat tap di HP */
+    -webkit-tap-highlight-color: transparent;
+    
+    /* Matikan kemampuan drag gambar (biar gambar gak bisa diseret) */
+    -webkit-user-drag: none;
+}
+
+/* Pengecualian: Izinkan seleksi hanya di kolom input (jika nanti ada) */
+input, textarea {
+    user-select: text;
+    -webkit-user-select: text;
+}
+
 html, body {
     margin: 0;
     padding: 0;

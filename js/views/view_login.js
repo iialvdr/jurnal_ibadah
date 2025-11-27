@@ -6,8 +6,8 @@ export const loginViewHTML = `
         </span>
         <div class="relative mb-6 group">
             <div class="absolute inset-0 bg-emerald-500 blur-xl opacity-20 group-hover:opacity-40 transition duration-500 rounded-full"></div>
-            <div class="relative bg-gradient-to-br from-emerald-500 to-teal-600 p-4 rounded-2xl shadow-lg transform group-hover:scale-110 transition duration-300">
-                <img src="logo.png" class="w-12 h-12 object-contain drop-shadow-md" alt="Logo">
+            <div class="relative bg-gradient-to-br from-emerald-500 to-teal-600 p-5 rounded-2xl shadow-lg transform group-hover:scale-110 transition duration-300">
+                <img src="assets/logo.png" class="w-12 h-12 object-contain drop-shadow-md" alt="Logo">
             </div>
         </div>
         <h1 class="text-3xl font-bold text-slate-800 dark:text-white mb-2">Jurnal Ibadah</h1>

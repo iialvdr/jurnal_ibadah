@@ -1,19 +1,28 @@
-import { profileViewHTML } from './view_profile.js';
-import { loginViewHTML } from './view_login.js';
-import { tasbihViewHTML } from './view_tasbih.js';
-import { homeViewHTML } from './view_home.js';
-import { qiblaViewHTML } from './view_qibla.js'; // <--- TAMBAHAN BARU
+// ==========================================
+// 1. IMPORT & INJECT VIEWS
+// ==========================================
+import { profileViewHTML } from './views/view_profile.js';
+import { loginViewHTML } from './views/view_login.js';
+import { tasbihViewHTML } from './views/view_tasbih.js';
+import { homeViewHTML } from './views/view_home.js';
+import { qiblaViewHTML } from './views/view_qibla.js';
+import { trackerViewHTML } from './views/view_tracker.js';
 
+// Inject HTML ke dalam Container utama
 const appContainer = document.getElementById('appContainer');
 if(appContainer) {
+    // Urutan inject menentukan z-index tumpukan default (walaupun kita main class hidden)
     appContainer.insertAdjacentHTML('beforeend', profileViewHTML);
     appContainer.insertAdjacentHTML('afterbegin', loginViewHTML);
     appContainer.insertAdjacentHTML('beforeend', tasbihViewHTML);
-    appContainer.insertAdjacentHTML('beforeend', qiblaViewHTML); // <--- TAMBAHAN BARU (Inject Kiblat)
-    appContainer.insertAdjacentHTML('afterbegin', homeViewHTML);
+    appContainer.insertAdjacentHTML('beforeend', qiblaViewHTML);
+    appContainer.insertAdjacentHTML('beforeend', trackerViewHTML);
+    appContainer.insertAdjacentHTML('afterbegin', homeViewHTML); // Home di paling bawah tumpukan
 }
 
-// --- FIREBASE CONFIG ---
+// ==========================================
+// 2. FIREBASE CONFIGURATION
+// ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -32,7 +41,9 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-// --- GLOBALS ---
+// ==========================================
+// 3. GLOBAL VARIABLES
+// ==========================================
 let currentUser = null;
 let currentDate = new Date();
 let currentRecords = {}; 
@@ -42,7 +53,7 @@ window.lastCity = "Menunggu GPS...";
 let isDarkMode = localStorage.getItem('valdi_theme') === 'dark';
 let myChart = null;
 
-const DEFAULT_COORDS = { lat: -6.4025, lng: 106.7942 };
+const DEFAULT_COORDS = { lat: -6.4025, lng: 106.7942 }; // Depok
 const PRAYER_CONFIG = [
     { id: 'Subuh', type: 'wajib', icon: 'sunrise' },
     { id: 'Dhuha', type: 'sunnah', icon: 'sun' },
@@ -53,65 +64,66 @@ const PRAYER_CONFIG = [
     { id: 'Tahajud', type: 'sunnah', icon: 'star' }
 ];
 
-// --- DOM ELEMENTS ---
-const appHeader = document.getElementById('appHeader');
-const mainContent = document.getElementById('mainContent');
+// ==========================================
+// 4. NAVIGATION LOGIC
+// ==========================================
 
-// --- HELPER: RESET TAMPILAN (PENTING!) ---
-// Fungsi ini menutup SEMUA tampilan agar tidak bertumpuk
+// --- HELPER: RESET TAMPILAN ---
 function hideAllViews() {
     const views = [
         document.getElementById('homeView'),
+        document.getElementById('trackerView'),
         document.getElementById('profileView'),
         document.getElementById('tasbihView'),
-        document.getElementById('qiblaView'), // <--- TAMBAHAN BARU
-        document.getElementById('appHeader'),
-        document.getElementById('mainContent')
+        document.getElementById('qiblaView') // <-- PASTIKAN INI ADA
     ];
-    views.forEach(el => { if(el) el.classList.add('hidden-force'); });
+    
+    views.forEach(el => { 
+        if(el) el.classList.add('hidden-force'); 
+    });
 }
 
-// --- NAVIGATION LOGIC (DIPERBAIKI) ---
-
-// 1. Buka Home (Dashboard)
+// Navigasi ke Home (Dashboard)
 window.goHome = () => {
-    hideAllViews(); // Reset dulu
-    
+    hideAllViews();
     const homeView = document.getElementById('homeView');
     if(homeView) homeView.classList.remove('hidden-force');
     
-    // Update Info
+    // Update Data Home
     updateNextPrayer();
     const locText = document.getElementById('homeLocationText');
     if(locText) locText.innerText = window.lastCity || "Mencari...";
     
+    // Update Profile Info di Home
     if(currentUser) {
         const hName = document.getElementById('homeUserName');
         const hPhoto = document.getElementById('homeUserPhoto');
         if(hName) hName.innerText = currentUser.displayName || "Hamba Allah";
         if(hPhoto) hPhoto.src = currentUser.photoURL || `https://ui-avatars.com/api/?name=${currentUser.displayName}`;
     }
-    if(window.lucide) lucide.createIcons();
-};
-
-// 2. Buka Tracker (Jurnal Harian)
-window.openTracker = () => {
-    hideAllViews(); // Reset dulu
     
-    if(appHeader) appHeader.classList.remove('hidden-force');
-    if(mainContent) mainContent.classList.remove('hidden-force');
     if(window.lucide) lucide.createIcons();
 };
 
-// 3. Buka Profile
+// Navigasi ke Jurnal (Tracker)
+window.openTracker = () => {
+    hideAllViews();
+    const trackerView = document.getElementById('trackerView');
+    if(trackerView) trackerView.classList.remove('hidden-force');
+    
+    // Pastikan data hari ini ter-render
+    renderPrayers();
+    if(window.lucide) lucide.createIcons();
+};
+
+// Navigasi ke Profil
 window.openProfile = () => {
     if(!currentUser) return;
-    hideAllViews(); // Reset dulu
-
+    hideAllViews();
     const profileView = document.getElementById('profileView');
     if(profileView) profileView.classList.remove('hidden-force');
 
-    // Populate Data
+    // Isi Data Profil
     const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
     const imgEl = document.getElementById('profilePhotoLarge');
     if(imgEl) imgEl.src = currentUser.photoURL || `https://ui-avatars.com/api/?name=${currentUser.displayName}`;
@@ -123,6 +135,7 @@ window.openProfile = () => {
     setSafeText('joinDate', joinDateObj.toLocaleDateString('id-ID'));
     setSafeText('lastLocation', window.lastCity || "Lokasi belum terdeteksi");
 
+    // Hitung Statistik
     const diffTime = Math.abs(new Date() - joinDateObj);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
     setSafeText('statDays', `${diffDays} Hari`);
@@ -131,31 +144,16 @@ window.openProfile = () => {
     PRAYER_CONFIG.forEach(p => { if(p.type === 'wajib' && currentRecords[p.id]) wajibDoneCount++; });
     setSafeText('statToday', `${wajibDoneCount}/5`);
 
+    // Load Grafik
     setTimeout(() => loadChartData(7), 100); 
     if(window.lucide) lucide.createIcons();
 };
 
-window.closeProfile = () => {
-    window.goHome(); // Balik ke Home
-};
+window.closeProfile = () => { window.goHome(); };
 
-// 4. Buka Tasbih
-let tasbihCount = 0;
-let tasbihTarget = 33;
-let isVibroOn = true;
-
-window.openTasbih = () => {
-    hideAllViews(); // Reset dulu
-    const tasbihView = document.getElementById('tasbihView');
-    if(tasbihView) tasbihView.classList.remove('hidden-force');
-    if(window.lucide) lucide.createIcons();
-};
-
-window.closeTasbih = () => {
-    window.goHome(); // Balik ke Home
-};
-
-// --- AUTH ---
+// ==========================================
+// 5. AUTHENTICATION
+// ==========================================
 const googleLoginBtn = document.getElementById('googleLoginBtn');
 if(googleLoginBtn) {
     googleLoginBtn.addEventListener('click', async () => {
@@ -172,13 +170,16 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
         if(loginOverlay) loginOverlay.classList.add('hidden-force');
-        initApp(); // Init akan memanggil goHome() otomatis
+        
+        // Start App
+        initApp(); 
     } else {
         currentUser = null;
         if(loginOverlay) loginOverlay.classList.remove('hidden-force');
-        hideAllViews(); // Sembunyikan semua kalau logout
+        hideAllViews(); // Sembunyikan semua jika logout
     }
 
+    // Hilangkan Splash Screen
     if(splash) {
         setTimeout(() => {
             splash.classList.add('opacity-0');
@@ -187,82 +188,27 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// --- CHART ---
-window.loadChartData = async (days) => {
-    if(!currentUser) return;
-    // Update Tombol UI
-    const btn7 = document.getElementById('btn7Days');
-    const btn14 = document.getElementById('btn14Days');
-    if(btn7 && btn14) {
-        const activeClass = "bg-white dark:bg-slate-700 text-emerald-600 shadow-sm";
-        const inactiveClass = "text-slate-500 hover:text-emerald-600";
-        // Reset base class dulu
-        btn7.className = "px-2 py-1 text-[10px] rounded-md font-medium transition " + (days===7 ? activeClass : inactiveClass);
-        btn14.className = "px-2 py-1 text-[10px] rounded-md font-medium transition " + (days===14 ? activeClass : inactiveClass);
-    }
-
-    const labels = [];
-    const dataPoints = [];
-    const fetchPromises = [];
-
-    for (let i = days - 1; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dateKey = formatDateKey(d);
-        labels.push(d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
-        fetchPromises.push(getDoc(doc(db, "users", currentUser.uid, "daily_records", dateKey)));
-    }
-
-    try {
-        const snapshots = await Promise.all(fetchPromises);
-        snapshots.forEach(snap => {
-            if(snap.exists()) {
-                const data = snap.data();
-                let count = 0;
-                PRAYER_CONFIG.forEach(p => { if(p.type === 'wajib' && data[p.id] === true) count++; });
-                dataPoints.push(count);
-            } else { dataPoints.push(0); }
-        });
-        renderChart(labels, dataPoints);
-    } catch (e) { console.error("Gagal load chart:", e); }
-};
-
-function renderChart(labels, data) {
-    const ctx = document.getElementById('activityChart');
-    if(!ctx) return;
-    if(myChart) myChart.destroy();
-    
-    const isDark = document.documentElement.classList.contains('dark');
-    const colorLine = '#10b981';
-    
-    myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Sholat Wajib', data: data, borderColor: colorLine,
-                backgroundColor: (context) => {
-                    const ctx = context.chart.ctx;
-                    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-                    gradient.addColorStop(0, "rgba(16, 185, 129, 0.4)");
-                    gradient.addColorStop(1, "rgba(16, 185, 129, 0)");
-                    return gradient;
-                },
-                borderWidth: 3, tension: 0.4, pointBackgroundColor: '#ffffff', pointBorderColor: colorLine, fill: true
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, max: 5, ticks: { stepSize: 1, color: isDark ? '#94a3b8' : '#64748b' }, grid: { display: false } },
-                x: { ticks: { color: isDark ? '#94a3b8' : '#64748b', font: { size: 9 } }, grid: { display: false } }
-            }
-        }
-    });
+const logoutBtnProfile = document.getElementById('logoutBtnProfile');
+if(logoutBtnProfile) {
+    logoutBtnProfile.addEventListener('click', () => { signOut(auth).then(() => location.reload()); });
 }
 
-// --- LOGIC TASBIH ---
+// ==========================================
+// 6. FEATURE: TASBIH DIGITAL
+// ==========================================
+let tasbihCount = 0;
+let tasbihTarget = 33;
+let isVibroOn = true;
+
+window.openTasbih = () => {
+    hideAllViews();
+    const tasbihView = document.getElementById('tasbihView');
+    if(tasbihView) tasbihView.classList.remove('hidden-force');
+    if(window.lucide) lucide.createIcons();
+};
+
+window.closeTasbih = () => { window.goHome(); };
+
 window.countTasbih = () => {
     tasbihCount++;
     const countEl = document.getElementById('tasbihCount');
@@ -282,20 +228,16 @@ window.resetTasbih = () => {
 window.setTasbihTarget = (target) => {
     tasbihTarget = target;
     document.getElementById('tasbihTargetDisplay').innerText = target === 0 ? "Target: ∞" : `Target: ${target}`;
+    
+    // UI Update
     const btn33 = document.getElementById('btnTarget33');
     const btn100 = document.getElementById('btnTarget100');
     const btnInf = document.getElementById('btnTargetInf');
-    // Update class active/inactive
-    [btn33, btn100, btnInf].forEach(btn => {
-        if(!btn) return;
-        btn.className = "px-4 py-2 text-xs font-bold rounded-lg transition text-slate-500 dark:text-slate-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30";
-    });
-    
-    const activeClass = "px-4 py-2 text-xs font-bold rounded-lg transition bg-emerald-500 text-white shadow-md";
-    if(target === 33 && btn33) btn33.className = activeClass;
-    if(target === 100 && btn100) btn100.className = activeClass;
-    if(target === 0 && btnInf) btnInf.className = activeClass;
-    
+    [btn33, btn100, btnInf].forEach(btn => { if(btn) btn.className = "px-4 py-2 text-xs font-bold rounded-lg transition text-slate-500 dark:text-slate-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"; });
+    const active = "px-4 py-2 text-xs font-bold rounded-lg transition bg-emerald-500 text-white shadow-md";
+    if(target===33 && btn33) btn33.className = active;
+    if(target===100 && btn100) btn100.className = active;
+    if(target===0 && btnInf) btnInf.className = active;
     resetTasbih();
 };
 
@@ -314,12 +256,142 @@ window.toggleVibro = () => {
     }
 };
 
-// --- APP FUNCTIONS ---
-function formatDateKey(date) {
-    const offset = date.getTimezoneOffset();
-    const localDate = new Date(date.getTime() - (offset*60*1000));
-    return localDate.toISOString().split('T')[0];
+// ==========================================
+// 7. FEATURE: QIBLA FINDER
+// ==========================================
+const KAABA_COORDS = { lat: 21.422487, lng: 39.826206 };
+let currentDiscRotation = 0;
+
+window.openQibla = () => {
+    hideAllViews();
+    const qiblaView = document.getElementById('qiblaView');
+    if(qiblaView) qiblaView.classList.remove('hidden-force');
+    
+    if(window.lastLat && window.lastLng) calculateQibla(window.lastLat, window.lastLng);
+    
+    startCompass();
+    
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        document.getElementById('compassPermissionBtn').classList.remove('hidden');
+    }
+    const calib = document.getElementById('calibrationWarning');
+    if(calib) { calib.classList.remove('hidden'); setTimeout(() => calib.classList.add('hidden'), 8000); }
+    if(window.lucide) lucide.createIcons();
+};
+
+window.closeQibla = () => { stopCompass(); window.goHome(); };
+
+window.requestCompassPermission = async () => {
+    try {
+        const response = await DeviceOrientationEvent.requestPermission();
+        if (response === 'granted') {
+            document.getElementById('compassPermissionBtn').classList.add('hidden');
+            startCompass();
+        } else { alert('Izin kompas ditolak.'); }
+    } catch (e) { console.error(e); }
+};
+
+function calculateQibla(lat, lng) {
+    const PI = Math.PI;
+    const lat1 = lat * (PI/180), lng1 = lng * (PI/180), lat2 = KAABA_COORDS.lat * (PI/180), lng2 = KAABA_COORDS.lng * (PI/180);
+    const y = Math.sin(lng2 - lng1) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lng2 - lng1);
+    let qiblaAngle = Math.atan2(y, x);
+    qiblaAngle = (qiblaAngle * 180 / PI + 360) % 360; 
+    
+    document.getElementById('qiblaDegree').innerText = `${Math.round(qiblaAngle)}°`;
+    const pointer = document.getElementById('qiblaPointer');
+    if(pointer) pointer.style.transform = `rotate(${qiblaAngle}deg)`;
+    
+    const R = 6371; const dLat = lat2 - lat1; const dLon = lng2 - lng1;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const d = R * c;
+    document.getElementById('qiblaDistance').innerText = `${Math.round(d).toLocaleString('id-ID')} km`;
 }
+
+function startCompass() {
+    if ('ondeviceorientationabsolute' in window) window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+    else if (window.DeviceOrientationEvent) window.addEventListener('deviceorientation', handleOrientation, true);
+}
+
+function stopCompass() {
+    if ('ondeviceorientationabsolute' in window) window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
+    window.removeEventListener('deviceorientation', handleOrientation, true);
+}
+
+function handleOrientation(event) {
+    let heading = null;
+    if (event.absolute && event.alpha !== null) heading = 360 - event.alpha;
+    else if (event.webkitCompassHeading) heading = event.webkitCompassHeading;
+    else if (event.alpha !== null) heading = 360 - event.alpha; 
+    
+    if (heading !== null) {
+        const debugHead = (heading + 360) % 360;
+        const headText = document.getElementById('compassHeading');
+        if(headText) headText.innerText = `${Math.round(debugHead)}°`;
+        
+        // Smart Rotation Logic
+        const targetRotation = -heading;
+        let delta = targetRotation - currentDiscRotation;
+        while (delta < -180) delta += 360;
+        while (delta > 180) delta -= 360;
+        currentDiscRotation += delta;
+        
+        const disc = document.getElementById('compassDisc');
+        if(disc) requestAnimationFrame(() => { disc.style.transform = `rotate(${currentDiscRotation}deg)`; });
+    }
+}
+
+// ==========================================
+// 8. FEATURE: STATISTIK CHART
+// ==========================================
+window.loadChartData = async (days) => {
+    if(!currentUser) return;
+    const btn7 = document.getElementById('btn7Days');
+    const btn14 = document.getElementById('btn14Days');
+    if(btn7 && btn14) {
+        const act = "bg-white dark:bg-slate-700 text-emerald-600 shadow-sm";
+        const inact = "text-slate-500 hover:text-emerald-600";
+        btn7.className = "px-2 py-1 text-[10px] rounded-md font-medium transition " + (days===7?act:inact);
+        btn14.className = "px-2 py-1 text-[10px] rounded-md font-medium transition " + (days===14?act:inact);
+    }
+    const labels = [], dataPoints = [], fetchPromises = [];
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const dateKey = formatDateKey(d);
+        labels.push(d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
+        fetchPromises.push(getDoc(doc(db, "users", currentUser.uid, "daily_records", dateKey)));
+    }
+    try {
+        const snapshots = await Promise.all(fetchPromises);
+        snapshots.forEach(snap => {
+            if(snap.exists()) {
+                const data = snap.data();
+                let count = 0;
+                PRAYER_CONFIG.forEach(p => { if(p.type === 'wajib' && data[p.id] === true) count++; });
+                dataPoints.push(count);
+            } else dataPoints.push(0);
+        });
+        renderChart(labels, dataPoints);
+    } catch (e) { console.error(e); }
+};
+
+function renderChart(labels, data) {
+    const ctx = document.getElementById('activityChart'); if(!ctx) return; if(myChart) myChart.destroy();
+    const isDark = document.documentElement.classList.contains('dark');
+    const colorLine = '#10b981';
+    myChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: [{ label: 'Sholat Wajib', data: data, borderColor: colorLine, backgroundColor: (context) => { const ctx = context.chart.ctx; const gradient = ctx.createLinearGradient(0, 0, 0, 200); gradient.addColorStop(0, "rgba(16, 185, 129, 0.4)"); gradient.addColorStop(1, "rgba(16, 185, 129, 0)"); return gradient; }, borderWidth: 3, tension: 0.4, pointBackgroundColor: '#ffffff', pointBorderColor: colorLine, fill: true }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 5, ticks: { stepSize: 1, color: isDark ? '#94a3b8' : '#64748b' }, grid: { display: false } }, x: { ticks: { color: isDark ? '#94a3b8' : '#64748b', font: { size: 9 } }, grid: { display: false } } } }
+    });
+}
+
+// ==========================================
+// 9. CORE FUNCTIONS (TRACKER & INIT)
+// ==========================================
+function formatDateKey(date) { const offset = date.getTimezoneOffset(); const localDate = new Date(date.getTime() - (offset*60*1000)); return localDate.toISOString().split('T')[0]; }
 
 async function loadRecordsFromCloud() {
     if (!currentUser) return;
@@ -341,7 +413,7 @@ function initApp() {
     initTheme();
     updateDateUI();
     getLocation();
-    window.goHome(); // Start at Home
+    window.goHome(); // Default masuk ke Home
 }
 
 window.changeDate = (days) => {
@@ -361,10 +433,12 @@ window.resetToToday = () => {
 };
 
 function updateDateUI() {
-    document.getElementById('dateDisplay').innerText = currentDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const elDate = document.getElementById('dateDisplay');
+    if(elDate) elDate.innerText = currentDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    
     const isToday = currentDate.getDate() === new Date().getDate() && currentDate.getMonth() === new Date().getMonth();
     const resetBtn = document.getElementById('resetDateBtn');
-    isToday ? resetBtn.classList.add('hidden') : resetBtn.classList.remove('hidden');
+    if(resetBtn) isToday ? resetBtn.classList.add('hidden') : resetBtn.classList.remove('hidden');
 }
 
 window.toggleDarkMode = () => {
@@ -375,16 +449,13 @@ window.toggleDarkMode = () => {
 
 function initTheme() {
     const html = document.documentElement;
-    // Update tombol di Desktop & Mobile
     const btns = document.querySelectorAll('button[onclick="toggleDarkMode()"]');
     
     if(isDarkMode) {
         html.classList.add('dark');
         btns.forEach(btn => {
-            // Cek jika tombol ikon saja (header) atau tombol menu (list)
             if(btn.querySelector('i')) {
                const icon = btn.querySelector('i');
-               // Ganti icon jadi sun
                icon.setAttribute('data-lucide', 'sun');
                icon.classList.add('text-yellow-300');
             }
@@ -394,7 +465,6 @@ function initTheme() {
         btns.forEach(btn => {
             if(btn.querySelector('i')) {
                const icon = btn.querySelector('i');
-               // Ganti icon jadi moon
                icon.setAttribute('data-lucide', 'moon');
                icon.classList.remove('text-yellow-300');
             }
@@ -426,10 +496,12 @@ function useDefaultLocation() {
     window.lastLat = DEFAULT_COORDS.lat;
     window.lastLng = DEFAULT_COORDS.lng;
     window.lastCity = "Depok (Default)";
+    
     const btnText = document.getElementById('locationText');
     const homeLoc = document.getElementById('homeLocationText');
     if(btnText) btnText.innerText = window.lastCity;
     if(homeLoc) homeLoc.innerText = window.lastCity;
+    
     fetchJadwal(window.lastLat, window.lastLng);
 }
 
@@ -442,10 +514,12 @@ async function fetchCityName(lat, lng) {
         const homeLoc = document.getElementById('homeLocationText');
         if(btnText) btnText.innerText = window.lastCity;
         if(homeLoc) homeLoc.innerText = window.lastCity;
-    } catch (e) { document.getElementById('locationText').innerText = "Lokasi Aktif"; }
+    } catch (e) { 
+        // Silent fail
+    }
 }
 
-// Logic Update Next Prayer
+// Logic Home Widget
 function updateNextPrayer() {
     const nameEl = document.getElementById('nextPrayerName');
     const timeEl = document.getElementById('nextPrayerTime');
@@ -616,146 +690,6 @@ function renderPrayers() {
     container.innerHTML = html;
     if(window.lucide) lucide.createIcons();
     updateProgressBar();
-}
-
-// --- QIBLA LOGIC (REVISED) ---
-const KAABA_COORDS = { lat: 21.422487, lng: 39.826206 };
-let qiblaAngleGlobal = 0;
-
-window.openQibla = () => {
-    hideAllViews();
-    const qiblaView = document.getElementById('qiblaView');
-    if(qiblaView) qiblaView.classList.remove('hidden-force');
-    
-    if(window.lastLat && window.lastLng) {
-        calculateQibla(window.lastLat, window.lastLng);
-    }
-    
-    startCompass();
-    
-    // Cek Izin iOS (Wajib klik tombol)
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        document.getElementById('compassPermissionBtn').classList.remove('hidden');
-    }
-    
-    // Tampilkan peringatan kalibrasi sebentar
-    const calib = document.getElementById('calibrationWarning');
-    if(calib) {
-        calib.classList.remove('hidden');
-        setTimeout(() => calib.classList.add('hidden'), 8000);
-    }
-    
-    if(window.lucide) lucide.createIcons();
-};
-
-window.closeQibla = () => {
-    stopCompass();
-    window.goHome();
-};
-
-window.requestCompassPermission = async () => {
-    try {
-        const response = await DeviceOrientationEvent.requestPermission();
-        if (response === 'granted') {
-            document.getElementById('compassPermissionBtn').classList.add('hidden');
-            startCompass();
-        } else { alert('Izin kompas ditolak.'); }
-    } catch (e) { console.error(e); }
-};
-
-function calculateQibla(lat, lng) {
-    const PI = Math.PI;
-    const lat1 = lat * (PI/180);
-    const lng1 = lng * (PI/180);
-    const lat2 = KAABA_COORDS.lat * (PI/180);
-    const lng2 = KAABA_COORDS.lng * (PI/180);
-
-    const y = Math.sin(lng2 - lng1) * Math.cos(lat2);
-    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lng2 - lng1);
-    let qiblaAngle = Math.atan2(y, x);
-    qiblaAngle = (qiblaAngle * 180 / PI + 360) % 360; 
-    qiblaAngleGlobal = qiblaAngle;
-
-    document.getElementById('qiblaDegree').innerText = `${Math.round(qiblaAngle)}°`;
-
-    // Putar Jarum Kiblat pada Piringan
-    // Jarum ini fix di piringan sesuai sudut geografis. 
-    // Nanti piringannya yang diputar sensor.
-    const pointer = document.getElementById('qiblaPointer');
-    if(pointer) pointer.style.transform = `rotate(${qiblaAngle}deg)`;
-    
-    // Hitung Jarak
-    const R = 6371; 
-    const dLat = lat2 - lat1;
-    const dLon = lng2 - lng1;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const d = R * c;
-    document.getElementById('qiblaDistance').innerText = `${Math.round(d).toLocaleString('id-ID')} km`;
-}
-
-// --- LOGIKA SENSOR KOMPAS (ANTI-SPIN) ---
-let currentDiscRotation = 0; // Simpan posisi putaran terakhir
-
-function startCompass() {
-    if ('ondeviceorientationabsolute' in window) {
-        window.addEventListener('deviceorientationabsolute', handleOrientation, true);
-    } else if (window.DeviceOrientationEvent) {
-        window.addEventListener('deviceorientation', handleOrientation, true);
-    }
-}
-
-function stopCompass() {
-    if ('ondeviceorientationabsolute' in window) {
-        window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
-    }
-    window.removeEventListener('deviceorientation', handleOrientation, true);
-}
-
-function handleOrientation(event) {
-    let heading = null;
-    
-    // 1. Deteksi Heading (Arah Mata Angin)
-    if (event.absolute && event.alpha !== null) {
-        heading = 360 - event.alpha;
-    } else if (event.webkitCompassHeading) {
-        heading = event.webkitCompassHeading;
-    } else if (event.alpha !== null) {
-        heading = 360 - event.alpha; 
-    }
-
-    if (heading !== null) {
-        // Tampilkan angka debug (0-360 normal)
-        const debugHead = (heading + 360) % 360;
-        const headText = document.getElementById('compassHeading');
-        if(headText) headText.innerText = `${Math.round(debugHead)}°`;
-
-        // --- ALGORITMA PINTAR: JALUR TERPENDEK (SHORTEST PATH) ---
-        // Target kita adalah memutar piringan ke arah berlawanan (-heading)
-        const targetRotation = -heading;
-        
-        // Hitung selisih antara target baru dengan posisi sekarang
-        let delta = targetRotation - currentDiscRotation;
-        
-        // Normalisasi selisih agar selalu mengambil jalan terdekat (-180 sampai 180)
-        // Contoh: Kalau selisihnya -350 derajat (muter balik jauh), 
-        // ubah jadi +10 derajat (maju dikit).
-        while (delta < -180) delta += 360;
-        while (delta > 180) delta -= 360;
-        
-        // Tambahkan selisih pendek itu ke posisi sekarang
-        currentDiscRotation += delta;
-
-        // Terapkan ke CSS
-        const disc = document.getElementById('compassDisc');
-        if(disc) {
-            // Gunakan requestAnimationFrame agar animasi frame-by-frame halus
-            requestAnimationFrame(() => {
-                disc.style.transform = `rotate(${currentDiscRotation}deg)`;
-            });
-        }
-    }
 }
 
 initTheme();
