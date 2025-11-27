@@ -139,6 +139,5 @@ svg {
 .font-quran {
     font-family: 'Scheherazade New', serif !important;
     line-height: 2.6 !important;
-    font-weight: 700; /* Penting: Scheherazade agak tipis, jadi kita tebalkan biar jelas di HP */
     font-size: 1.5rem; /* Pastikan ukuran cukup besar */
 }
