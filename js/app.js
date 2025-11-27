@@ -835,34 +835,32 @@ document.addEventListener('keydown', event => {
 // ==========================================
 // 11. FITUR AL-QURAN (EQURAN.ID API)
 // ==========================================
-let surahDataCache = null; // Menyimpan semua data surat
+let surahDataCache = null; 
 let currentSurahId = null;
+let currentAyahList = []; // [BARU] Simpan data ayat yang sedang dibuka
+let currentAudio = null; 
 
 window.openQuran = async () => {
     hideAllViews();
     const quranView = document.getElementById('quranView');
     if(quranView) quranView.classList.remove('hidden-force');
     
-    // --- PERBAIKAN DI SINI ---
-    // Kita reset UI secara manual, JANGAN panggil handleQuranBack()
-    // karena handleQuranBack() sekarang punya logika buat menendang user balik ke Home.
-    
-    // 1. Reset Posisi Container (Tampilkan List Surat)
+    // Stop audio & reset
+    stopCurrentAudio();
+
+    // Reset UI Manual
     document.getElementById('surahListContainer').classList.remove('-translate-x-full');
     document.getElementById('ayahListContainer').classList.add('translate-x-full');
     
-    // 2. Reset Elemen Pendukung (Search Bar Muncul, Navigasi Hilang)
     const searchContainer = document.getElementById('quranSearchContainer');
     const navButtons = document.getElementById('surahNavButtons');
     
     if(searchContainer) searchContainer.classList.remove('-translate-y-20');
     if(navButtons) navButtons.classList.add('translate-y-32');
     
-    // 3. Reset Judul & ID
     document.getElementById('quranTitle').innerText = "Al-Qur'an";
     currentSurahId = null;
-
-    // --- AKHIR PERBAIKAN ---
+    currentAyahList = []; // Reset list ayat
 
     if(!surahDataCache) {
         await fetchSurahList();
@@ -871,27 +869,40 @@ window.openQuran = async () => {
 };
 
 window.handleQuranBack = () => {
-    // Cek kondisi: Apakah user sedang baca surat (ada ID surat aktif)?
+    stopCurrentAudio();
+
     if (currentSurahId) {
-        // KONDISI 1: Sedang baca surat -> Balik ke Daftar Surat
-        
-        // Animasi Slide
+        // Balik ke List Surat
         document.getElementById('surahListContainer').classList.remove('-translate-x-full');
         document.getElementById('ayahListContainer').classList.add('translate-x-full');
         
-        // UI Elemen: Munculin Search, Umpetin Tombol Next/Prev
         document.getElementById('quranSearchContainer').classList.remove('-translate-y-20');
         document.getElementById('surahNavButtons').classList.add('translate-y-32');
         
-        // Reset Judul & Status
         document.getElementById('quranTitle').innerText = "Al-Qur'an";
         currentSurahId = null;
+        currentAyahList = []; // Reset list ayat
         
     } else {
-        // KONDISI 2: Sedang di Daftar Surat (Awal) -> Balik ke Home Dashboard
         window.goHome();
     }
 };
+
+// Helper untuk matikan audio dengan bersih
+function stopCurrentAudio() {
+    if(currentAudio) {
+        const prevId = currentAudio.getAttribute('data-id');
+        currentAudio.pause();
+        currentAudio = null;
+        
+        // Reset icon jadi Play
+        const prevIcon = document.getElementById(`icon-audio-${prevId}`);
+        if(prevIcon) {
+            prevIcon.innerHTML = `<i data-lucide="play" class="w-3 h-3 fill-current"></i>`;
+            if(window.lucide) lucide.createIcons();
+        }
+    }
+}
 
 async function fetchSurahList() {
     const loading = document.getElementById('quranLoading');
@@ -925,7 +936,6 @@ function renderSurahList(data) {
     }
 
     data.forEach(s => {
-        // Amanin tanda petik di nama surat
         const safeNamaLatin = s.namaLatin.replace(/'/g, "\\'"); 
 
         html += `
@@ -945,32 +955,95 @@ function renderSurahList(data) {
     container.innerHTML = html;
 }
 
-// --- FITUR PENCARIAN ---
+// --- FITUR AUDIO PLAYER (AUTO NEXT) ---
+window.toggleAudio = (url, ayatNum) => {
+    // 1. Jika audio yang diklik sedang main, PAUSE.
+    if(currentAudio && currentAudio.getAttribute('data-id') == ayatNum) {
+        stopCurrentAudio();
+        return;
+    }
+
+    // 2. Jika ada audio LAIN yang main, STOP dulu.
+    stopCurrentAudio();
+
+    // 3. Play Audio Baru
+    const audio = new Audio(url);
+    audio.setAttribute('data-id', ayatNum);
+    
+    // UI: Loading
+    const btnIcon = document.getElementById(`icon-audio-${ayatNum}`);
+    if(btnIcon) {
+        btnIcon.innerHTML = `<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i>`;
+        if(window.lucide) lucide.createIcons();
+    }
+
+    // Saat audio siap main
+    audio.oncanplaythrough = () => {
+        if(btnIcon) {
+            btnIcon.innerHTML = `<i data-lucide="pause" class="w-3 h-3 fill-current"></i>`;
+            if(window.lucide) lucide.createIcons();
+        }
+        audio.play();
+        
+        // Auto Scroll ke ayat yang sedang dibaca (biar user gak usah scroll manual)
+        const ayatEl = document.getElementById(`ayat-card-${ayatNum}`);
+        if(ayatEl) {
+            ayatEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    };
+
+    // [PENTING] Saat audio selesai, lanjut ke ayat berikutnya
+    audio.onended = () => {
+        // Reset icon current jadi Play
+        if(btnIcon) {
+            btnIcon.innerHTML = `<i data-lucide="play" class="w-3 h-3 fill-current"></i>`;
+            if(window.lucide) lucide.createIcons();
+        }
+        currentAudio = null;
+
+        // Cari ayat berikutnya
+        const nextAyatNum = ayatNum + 1;
+        const nextAyatData = currentAyahList.find(a => a.nomorAyat === nextAyatNum);
+
+        if(nextAyatData) {
+            // Ada ayat selanjutnya? Mainkan!
+            const nextAudioUrl = nextAyatData.audio['05'] || nextAyatData.audio['01'];
+            toggleAudio(nextAudioUrl, nextAyatNum);
+        } else {
+            // Udah ayat terakhir (Selesai surat)
+            console.log("Alhamdulillah, surat selesai.");
+        }
+    };
+
+    // Handle Error (misal internet putus)
+    audio.onerror = () => {
+        alert("Gagal memutar audio. Cek koneksi internet.");
+        stopCurrentAudio();
+    };
+
+    currentAudio = audio;
+};
+
+// --- FITUR PENCARIAN & NAVIGASI ---
 window.searchSurah = (keyword) => {
     if(!surahDataCache) return;
-    
     const lowerKey = keyword.toLowerCase();
     const filtered = surahDataCache.filter(s => 
         s.namaLatin.toLowerCase().includes(lowerKey) || 
         s.arti.toLowerCase().includes(lowerKey) ||
         s.nomor.toString().includes(lowerKey)
     );
-    
     renderSurahList(filtered);
 };
 
-// --- FITUR NAVIGASI SURAT ---
 window.changeSurah = (direction) => {
     if(!currentSurahId) return;
-    
     const nextId = currentSurahId + direction;
-    
-    // Validasi batas surat (1 - 114)
     if(nextId < 1 || nextId > 114) return;
     
-    // Cari data surat berikutnya dari cache
     const nextSurah = surahDataCache.find(s => s.nomor === nextId);
     if(nextSurah) {
+        stopCurrentAudio();
         openSurahDetail(nextSurah.nomor, nextSurah.namaLatin);
     }
 };
@@ -981,16 +1054,14 @@ window.openSurahDetail = async (nomor, namaLatin) => {
     const ayahsContent = document.getElementById('ayahsContent');
     const navButtons = document.getElementById('surahNavButtons');
     
-    // UI Transitions
     document.getElementById('surahListContainer').classList.add('-translate-x-full');
     document.getElementById('ayahListContainer').classList.remove('translate-x-full');
-    document.getElementById('quranSearchContainer').classList.add('-translate-y-20'); // Sembunyiin search bar
+    document.getElementById('quranSearchContainer').classList.add('-translate-y-20');
     
-    // Tampilkan Navigasi
     navButtons.classList.remove('translate-y-32');
     
     document.getElementById('quranTitle').innerText = `QS. ${namaLatin}`;
-    document.getElementById('ayahListContainer').scrollTop = 0; // Reset scroll ke atas
+    document.getElementById('ayahListContainer').scrollTop = 0;
     
     ayahsContent.innerHTML = "";
     if(loading) loading.classList.remove('hidden');
@@ -1000,7 +1071,8 @@ window.openSurahDetail = async (nomor, namaLatin) => {
         const json = await res.json();
         
         if(json.code === 200) {
-            renderAyahs(json.data.ayat);
+            currentAyahList = json.data.ayat; // [BARU] Simpan ke global
+            renderAyahs(currentAyahList);
         }
     } catch (e) {
         console.error(e);
@@ -1015,10 +1087,21 @@ function renderAyahs(ayatList) {
     let html = '';
     
     ayatList.forEach(a => {
+        const audioUrl = a.audio['05'] || a.audio['01'];
+        
+        // Tambahkan ID unik di div wrapper biar bisa di-scroll otomatis
         html += `
-        <div class="border-b border-slate-100 dark:border-slate-800 pb-6 last:border-0">
+        <div id="ayat-card-${a.nomorAyat}" class="border-b border-slate-100 dark:border-slate-800 pb-6 last:border-0 transition-colors duration-500">
             <div class="flex justify-between items-center mb-4 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
-                <span class="text-xs font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-1 rounded-md">Ayat ${a.nomorAyat}</span>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-1 rounded-md">Ayat ${a.nomorAyat}</span>
+                    
+                    <button onclick="toggleAudio('${audioUrl}', ${a.nomorAyat})" class="w-7 h-7 flex items-center justify-center rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-emerald-600 hover:scale-110 transition shadow-sm active:scale-95">
+                        <span id="icon-audio-${a.nomorAyat}">
+                            <i data-lucide="play" class="w-3 h-3 fill-current"></i>
+                        </span>
+                    </button>
+                </div>
             </div>
             
             <p class="text-right font-serif text-3xl leading-[2.5] text-slate-800 dark:text-white mb-4 dir-rtl" style="direction: rtl;">
@@ -1030,4 +1113,6 @@ function renderAyahs(ayatList) {
         </div>`;
     });
     container.innerHTML = html;
+    
+    if(window.lucide) lucide.createIcons();
 }
