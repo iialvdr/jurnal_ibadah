@@ -835,7 +835,7 @@ document.addEventListener('keydown', event => {
 // ==========================================
 // 11. FITUR AL-QURAN (EQURAN.ID API)
 // ==========================================
-let surahDataCache = null;
+let surahDataCache = null; // Menyimpan semua data surat
 let currentSurahId = null;
 
 window.openQuran = async () => {
@@ -843,11 +843,8 @@ window.openQuran = async () => {
     const quranView = document.getElementById('quranView');
     if(quranView) quranView.classList.remove('hidden-force');
     
-    // Reset tampilan ke List Surat
-    document.getElementById('surahListContainer').classList.remove('-translate-x-full');
-    document.getElementById('ayahListContainer').classList.add('translate-x-full');
-    document.getElementById('quranTitle').innerText = "Al-Qur'an";
-    currentSurahId = null;
+    // Reset UI
+    handleQuranBack();
 
     if(!surahDataCache) {
         await fetchSurahList();
@@ -856,16 +853,19 @@ window.openQuran = async () => {
 };
 
 window.handleQuranBack = () => {
-    // Kalau sedang di detail surat, balik ke list
-    if(currentSurahId) {
-        document.getElementById('surahListContainer').classList.remove('-translate-x-full');
-        document.getElementById('ayahListContainer').classList.add('translate-x-full');
-        document.getElementById('quranTitle').innerText = "Al-Qur'an";
-        currentSurahId = null;
-    } else {
-        // Kalau di list surat, balik ke Home
-        window.goHome();
-    }
+    // Balik ke List Surat
+    document.getElementById('surahListContainer').classList.remove('-translate-x-full');
+    document.getElementById('ayahListContainer').classList.add('translate-x-full');
+    
+    // Tampilkan Search Bar, Sembunyikan Navigasi
+    document.getElementById('quranSearchContainer').classList.remove('-translate-y-20');
+    document.getElementById('surahNavButtons').classList.add('translate-y-32'); // Sembunyi ke bawah
+    
+    document.getElementById('quranTitle').innerText = "Al-Qur'an";
+    currentSurahId = null;
+    
+    // Reset scroll list ke atas (opsional)
+    // document.getElementById('surahListContainer').scrollTop = 0;
 };
 
 async function fetchSurahList() {
@@ -894,10 +894,18 @@ function renderSurahList(data) {
     const container = document.getElementById('surahListContainer');
     let html = '';
     
+    if(data.length === 0) {
+        container.innerHTML = `<p class="text-center text-slate-400 mt-10 text-sm">Surat tidak ditemukan.</p>`;
+        return;
+    }
+
     data.forEach(s => {
+        // Amanin tanda petik di nama surat
+        const safeNamaLatin = s.namaLatin.replace(/'/g, "\\'"); 
+
         html += `
-        <div onclick="openSurahDetail(${s.nomor}, '${s.namaLatin}')" class="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm cursor-pointer hover:border-emerald-500 transition">
-            <div class="w-10 h-10 flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/30 rounded-full text-emerald-600 font-bold text-sm relative">
+        <div onclick="openSurahDetail(${s.nomor}, '${safeNamaLatin}')" class="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm cursor-pointer hover:border-emerald-500 transition">
+            <div class="w-10 h-10 flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/30 rounded-full text-emerald-600 font-bold text-sm relative shrink-0">
                 ${s.nomor}
             </div>
             <div class="flex-1">
@@ -912,17 +920,54 @@ function renderSurahList(data) {
     container.innerHTML = html;
 }
 
+// --- FITUR PENCARIAN ---
+window.searchSurah = (keyword) => {
+    if(!surahDataCache) return;
+    
+    const lowerKey = keyword.toLowerCase();
+    const filtered = surahDataCache.filter(s => 
+        s.namaLatin.toLowerCase().includes(lowerKey) || 
+        s.arti.toLowerCase().includes(lowerKey) ||
+        s.nomor.toString().includes(lowerKey)
+    );
+    
+    renderSurahList(filtered);
+};
+
+// --- FITUR NAVIGASI SURAT ---
+window.changeSurah = (direction) => {
+    if(!currentSurahId) return;
+    
+    const nextId = currentSurahId + direction;
+    
+    // Validasi batas surat (1 - 114)
+    if(nextId < 1 || nextId > 114) return;
+    
+    // Cari data surat berikutnya dari cache
+    const nextSurah = surahDataCache.find(s => s.nomor === nextId);
+    if(nextSurah) {
+        openSurahDetail(nextSurah.nomor, nextSurah.namaLatin);
+    }
+};
+
 window.openSurahDetail = async (nomor, namaLatin) => {
     currentSurahId = nomor;
     const loading = document.getElementById('quranLoading');
     const ayahsContent = document.getElementById('ayahsContent');
+    const navButtons = document.getElementById('surahNavButtons');
     
-    // Animasi transisi slide
+    // UI Transitions
     document.getElementById('surahListContainer').classList.add('-translate-x-full');
     document.getElementById('ayahListContainer').classList.remove('translate-x-full');
-    document.getElementById('quranTitle').innerText = `QS. ${namaLatin}`;
+    document.getElementById('quranSearchContainer').classList.add('-translate-y-20'); // Sembunyiin search bar
     
-    ayahsContent.innerHTML = ""; // Bersihkan dulu
+    // Tampilkan Navigasi
+    navButtons.classList.remove('translate-y-32');
+    
+    document.getElementById('quranTitle').innerText = `QS. ${namaLatin}`;
+    document.getElementById('ayahListContainer').scrollTop = 0; // Reset scroll ke atas
+    
+    ayahsContent.innerHTML = "";
     if(loading) loading.classList.remove('hidden');
 
     try {
@@ -949,7 +994,7 @@ function renderAyahs(ayatList) {
         <div class="border-b border-slate-100 dark:border-slate-800 pb-6 last:border-0">
             <div class="flex justify-between items-center mb-4 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
                 <span class="text-xs font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-1 rounded-md">Ayat ${a.nomorAyat}</span>
-                </div>
+            </div>
             
             <p class="text-right font-serif text-3xl leading-[2.5] text-slate-800 dark:text-white mb-4 dir-rtl" style="direction: rtl;">
                 ${a.teksArab}
