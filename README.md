@@ -9,6 +9,12 @@
 </p>
 
 <p align="center">
+  <a href="https://jurnal-ibadah.vercel.app/">
+    <img src="https://img.shields.io/badge/🚀_Live_Demo-Buka_Aplikasi-10b981?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
+  </a>
+</p>
+
+<p align="center">
   <a href="#-fitur-utama">Fitur</a> •
   <a href="#-teknologi-yang-digunakan">Teknologi</a> •
   <a href="#-cara-menjalankan-local-development">Instalasi</a>
