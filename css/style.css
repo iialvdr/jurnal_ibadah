@@ -69,3 +69,10 @@ body, div, button, span, h1, h2, h3, p, i, svg {
 
 /* Utility */
 .hidden-force { display: none !important; }
+
+/* Font Khusus Arab - Update Lebih Kuat */
+.font-quran {
+    font-family: 'Scheherazade New', 'Amiri', serif; /* Prioritas Scheherazade */
+    line-height: 2.2; 
+    font-feature-settings: "cv01", "cv02", "ss01"; /* Fitur tambahan font */
+}
