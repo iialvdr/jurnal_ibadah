@@ -843,8 +843,26 @@ window.openQuran = async () => {
     const quranView = document.getElementById('quranView');
     if(quranView) quranView.classList.remove('hidden-force');
     
-    // Reset UI
-    handleQuranBack();
+    // --- PERBAIKAN DI SINI ---
+    // Kita reset UI secara manual, JANGAN panggil handleQuranBack()
+    // karena handleQuranBack() sekarang punya logika buat menendang user balik ke Home.
+    
+    // 1. Reset Posisi Container (Tampilkan List Surat)
+    document.getElementById('surahListContainer').classList.remove('-translate-x-full');
+    document.getElementById('ayahListContainer').classList.add('translate-x-full');
+    
+    // 2. Reset Elemen Pendukung (Search Bar Muncul, Navigasi Hilang)
+    const searchContainer = document.getElementById('quranSearchContainer');
+    const navButtons = document.getElementById('surahNavButtons');
+    
+    if(searchContainer) searchContainer.classList.remove('-translate-y-20');
+    if(navButtons) navButtons.classList.add('translate-y-32');
+    
+    // 3. Reset Judul & ID
+    document.getElementById('quranTitle').innerText = "Al-Qur'an";
+    currentSurahId = null;
+
+    // --- AKHIR PERBAIKAN ---
 
     if(!surahDataCache) {
         await fetchSurahList();
@@ -853,19 +871,26 @@ window.openQuran = async () => {
 };
 
 window.handleQuranBack = () => {
-    // Balik ke List Surat
-    document.getElementById('surahListContainer').classList.remove('-translate-x-full');
-    document.getElementById('ayahListContainer').classList.add('translate-x-full');
-    
-    // Tampilkan Search Bar, Sembunyikan Navigasi
-    document.getElementById('quranSearchContainer').classList.remove('-translate-y-20');
-    document.getElementById('surahNavButtons').classList.add('translate-y-32'); // Sembunyi ke bawah
-    
-    document.getElementById('quranTitle').innerText = "Al-Qur'an";
-    currentSurahId = null;
-    
-    // Reset scroll list ke atas (opsional)
-    // document.getElementById('surahListContainer').scrollTop = 0;
+    // Cek kondisi: Apakah user sedang baca surat (ada ID surat aktif)?
+    if (currentSurahId) {
+        // KONDISI 1: Sedang baca surat -> Balik ke Daftar Surat
+        
+        // Animasi Slide
+        document.getElementById('surahListContainer').classList.remove('-translate-x-full');
+        document.getElementById('ayahListContainer').classList.add('translate-x-full');
+        
+        // UI Elemen: Munculin Search, Umpetin Tombol Next/Prev
+        document.getElementById('quranSearchContainer').classList.remove('-translate-y-20');
+        document.getElementById('surahNavButtons').classList.add('translate-y-32');
+        
+        // Reset Judul & Status
+        document.getElementById('quranTitle').innerText = "Al-Qur'an";
+        currentSurahId = null;
+        
+    } else {
+        // KONDISI 2: Sedang di Daftar Surat (Awal) -> Balik ke Home Dashboard
+        window.goHome();
+    }
 };
 
 async function fetchSurahList() {
