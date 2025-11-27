@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jurnal-ibadah-v6'; 
+const CACHE_NAME = 'jurnal-ibadah-v7'; 
 
 const urlsToCache = [
   './',

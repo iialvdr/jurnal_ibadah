@@ -135,9 +135,10 @@ svg {
   display: none !important;
 }
 
-/* Font Khusus Arab - Update Lebih Kuat */
+/* Font Khusus Arab (Hanya Scheherazade New) */
 .font-quran {
-    font-family: 'Scheherazade New', serif; /* Prioritas Scheherazade */
-    line-height: 2.5 !important;
-    font-feature-settings: "cv01", "cv02", "ss01"; /* Fitur tambahan font */
+    font-family: 'Scheherazade New', serif !important;
+    line-height: 2.6 !important;
+    font-weight: 700; /* Penting: Scheherazade agak tipis, jadi kita tebalkan biar jelas di HP */
+    font-size: 1.5rem; /* Pastikan ukuran cukup besar */
 }

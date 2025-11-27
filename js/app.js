@@ -1089,7 +1089,6 @@ function renderAyahs(ayatList) {
     ayatList.forEach(a => {
         const audioUrl = a.audio['05'] || a.audio['01'];
         
-        // Tambahkan ID unik di div wrapper biar bisa di-scroll otomatis
         html += `
         <div id="ayat-card-${a.nomorAyat}" class="border-b border-slate-100 dark:border-slate-800 pb-6 last:border-0 transition-colors duration-500">
             <div class="flex justify-between items-center mb-4 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
@@ -1104,7 +1103,7 @@ function renderAyahs(ayatList) {
                 </div>
             </div>
             
-            <p class="text-right font-quran text-3xl text-slate-800 dark:text-white mb-4 dir-rtl" style="direction: rtl;">
+            <p lang="ar" dir="rtl" class="text-right font-quran text-4xl text-slate-800 dark:text-white mb-4">
                 ${a.teksArab}
             </p>
             
