@@ -138,6 +138,6 @@ svg {
 /* Font Khusus Arab - Update Lebih Kuat */
 .font-quran {
     font-family: 'Scheherazade New', serif; /* Prioritas Scheherazade */
-    line-height: 2.2; 
+    line-height: 2.5 !important;
     font-feature-settings: "cv01", "cv02", "ss01"; /* Fitur tambahan font */
 }
