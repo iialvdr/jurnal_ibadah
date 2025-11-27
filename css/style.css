@@ -69,9 +69,3 @@ body, div, button, span, h1, h2, h3, p, i, svg {
 
 /* Utility */
 .hidden-force { display: none !important; }
-
-/* Font Khusus Arab */
-.font-quran {
-    font-family: 'Amiri', serif;
-    line-height: 2.8; /* Sedikit dilonggarkan biar enak dibaca */
-}
