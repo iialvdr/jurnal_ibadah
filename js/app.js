@@ -706,17 +706,19 @@ function checkTimeAvailability(prayerTimeStr) {
 
     const now = new Date();
     
-    // Logika: 
-    // Kita bandingkan waktu sekarang dengan waktu sholat.
-    // Kalau Valdi mau sholat yang belum masuk waktunya digembok, pakai logika di bawah.
-    // Kalau mau dibuka semua (biar bisa testing), return { locked: false } saja.
-    
-    // Contoh logika pengamanan (Hanya bisa checklist kalau sudah masuk waktunya):
-    // if (now < prayerDate && currentDate.toDateString() === now.toDateString()) {
-    //    return { locked: true, reason: 'Belum Masuk' };
-    // }
+    // Logika pengamanan: Jika waktu sekarang (now) belum mencapai waktu sholat (prayerDate) 
+    // DAN tanggal yang dilihat adalah hari ini (currentDate), maka checklist dikunci.
+    if (now < prayerDate && currentDate.toDateString() === now.toDateString()) {
+        return { locked: true, reason: 'Belum Masuk' };
+    }
 
-    // Untuk sekarang, kita buka semua (unlocked) agar list-nya MUNCUL dulu:
+    // Tambahan: Kunci jika melihat tanggal di masa depan
+    if (currentDate.getTime() > now.getTime() && currentDate.toDateString() !== now.toDateString()) {
+        return { locked: true, reason: 'Tanggal Belum Tiba' };
+    }
+    
+    // Jika sedang melihat tanggal masa lalu, atau sudah melewati waktunya hari ini, 
+    // maka checklist tidak dikunci.
     return { locked: false };
 }
 
