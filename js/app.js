@@ -9,11 +9,9 @@ import { qiblaViewHTML } from './views/view_qibla.js';
 import { trackerViewHTML } from './views/view_tracker.js';
 import { quranViewHTML } from './views/view_quran.js';
 
-// Inject HTML ke dalam Container utama
 const appContainer = document.getElementById('appContainer');
 if(appContainer) {
-    appContainer.innerHTML = ""; // Bersihkan container biar bersih
-    // Urutan inject (Paling bawah = Paling atas tumpukan z-index)
+    appContainer.innerHTML = "";
     appContainer.insertAdjacentHTML('beforeend', profileViewHTML);
     appContainer.insertAdjacentHTML('afterbegin', loginViewHTML);
     appContainer.insertAdjacentHTML('beforeend', tasbihViewHTML);
@@ -70,7 +68,6 @@ const PRAYER_CONFIG = [
 // ==========================================
 // 4. NAVIGATION SYSTEM
 // ==========================================
-
 function hideAllViews() {
     const views = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView'];
     views.forEach(id => {
@@ -79,53 +76,38 @@ function hideAllViews() {
     });
 }
 
-// HELPER: Update Data Tampilan Home
 function updateHomeUI() {
-    // 1. Update Widget Sholat
     updateNextPrayer();
-    
-    // 2. Update Lokasi
     const locText = document.getElementById('homeLocationText');
     if(locText) locText.innerText = window.lastCity || "Mencari...";
     
-    // 3. Update Profil User
     if(currentUser) {
         const hName = document.getElementById('homeUserName');
         const hPhoto = document.getElementById('homeUserPhoto');
-        
         if(hName) hName.innerText = currentUser.displayName || "Hamba Allah";
         if(hPhoto) {
             hPhoto.src = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName || 'User')}&background=10b981&color=fff`;
         }
     }
+    checkNotificationStatus();
 }
 
 window.goHome = () => {
     hideAllViews();
     const homeView = document.getElementById('homeView');
     if(homeView) homeView.classList.remove('hidden-force');
-    
-    // Panggil fungsi update setiap kali masuk Home
     updateHomeUI();
     if(window.lucide) lucide.createIcons();
 };
 
 window.openTracker = () => {
     if (!currentUser) return;
-    
     hideAllViews();
     const trackerView = document.getElementById('trackerView');
-    
     if(trackerView) {
         trackerView.classList.remove('hidden-force');
-        
-        // PENTING: Panggil renderPrayers() SETELAH view aktif
-        // Gunakan requestAnimationFrame agar DOM siap dulu
-        requestAnimationFrame(() => {
-            renderPrayers();
-        });
+        requestAnimationFrame(() => renderPrayers());
     }
-    
     if(window.lucide) lucide.createIcons();
 };
 
@@ -135,22 +117,18 @@ window.openProfile = () => {
     const profileView = document.getElementById('profileView');
     if(profileView) profileView.classList.remove('hidden-force');
 
-    // Populate Data
     const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
     const imgEl = document.getElementById('profilePhotoLarge');
     
     setSafeText('profileNameLarge', currentUser.displayName);
     setSafeText('profileEmail', currentUser.email);
-    
     if(imgEl) {
         imgEl.src = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName)}&background=10b981&color=fff`;
     }
-    
     const joinDateObj = new Date(currentUser.metadata.creationTime);
     setSafeText('joinDate', joinDateObj.toLocaleDateString('id-ID'));
     setSafeText('lastLocation', window.lastCity || "Lokasi belum terdeteksi");
 
-    // Hitung Statistik
     const diffTime = Math.abs(new Date() - joinDateObj);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
     setSafeText('statDays', `${diffDays} Hari`);
@@ -166,7 +144,7 @@ window.openProfile = () => {
 window.closeProfile = () => { window.goHome(); };
 
 // ==========================================
-// 5. AUTHENTICATION & STARTUP
+// 5. AUTH & STARTUP
 // ==========================================
 const googleLoginBtn = document.getElementById('googleLoginBtn');
 if(googleLoginBtn) {
@@ -186,10 +164,8 @@ onAuthStateChanged(auth, async (user) => {
         currentUser = user;
         if(loginOverlay) loginOverlay.classList.add('hidden-force');
         if(sidebar) sidebar.classList.remove('hidden-force');
-        
-        await initApp(); // Tunggu init selesai
-        updateHomeUI();  // Update tampilan Home setelah data siap
-
+        await initApp(); 
+        updateHomeUI();
     } else {
         currentUser = null;
         if(loginOverlay) loginOverlay.classList.remove('hidden-force');
@@ -211,7 +187,7 @@ if(logoutBtnProfile) {
 }
 
 // ==========================================
-// 6. FEATURES (TASBIH, QIBLA, CHART)
+// 6. TASBIH & CHART
 // ==========================================
 const DHIKR_DATA = [
     { id: 0, title: "Tasbih", arabic: "سُبْحَانَ الله", latin: "Subhanallah", target: 33 },
@@ -226,56 +202,43 @@ const DHIKR_DATA = [
 let tasbihCount = 0;
 let tasbihTarget = 33;
 let isVibroOn = true;
-let currentDhikrIndex = -1; // -1 artinya mode bebas (kosong)
+let currentDhikrIndex = -1; 
 
 window.openTasbih = () => {
     hideAllViews();
     const tasbihView = document.getElementById('tasbihView');
     if(tasbihView) tasbihView.classList.remove('hidden-force');
     if(window.lucide) lucide.createIcons();
-    
-    // Default: Reset tampilan bacaan kalau baru buka
     updateDhikrDisplay(); 
 };
-
 window.closeTasbih = () => { window.goHome(); };
-
 window.countTasbih = () => {
     tasbihCount++;
     const countEl = document.getElementById('tasbihCount');
     if(countEl) countEl.innerText = tasbihCount;
-    
-    // Efek Getar
     if(isVibroOn && navigator.vibrate) {
         if(tasbihTarget > 0 && tasbihCount % tasbihTarget === 0) navigator.vibrate([50, 50, 50]);
         else navigator.vibrate(15);
     }
 };
-
 window.resetTasbih = () => {
     tasbihCount = 0;
     document.getElementById('tasbihCount').innerText = '0';
     if(navigator.vibrate) navigator.vibrate(30);
 };
-
 window.setTasbihTarget = (target) => {
     tasbihTarget = target;
     document.getElementById('tasbihTargetDisplay').innerText = target === 0 ? "Target: ∞" : `Target: ${target}`;
-    
-    // Update style tombol target
     const btn33 = document.getElementById('btnTarget33');
     const btn100 = document.getElementById('btnTarget100');
     const btnInf = document.getElementById('btnTargetInf');
     [btn33, btn100, btnInf].forEach(btn => { if(btn) btn.className = "px-4 py-2 text-xs font-bold rounded-xl transition text-slate-500 dark:text-slate-400 hover:bg-white/20"; });
-    
-    const activeClass = "px-4 py-2 text-xs font-bold rounded-xl transition bg-white dark:bg-slate-600 text-emerald-600 shadow-sm";
-    if(target===33 && btn33) btn33.className = activeClass;
-    if(target===100 && btn100) btn100.className = activeClass;
-    if(target===0 && btnInf) btnInf.className = activeClass;
-    
+    const active = "px-4 py-2 text-xs font-bold rounded-xl transition bg-white dark:bg-slate-600 text-emerald-600 shadow-sm";
+    if(target===33 && btn33) btn33.className = active;
+    if(target===100 && btn100) btn100.className = active;
+    if(target===0 && btnInf) btnInf.className = active;
     resetTasbih();
 };
-
 window.toggleVibro = () => {
     isVibroOn = !isVibroOn;
     const btn = document.getElementById('vibroBtn').firstElementChild;
@@ -290,62 +253,35 @@ window.toggleVibro = () => {
         txt.innerText = "Getar Off";
     }
 };
-
-// --- LOGIKA MENU BACAAN (BARU) ---
 window.openDhikrMenu = () => {
     const modal = document.getElementById('dhikrMenuModal');
-    const listContainer = document.getElementById('dhikrListContainer');
-    
-    if(!modal || !listContainer) return;
-    
-    // Render list bacaan
+    const list = document.getElementById('dhikrListContainer');
+    if(!modal || !list) return;
     let html = '';
     DHIKR_DATA.forEach((item, index) => {
         const isSelected = index === currentDhikrIndex;
-        html += `
-        <div onclick="chooseDhikr(${index})" class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition ${isSelected ? 'bg-emerald-50 border-emerald-500 dark:bg-emerald-900/20 dark:border-emerald-500/50' : 'bg-slate-50 dark:bg-slate-800/50 border-transparent hover:bg-emerald-50 dark:hover:bg-slate-800'}">
-            <div>
-                <h4 class="font-bold text-slate-800 dark:text-white">${item.title}</h4>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${item.latin}</p>
-            </div>
+        html += `<div onclick="chooseDhikr(${index})" class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition ${isSelected ? 'bg-emerald-50 border-emerald-500 dark:bg-emerald-900/20' : 'bg-slate-50 dark:bg-slate-800/50 border-transparent'}">
+            <div><h4 class="font-bold text-slate-800 dark:text-white">${item.title}</h4><p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${item.latin}</p></div>
             ${isSelected ? '<div class="bg-emerald-500 text-white p-1 rounded-full"><i data-lucide="check" class="w-4 h-4"></i></div>' : ''}
         </div>`;
     });
-    
-    // Tambah opsi "Mode Bebas" (Tanpa bacaan)
-    html += `
-        <button onclick="chooseDhikr(-1)" class="w-full p-3 text-sm font-bold text-red-500 border border-red-200 dark:border-red-900 rounded-xl mt-4 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
-            Hapus Bacaan (Mode Bebas)
-        </button>
-    `;
-
-    listContainer.innerHTML = html;
+    html += `<button onclick="chooseDhikr(-1)" class="w-full p-3 text-sm font-bold text-red-500 border border-red-200 dark:border-red-900 rounded-xl mt-4">Hapus Bacaan</button>`;
+    list.innerHTML = html;
     modal.classList.remove('hidden');
     if(window.lucide) lucide.createIcons();
 };
-
-window.closeDhikrMenu = () => {
-    document.getElementById('dhikrMenuModal').classList.add('hidden');
-};
-
+window.closeDhikrMenu = () => { document.getElementById('dhikrMenuModal').classList.add('hidden'); };
 window.chooseDhikr = (index) => {
     currentDhikrIndex = index;
-    
-    if(index >= 0) {
-        // Set target otomatis sesuai data dzikir
-        setTasbihTarget(DHIKR_DATA[index].target);
-    }
-    
+    if(index >= 0) setTasbihTarget(DHIKR_DATA[index].target);
     updateDhikrDisplay();
     closeDhikrMenu();
-    resetTasbih(); // Reset hitungan biar mulai dari 0
+    resetTasbih();
 };
-
 function updateDhikrDisplay() {
     const displayArea = document.getElementById('dhikrDisplayArea');
     const arabicEl = document.getElementById('dhikrArabicDisplay');
     const latinEl = document.getElementById('dhikrLatinDisplay');
-    
     if (currentDhikrIndex >= 0) {
         const data = DHIKR_DATA[currentDhikrIndex];
         displayArea.classList.remove('hidden');
@@ -356,10 +292,53 @@ function updateDhikrDisplay() {
     }
 }
 
-// --- QIBLA LOGIC ---
+// --- CHART ---
+window.loadChartData = async (days) => {
+    if(!currentUser) return;
+    const btn7 = document.getElementById('btn7Days');
+    const btn14 = document.getElementById('btn14Days');
+    if(btn7 && btn14) {
+        const act = "bg-white dark:bg-slate-700 text-emerald-600 shadow-sm";
+        const inact = "text-slate-500 hover:text-emerald-600";
+        btn7.className = "px-2 py-1 text-[10px] rounded-md font-medium transition " + (days===7?act:inact);
+        btn14.className = "px-2 py-1 text-[10px] rounded-md font-medium transition " + (days===14?act:inact);
+    }
+    const labels = [], dataPoints = [], fetchPromises = [];
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const dateKey = formatDateKey(d);
+        labels.push(d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
+        fetchPromises.push(getDoc(doc(db, "users", currentUser.uid, "daily_records", dateKey)));
+    }
+    try {
+        const snapshots = await Promise.all(fetchPromises);
+        snapshots.forEach(snap => {
+            if(snap.exists()) {
+                const data = snap.data();
+                let count = 0;
+                PRAYER_CONFIG.forEach(p => { if(p.type === 'wajib' && data[p.id] === true) count++; });
+                dataPoints.push(count);
+            } else dataPoints.push(0);
+        });
+        renderChart(labels, dataPoints);
+    } catch (e) { console.error(e); }
+};
+function renderChart(labels, data) {
+    const ctx = document.getElementById('activityChart'); if(!ctx) return; if(myChart) myChart.destroy();
+    const isDark = document.documentElement.classList.contains('dark');
+    const colorLine = '#10b981';
+    myChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: [{ label: 'Sholat Wajib', data: data, borderColor: colorLine, backgroundColor: (context) => { const ctx = context.chart.ctx; const gradient = ctx.createLinearGradient(0, 0, 0, 200); gradient.addColorStop(0, "rgba(16, 185, 129, 0.4)"); gradient.addColorStop(1, "rgba(16, 185, 129, 0)"); return gradient; }, borderWidth: 3, tension: 0.4, pointBackgroundColor: '#ffffff', pointBorderColor: colorLine, fill: true }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 5, ticks: { stepSize: 1, color: isDark ? '#94a3b8' : '#64748b' }, grid: { display: false } }, x: { ticks: { color: isDark ? '#94a3b8' : '#64748b', font: { size: 9 } }, grid: { display: false } } } }
+    });
+}
+
+// ==========================================
+// 7. QIBLA
+// ==========================================
 const KAABA_COORDS = { lat: 21.422487, lng: 39.826206 };
 let currentDiscRotation = 0;
-
 window.openQibla = () => {
     hideAllViews();
     const qiblaView = document.getElementById('qiblaView');
@@ -427,50 +406,8 @@ function handleOrientation(event) {
     }
 }
 
-// --- CHART LOGIC ---
-window.loadChartData = async (days) => {
-    if(!currentUser) return;
-    const btn7 = document.getElementById('btn7Days');
-    const btn14 = document.getElementById('btn14Days');
-    if(btn7 && btn14) {
-        const act = "bg-white dark:bg-slate-700 text-emerald-600 shadow-sm";
-        const inact = "text-slate-500 hover:text-emerald-600";
-        btn7.className = "px-2 py-1 text-[10px] rounded-md font-medium transition " + (days===7?act:inact);
-        btn14.className = "px-2 py-1 text-[10px] rounded-md font-medium transition " + (days===14?act:inact);
-    }
-    const labels = [], dataPoints = [], fetchPromises = [];
-    for (let i = days - 1; i >= 0; i--) {
-        const d = new Date(); d.setDate(d.getDate() - i);
-        const dateKey = formatDateKey(d);
-        labels.push(d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
-        fetchPromises.push(getDoc(doc(db, "users", currentUser.uid, "daily_records", dateKey)));
-    }
-    try {
-        const snapshots = await Promise.all(fetchPromises);
-        snapshots.forEach(snap => {
-            if(snap.exists()) {
-                const data = snap.data();
-                let count = 0;
-                PRAYER_CONFIG.forEach(p => { if(p.type === 'wajib' && data[p.id] === true) count++; });
-                dataPoints.push(count);
-            } else dataPoints.push(0);
-        });
-        renderChart(labels, dataPoints);
-    } catch (e) { console.error(e); }
-};
-function renderChart(labels, data) {
-    const ctx = document.getElementById('activityChart'); if(!ctx) return; if(myChart) myChart.destroy();
-    const isDark = document.documentElement.classList.contains('dark');
-    const colorLine = '#10b981';
-    myChart = new Chart(ctx, {
-        type: 'line',
-        data: { labels: labels, datasets: [{ label: 'Sholat Wajib', data: data, borderColor: colorLine, backgroundColor: (context) => { const ctx = context.chart.ctx; const gradient = ctx.createLinearGradient(0, 0, 0, 200); gradient.addColorStop(0, "rgba(16, 185, 129, 0.4)"); gradient.addColorStop(1, "rgba(16, 185, 129, 0)"); return gradient; }, borderWidth: 3, tension: 0.4, pointBackgroundColor: '#ffffff', pointBorderColor: colorLine, fill: true }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 5, ticks: { stepSize: 1, color: isDark ? '#94a3b8' : '#64748b' }, grid: { display: false } }, x: { ticks: { color: isDark ? '#94a3b8' : '#64748b', font: { size: 9 } }, grid: { display: false } } } }
-    });
-}
-
 // ==========================================
-// 9. CORE FUNCTIONS
+// 8. CORE FUNCTIONS
 // ==========================================
 function formatDateKey(date) { const offset = date.getTimezoneOffset(); const localDate = new Date(date.getTime() - (offset*60*1000)); return localDate.toISOString().split('T')[0]; }
 
@@ -495,6 +432,10 @@ async function initApp() {
     updateDateUI();
     getLocation();
     
+    // Start Notification Check
+    startPrayerCheckTimer();
+    checkNotificationStatus();
+
     // Default open Home
     window.goHome();
 }
@@ -542,11 +483,30 @@ function initTheme() {
     if(window.lucide) lucide.createIcons();
 }
 
-window.getLocation = () => {
+// LOKASI (MANUAL REFRESH)
+window.refreshLocation = () => {
+    const btn = document.getElementById('locationBtn');
+    const text = document.getElementById('homeLocationText');
+    const icon = document.getElementById('locIcon');
+
+    if(text) text.innerText = "Mencari...";
+    if(btn) btn.classList.add('animate-pulse');
+    if(icon) {
+        icon.classList.add('animate-spin', 'text-emerald-500'); 
+        icon.setAttribute('data-lucide', 'loader-2');
+    }
+    if(window.lucide) lucide.createIcons();
+
+    setTimeout(() => { getLocation(true); }, 500);
+};
+
+window.getLocation = (isManualRefresh = false) => {
     const t1 = document.getElementById('locationText');
     const t2 = document.getElementById('homeLocationText');
+    
     if(t1) t1.innerText = "Mencari...";
-    if(t2) t2.innerText = "Mencari...";
+    if(t2 && !isManualRefresh) t2.innerText = "Mencari...";
+
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (pos) => {
@@ -554,10 +514,28 @@ window.getLocation = () => {
                 window.lastLng = pos.coords.longitude;
                 fetchJadwal(window.lastLat, window.lastLng);
                 fetchCityName(window.lastLat, window.lastLng);
+                if(isManualRefresh) resetLocationButton();
             }, 
-            () => { useDefaultLocation(); }
+            () => { 
+                useDefaultLocation(); 
+                if(isManualRefresh) resetLocationButton();
+            }
         );
-    } else { useDefaultLocation(); }
+    } else { 
+        useDefaultLocation(); 
+        if(isManualRefresh) resetLocationButton();
+    }
+};
+
+function resetLocationButton() {
+    const btn = document.getElementById('locationBtn');
+    const icon = document.getElementById('locIcon');
+    if(btn) btn.classList.remove('animate-pulse');
+    if(icon) {
+        icon.classList.remove('animate-spin', 'text-emerald-500');
+        icon.setAttribute('data-lucide', 'map-pin');
+    }
+    if(window.lucide) lucide.createIcons();
 }
 
 function useDefaultLocation() {
@@ -575,13 +553,17 @@ async function fetchCityName(lat, lng) {
     try {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`);
         const data = await res.json();
-        window.lastCity = data.address.city || data.address.town || "Indonesia"; 
+        window.lastCity = data.address.city || data.address.town || "Lokasi Terdeteksi"; 
         const t1 = document.getElementById('locationText');
         const t2 = document.getElementById('homeLocationText');
         if(t1) t1.innerText = window.lastCity;
         if(t2) t2.innerText = window.lastCity;
     } catch (e) { 
-        document.getElementById('locationText').innerText = "Lokasi Aktif"; 
+        window.lastCity = "Lokasi Aktif";
+        const t1 = document.getElementById('locationText');
+        const t2 = document.getElementById('homeLocationText');
+        if(t1) t1.innerText = "Lokasi Aktif";
+        if(t2) t2.innerText = "Lokasi Aktif";
     }
 }
 
@@ -608,7 +590,6 @@ async function fetchJadwal(lat, lng) {
             const t = dayData.timings;
             const clean = (s) => s ? s.split(' ')[0] : '--:--';
             prayerTimes = { Subuh: clean(t.Fajr), Dzuhur: clean(t.Dhuhr), Ashar: clean(t.Asr), Maghrib: clean(t.Maghrib), Isya: clean(t.Isha), Tahajud: '03:00', Dhuha: '--:--' };
-            
             if (t.Sunrise) {
                 const [sh, sm] = clean(t.Sunrise).split(':').map(Number);
                 const dhuha = new Date(); dhuha.setHours(sh, sm + 20);
@@ -726,19 +707,7 @@ function updateProgressBar() {
 
 function renderPrayers() {
     const container = document.getElementById('prayerList');
-    
-    // SAFETY CHECK: Jika container tidak ketemu, stop.
-    if(!container) {
-        console.warn("Element #prayerList belum siap.");
-        return;
-    }
-    
-    // SAFETY CHECK 2: Jika data waktu sholat belum siap (masih '--:--'), jangan render kosong
-    if(prayerTimes.Subuh === '--:--') {
-        // Coba ambil data lagi jika kosong
-        if(window.lastLat) fetchJadwal(window.lastLat, window.lastLng);
-        return; 
-    }
+    if(!container || prayerTimes.Subuh === '--:--') return;
 
     let html = '';
     PRAYER_CONFIG.forEach((p) => {
@@ -746,7 +715,6 @@ function renderPrayers() {
         const time = prayerTimes[p.id];
         const status = checkTimeAvailability(time);
         
-        // Style Glassmorphism untuk Item List
         let wrapperClass = status.locked 
             ? 'bg-slate-100/50 dark:bg-slate-800/50 border-white/20 dark:border-slate-700/30 opacity-60 cursor-not-allowed grayscale backdrop-blur-sm' 
             : (isDone 
@@ -775,127 +743,73 @@ function renderPrayers() {
                     <div id="checkbtn-${p.id}">${checkIcon}</div>
                 </div>`;
     });
-    
     container.innerHTML = html;
     if(window.lucide) lucide.createIcons();
     updateProgressBar();
 }
 
-// ==========================================
-// FUNGSI TAMBAHAN (SOLUSI MASALAH 2)
-// ==========================================
 function checkTimeAvailability(prayerTimeStr) {
-    // Kalau waktu belum ada
-    if (!prayerTimeStr || prayerTimeStr === '--:--') {
-        return { locked: true, reason: 'Menunggu Data' };
-    }
-
-    // Parse waktu sholat
+    if (!prayerTimeStr || prayerTimeStr === '--:--') return { locked: true, reason: 'Menunggu Data' };
     const [h, m] = prayerTimeStr.split(':').map(Number);
     const prayerDate = new Date(currentDate);
     prayerDate.setHours(h, m, 0, 0);
-
     const now = new Date();
-    
-    // Logika pengamanan: Jika waktu sekarang (now) belum mencapai waktu sholat (prayerDate) 
-    // DAN tanggal yang dilihat adalah hari ini (currentDate), maka checklist dikunci.
-    if (now < prayerDate && currentDate.toDateString() === now.toDateString()) {
-        return { locked: true, reason: 'Belum Masuk' };
-    }
-
-    // Tambahan: Kunci jika melihat tanggal di masa depan
-    if (currentDate.getTime() > now.getTime() && currentDate.toDateString() !== now.toDateString()) {
-        return { locked: true, reason: 'Tanggal Belum Tiba' };
-    }
-    
-    // Jika sedang melihat tanggal masa lalu, atau sudah melewati waktunya hari ini, 
-    // maka checklist tidak dikunci.
+    if (now < prayerDate && currentDate.toDateString() === now.toDateString()) return { locked: true, reason: 'Belum Masuk' };
+    if (currentDate.getTime() > now.getTime() && currentDate.toDateString() !== now.toDateString()) return { locked: true, reason: 'Tanggal Belum Tiba' };
     return { locked: false };
 }
 
 initTheme();
 
-// ==========================================
-// 10. SECURITY & UX PROTECTION
-// ==========================================
-document.addEventListener('contextmenu', event => {
-    event.preventDefault();
-});
-
-document.addEventListener('keydown', event => {
-    if (
-        event.key === 'F12' || 
-        (event.ctrlKey && (event.key === 'u' || event.key === 's')) ||
-        (event.ctrlKey && event.shiftKey && event.key === 'i')
-    ) {
-        event.preventDefault();
-    }
-});
+document.addEventListener('contextmenu', event => { event.preventDefault(); });
+document.addEventListener('keydown', event => { if (event.key === 'F12' || (event.ctrlKey && (event.key === 'u' || event.key === 's')) || (event.ctrlKey && event.shiftKey && event.key === 'i')) { event.preventDefault(); } });
 
 // ==========================================
-// 11. FITUR AL-QURAN (EQURAN.ID API)
+// 11. AL-QURAN
 // ==========================================
 let surahDataCache = null; 
 let currentSurahId = null;
-let currentAyahList = []; // [BARU] Simpan data ayat yang sedang dibuka
+let currentAyahList = [];
 let currentAudio = null; 
 
 window.openQuran = async () => {
     hideAllViews();
     const quranView = document.getElementById('quranView');
     if(quranView) quranView.classList.remove('hidden-force');
-    
-    // Stop audio & reset
     stopCurrentAudio();
-
-    // Reset UI Manual
     document.getElementById('surahListContainer').classList.remove('-translate-x-full');
     document.getElementById('ayahListContainer').classList.add('translate-x-full');
-    
     const searchContainer = document.getElementById('quranSearchContainer');
     const navButtons = document.getElementById('surahNavButtons');
-    
     if(searchContainer) searchContainer.classList.remove('-translate-y-20');
     if(navButtons) navButtons.classList.add('translate-y-32');
-    
     document.getElementById('quranTitle').innerText = "Al-Qur'an";
     currentSurahId = null;
-    currentAyahList = []; // Reset list ayat
-
-    if(!surahDataCache) {
-        await fetchSurahList();
-    }
+    currentAyahList = [];
+    if(!surahDataCache) await fetchSurahList();
     if(window.lucide) lucide.createIcons();
 };
 
 window.handleQuranBack = () => {
     stopCurrentAudio();
-
     if (currentSurahId) {
-        // Balik ke List Surat
         document.getElementById('surahListContainer').classList.remove('-translate-x-full');
         document.getElementById('ayahListContainer').classList.add('translate-x-full');
-        
         document.getElementById('quranSearchContainer').classList.remove('-translate-y-20');
         document.getElementById('surahNavButtons').classList.add('translate-y-32');
-        
         document.getElementById('quranTitle').innerText = "Al-Qur'an";
         currentSurahId = null;
-        currentAyahList = []; // Reset list ayat
-        
+        currentAyahList = [];
     } else {
         window.goHome();
     }
 };
 
-// Helper untuk matikan audio dengan bersih
 function stopCurrentAudio() {
     if(currentAudio) {
         const prevId = currentAudio.getAttribute('data-id');
         currentAudio.pause();
         currentAudio = null;
-        
-        // Reset icon jadi Play
         const prevIcon = document.getElementById(`icon-audio-${prevId}`);
         if(prevIcon) {
             prevIcon.innerHTML = `<i data-lucide="play" class="w-3 h-3 fill-current"></i>`;
@@ -906,21 +820,17 @@ function stopCurrentAudio() {
 
 async function fetchSurahList() {
     const loading = document.getElementById('quranLoading');
-    const container = document.getElementById('surahListContainer');
-    
     if(loading) loading.classList.remove('hidden');
-    
     try {
         const res = await fetch('https://equran.id/api/v2/surat');
         const json = await res.json();
-        
         if(json.code === 200) {
             surahDataCache = json.data;
             renderSurahList(surahDataCache);
         }
     } catch (e) {
-        console.error("Gagal ambil data surat:", e);
-        container.innerHTML = `<p class="text-center text-red-500 mt-10">Gagal memuat data. Cek koneksi internet.</p>`;
+        console.error(e);
+        document.getElementById('surahListContainer').innerHTML = `<p class="text-center text-red-500 mt-10">Gagal memuat data.</p>`;
     } finally {
         if(loading) loading.classList.add('hidden');
     }
@@ -929,110 +839,64 @@ async function fetchSurahList() {
 function renderSurahList(data) {
     const container = document.getElementById('surahListContainer');
     let html = '';
-    
     if(data.length === 0) {
         container.innerHTML = `<p class="text-center text-slate-400 mt-10 text-sm">Surat tidak ditemukan.</p>`;
         return;
     }
-
     data.forEach(s => {
         const safeNamaLatin = s.namaLatin.replace(/'/g, "\\'"); 
-
-        html += `
-        <div onclick="openSurahDetail(${s.nomor}, '${safeNamaLatin}')" class="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm cursor-pointer hover:border-emerald-500 transition">
-            <div class="w-10 h-10 flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/30 rounded-full text-emerald-600 font-bold text-sm relative shrink-0">
-                ${s.nomor}
-            </div>
-            <div class="flex-1">
-                <h3 class="font-bold text-slate-800 dark:text-white">${s.namaLatin}</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400">${s.arti} • ${s.jumlahAyat} Ayat</p>
-            </div>
-            <div class="text-right">
-                <span class="font-serif text-lg text-slate-800 dark:text-emerald-400">${s.nama}</span>
-            </div>
+        html += `<div onclick="openSurahDetail(${s.nomor}, '${safeNamaLatin}')" class="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm cursor-pointer hover:border-emerald-500 transition">
+            <div class="w-10 h-10 flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/30 rounded-full text-emerald-600 font-bold text-sm relative shrink-0">${s.nomor}</div>
+            <div class="flex-1"><h3 class="font-bold text-slate-800 dark:text-white">${s.namaLatin}</h3><p class="text-xs text-slate-500 dark:text-slate-400">${s.arti} • ${s.jumlahAyat} Ayat</p></div>
+            <div class="text-right"><span class="font-serif text-lg text-slate-800 dark:text-emerald-400">${s.nama}</span></div>
         </div>`;
     });
     container.innerHTML = html;
 }
 
-// --- FITUR AUDIO PLAYER (AUTO NEXT) ---
 window.toggleAudio = (url, ayatNum) => {
-    // 1. Jika audio yang diklik sedang main, PAUSE.
     if(currentAudio && currentAudio.getAttribute('data-id') == ayatNum) {
         stopCurrentAudio();
         return;
     }
-
-    // 2. Jika ada audio LAIN yang main, STOP dulu.
     stopCurrentAudio();
-
-    // 3. Play Audio Baru
     const audio = new Audio(url);
     audio.setAttribute('data-id', ayatNum);
-    
-    // UI: Loading
     const btnIcon = document.getElementById(`icon-audio-${ayatNum}`);
     if(btnIcon) {
         btnIcon.innerHTML = `<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i>`;
         if(window.lucide) lucide.createIcons();
     }
-
-    // Saat audio siap main
     audio.oncanplaythrough = () => {
         if(btnIcon) {
             btnIcon.innerHTML = `<i data-lucide="pause" class="w-3 h-3 fill-current"></i>`;
             if(window.lucide) lucide.createIcons();
         }
         audio.play();
-        
-        // Auto Scroll ke ayat yang sedang dibaca (biar user gak usah scroll manual)
         const ayatEl = document.getElementById(`ayat-card-${ayatNum}`);
-        if(ayatEl) {
-            ayatEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        if(ayatEl) ayatEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
-
-    // [PENTING] Saat audio selesai, lanjut ke ayat berikutnya
     audio.onended = () => {
-        // Reset icon current jadi Play
         if(btnIcon) {
             btnIcon.innerHTML = `<i data-lucide="play" class="w-3 h-3 fill-current"></i>`;
             if(window.lucide) lucide.createIcons();
         }
         currentAudio = null;
-
-        // Cari ayat berikutnya
         const nextAyatNum = ayatNum + 1;
         const nextAyatData = currentAyahList.find(a => a.nomorAyat === nextAyatNum);
-
         if(nextAyatData) {
-            // Ada ayat selanjutnya? Mainkan!
             const nextAudioUrl = nextAyatData.audio['05'] || nextAyatData.audio['01'];
             toggleAudio(nextAudioUrl, nextAyatNum);
-        } else {
-            // Udah ayat terakhir (Selesai surat)
-            console.log("Alhamdulillah, surat selesai.");
         }
     };
-
-    // Handle Error (misal internet putus)
-    audio.onerror = () => {
-        alert("Gagal memutar audio. Cek koneksi internet.");
-        stopCurrentAudio();
-    };
-
+    audio.onerror = () => { alert("Gagal memutar audio."); stopCurrentAudio(); };
     currentAudio = audio;
 };
 
-// --- FITUR PENCARIAN & NAVIGASI ---
 window.searchSurah = (keyword) => {
     if(!surahDataCache) return;
     const lowerKey = keyword.toLowerCase();
-    const filtered = surahDataCache.filter(s => 
-        s.namaLatin.toLowerCase().includes(lowerKey) || 
-        s.arti.toLowerCase().includes(lowerKey) ||
-        s.nomor.toString().includes(lowerKey)
-    );
+    const filtered = surahDataCache.filter(s => s.namaLatin.toLowerCase().includes(lowerKey) || s.arti.toLowerCase().includes(lowerKey) || s.nomor.toString().includes(lowerKey));
     renderSurahList(filtered);
 };
 
@@ -1040,7 +904,6 @@ window.changeSurah = (direction) => {
     if(!currentSurahId) return;
     const nextId = currentSurahId + direction;
     if(nextId < 1 || nextId > 114) return;
-    
     const nextSurah = surahDataCache.find(s => s.nomor === nextId);
     if(nextSurah) {
         stopCurrentAudio();
@@ -1053,25 +916,19 @@ window.openSurahDetail = async (nomor, namaLatin) => {
     const loading = document.getElementById('quranLoading');
     const ayahsContent = document.getElementById('ayahsContent');
     const navButtons = document.getElementById('surahNavButtons');
-    
     document.getElementById('surahListContainer').classList.add('-translate-x-full');
     document.getElementById('ayahListContainer').classList.remove('translate-x-full');
     document.getElementById('quranSearchContainer').classList.add('-translate-y-20');
-    
     navButtons.classList.remove('translate-y-32');
-    
     document.getElementById('quranTitle').innerText = `QS. ${namaLatin}`;
     document.getElementById('ayahListContainer').scrollTop = 0;
-    
     ayahsContent.innerHTML = "";
     if(loading) loading.classList.remove('hidden');
-
     try {
         const res = await fetch(`https://equran.id/api/v2/surat/${nomor}`);
         const json = await res.json();
-        
         if(json.code === 200) {
-            currentAyahList = json.data.ayat; // [BARU] Simpan ke global
+            currentAyahList = json.data.ayat; 
             renderAyahs(currentAyahList);
         }
     } catch (e) {
@@ -1085,33 +942,95 @@ window.openSurahDetail = async (nomor, namaLatin) => {
 function renderAyahs(ayatList) {
     const container = document.getElementById('ayahsContent');
     let html = '';
-    
     ayatList.forEach(a => {
         const audioUrl = a.audio['05'] || a.audio['01'];
-        
-        html += `
-        <div id="ayat-card-${a.nomorAyat}" class="border-b border-slate-100 dark:border-slate-800 pb-6 last:border-0 transition-colors duration-500">
+        html += `<div id="ayat-card-${a.nomorAyat}" class="border-b border-slate-100 dark:border-slate-800 pb-6 last:border-0 transition-colors duration-500">
             <div class="flex justify-between items-center mb-4 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
                 <div class="flex items-center gap-2">
                     <span class="text-xs font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-1 rounded-md">Ayat ${a.nomorAyat}</span>
-                    
                     <button onclick="toggleAudio('${audioUrl}', ${a.nomorAyat})" class="w-7 h-7 flex items-center justify-center rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-emerald-600 hover:scale-110 transition shadow-sm active:scale-95">
-                        <span id="icon-audio-${a.nomorAyat}">
-                            <i data-lucide="play" class="w-3 h-3 fill-current"></i>
-                        </span>
+                        <span id="icon-audio-${a.nomorAyat}"><i data-lucide="play" class="w-3 h-3 fill-current"></i></span>
                     </button>
                 </div>
             </div>
-            
-            <p lang="ar" dir="rtl" class="text-right font-quran text-3xl text-slate-800 dark:text-white mb-4">
-                ${a.teksArab}
-            </p>
-            
+            <p lang="ar" dir="rtl" class="text-right font-quran text-3xl text-slate-800 dark:text-white mb-4 leading-loose">${a.teksArab}</p>
             <p class="text-sm text-emerald-600 dark:text-emerald-400 font-medium mb-1">${a.teksLatin}</p>
             <p class="text-sm text-slate-600 dark:text-slate-300 italic">"${a.teksIndonesia}"</p>
         </div>`;
     });
     container.innerHTML = html;
-    
     if(window.lucide) lucide.createIcons();
+}
+
+// ==========================================
+// 12. NOTIFICATION
+// ==========================================
+let notificationInterval = null;
+let isNotifEnabled = localStorage.getItem('valdi_notif_enabled') === 'true';
+
+window.toggleNotification = async () => {
+    if (!("Notification" in window)) { alert("Browser ini tidak mendukung notifikasi."); return; }
+    if (isNotifEnabled) {
+        isNotifEnabled = false;
+        localStorage.setItem('valdi_notif_enabled', 'false');
+        checkNotificationStatus();
+    } else {
+        if (Notification.permission === "granted") {
+            enableNotif();
+        } else if (Notification.permission !== "denied") {
+            const permission = await Notification.requestPermission();
+            if (permission === "granted") enableNotif();
+        } else {
+            alert("Izin notifikasi ditolak browser.");
+        }
+    }
+};
+
+function enableNotif() {
+    isNotifEnabled = true;
+    localStorage.setItem('valdi_notif_enabled', 'true');
+    new Notification("Jurnal Ibadah", { body: "Notifikasi sholat aktif!", icon: "assets/logo.png" });
+    checkNotificationStatus();
+}
+
+function checkNotificationStatus() {
+    const btn = document.getElementById('notifBtn');
+    if(btn) {
+        btn.classList.remove('text-emerald-600', 'bg-emerald-100/50', 'text-slate-600', 'dark:text-white');
+        if(isNotifEnabled && Notification.permission === 'granted') {
+            btn.classList.add('text-emerald-600', 'bg-emerald-100/50');
+            btn.innerHTML = `<i data-lucide="bell-ring" class="w-5 h-5"></i>`;
+        } else {
+            btn.classList.add('text-slate-600', 'dark:text-white');
+            btn.innerHTML = `<i data-lucide="bell-off" class="w-5 h-5"></i>`;
+        }
+        if(window.lucide) lucide.createIcons();
+    }
+}
+
+function startPrayerCheckTimer() {
+    if(notificationInterval) clearInterval(notificationInterval);
+    notificationInterval = setInterval(() => {
+        if (!isNotifEnabled) return;
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const currentTime = `${hours}:${minutes}`;
+        for (const [name, time] of Object.entries(prayerTimes)) {
+            if (time === currentTime) showPrayerNotification(name);
+        }
+    }, 60000); 
+}
+
+function showPrayerNotification(prayerName) {
+    if (Notification.permission === "granted" && isNotifEnabled) {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification(`Waktunya Sholat ${prayerName}`, {
+                body: `Mari tunaikan sholat ${prayerName} tepat waktu.`,
+                icon: "assets/logo.png",
+                vibrate: [200, 100, 200],
+                tag: "prayer-notification"
+            });
+        });
+    }
 }

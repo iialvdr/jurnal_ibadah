@@ -1,4 +1,5 @@
-const CACHE_NAME = 'jurnal-ibadah-v8'; 
+// Ganti nama cache biar fresh
+const CACHE_NAME = 'jurnal-ibadah-v10-final'; 
 
 const urlsToCache = [
   './',
@@ -11,11 +12,11 @@ const urlsToCache = [
   './js/views/view_home.js',
   './js/views/view_qibla.js',
   './js/views/view_tracker.js',
+  './js/views/view_quran.js',
   './assets/logo.png',
   './manifest.json'
 ];
 
-// Install Service Worker
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -23,7 +24,6 @@ self.addEventListener('install', event => {
   );
 });
 
-// Fetch Data (Agar bisa jalan offline terbatas)
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)

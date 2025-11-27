@@ -8,12 +8,16 @@ export const homeViewHTML = `
                 <h1 id="homeUserName" class="text-2xl font-bold text-slate-800 dark:text-white leading-tight">Hamba Allah</h1>
             </div>
             
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
+                <button onclick="toggleNotification()" id="notifBtn" class="p-2 rounded-full bg-slate-200/50 dark:bg-white/10 hover:bg-slate-300/50 dark:hover:bg-white/20 backdrop-blur-md border border-slate-200/50 dark:border-white/10 text-slate-600 dark:text-white transition active:scale-90 shadow-sm relative">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                </button>
+
                 <button onclick="toggleDarkMode()" class="p-2 rounded-full bg-slate-200/50 dark:bg-white/10 hover:bg-slate-300/50 dark:hover:bg-white/20 backdrop-blur-md border border-slate-200/50 dark:border-white/10 text-slate-600 dark:text-white transition active:scale-90 shadow-sm">
                     <i data-lucide="moon" class="w-5 h-5"></i>
                 </button>
 
-                <div onclick="openProfile()" class="relative group cursor-pointer">
+                <div onclick="openProfile()" class="relative group cursor-pointer ml-1">
                     <div class="absolute inset-0 bg-emerald-500/20 dark:bg-white/20 rounded-full blur-md group-hover:blur-lg transition"></div>
                     <img id="homeUserPhoto" src="" referrerpolicy="no-referrer" class="relative w-10 h-10 rounded-full border-2 border-white/50 dark:border-white/30 object-cover shadow-sm">
                 </div>
@@ -30,10 +34,11 @@ export const homeViewHTML = `
                 <h2 id="nextPrayerName" class="text-4xl font-bold tracking-tight mt-2">...</h2>
                 <p id="nextPrayerTime" class="text-xl opacity-90 font-mono mt-1">--:--</p>
                 
-                <div class="mt-6 flex items-center gap-2 text-[10px] bg-black/20 w-fit px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/10">
-                    <i data-lucide="map-pin" class="w-3 h-3"></i>
+                <button onclick="refreshLocation()" id="locationBtn" class="mt-6 flex items-center gap-2 text-[10px] bg-black/20 w-fit px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/10 hover:bg-black/30 transition active:scale-95 cursor-pointer">
+                    <i id="locIcon" data-lucide="map-pin" class="w-3 h-3"></i>
                     <span id="homeLocationText">Mencari Lokasi...</span>
-                </div>
+                    <i data-lucide="rotate-cw" class="w-2.5 h-2.5 opacity-70 ml-1"></i>
+                </button>
             </div>
         </div>
     </div>
