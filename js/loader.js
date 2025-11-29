@@ -20,9 +20,8 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 // ==========================================
-// 2. VIEW LOADER SYSTEM (THE NEW PART)
+// 2. VIEW LOADER SYSTEM
 // ==========================================
-// Daftar views yang akan diload (urutannya penting untuk z-index tumpukan di SPA)
 const VIEWS = [
     'views/login.html',
     'views/home.html',
@@ -37,32 +36,25 @@ async function loadAllViews() {
     const appContainer = document.getElementById('appContainer');
     if (!appContainer) return;
 
-    // Bersihkan container dulu
     appContainer.innerHTML = '';
 
-    // Loop untuk fetch semua file HTML
     for (const viewPath of VIEWS) {
         try {
             const response = await fetch(viewPath);
             if (!response.ok) throw new Error(`Gagal memuat ${viewPath}`);
             const html = await response.text();
-            
-            // Masukkan HTML ke dalam appContainer
             appContainer.insertAdjacentHTML('beforeend', html);
         } catch (error) {
             console.error(error);
         }
     }
     
-    // Setelah semua HTML masuk, baru jalankan logika aplikasi
     initializeAppLogic();
 }
 
 // ==========================================
 // 3. MAIN APPLICATION LOGIC
 // ==========================================
-// (Kode di bawah ini adalah logika asli dari app.js, dibungkus fungsi agar jalan setelah HTML siap)
-
 function initializeAppLogic() {
     // === GLOBAL VARIABLES ===
     let currentUser = null;
@@ -97,7 +89,6 @@ function initializeAppLogic() {
     let isVibroOn = true;
     let currentDhikrIndex = -1; 
 
-    // Constants
     const PRAYER_CONFIG = [
         { id: 'Subuh', type: 'wajib', icon: 'sunrise' },
         { id: 'Dhuha', type: 'sunnah', icon: 'sun' },
@@ -108,15 +99,75 @@ function initializeAppLogic() {
         { id: 'Tahajud', type: 'sunnah', icon: 'star' }
     ];
 
-    // === NAVIGATION FUNCTIONS ===
-    function hideAllViews() {
-        const views = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView'];
-        views.forEach(id => {
+    // === NAVIGATION FUNCTIONS (SEAMLESS & HISTORY SUPPORT) ===
+    
+    // 1. Setup awal class view
+    function setupViews() {
+        const viewIds = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView'];
+        viewIds.forEach(id => {
             const el = document.getElementById(id);
-            if(el) el.classList.add('hidden-force');
+            if (el) {
+                el.classList.add('app-view'); 
+                if (!el.classList.contains('hidden-force')) {
+                    el.classList.add('active'); 
+                }
+            }
         });
     }
 
+    // 2. Core Function: Pindah View
+    function switchView(targetId, pushState = true) {
+        const viewIds = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView'];
+        const targetEl = document.getElementById(targetId);
+        
+        if (!targetEl) return;
+
+        const currentActive = viewIds.find(id => {
+            const el = document.getElementById(id);
+            return el && el.classList.contains('active');
+        });
+
+        if (currentActive === targetId) return;
+
+        // HISTORY MANAGEMENT
+        if (pushState && targetId !== 'homeView') {
+            history.pushState({ view: targetId }, '', `#${targetId.replace('View', '').toLowerCase()}`);
+        } else if (targetId === 'homeView' && pushState) {
+            // Jika manual ke home, kita replace state agar bersih atau biarkan user menumpuk history
+            // Untuk simple-nya, kita tidak pushState kalau ke Home via tombol back, tapi kalau via menu bisa jadi.
+            // Di sini kita biarkan logic back button yang handle history.
+        }
+
+        // ANIMASI KELUAR
+        if (currentActive) {
+            const oldEl = document.getElementById(currentActive);
+            if(oldEl) {
+                oldEl.classList.remove('active');
+                setTimeout(() => { oldEl.classList.add('hidden-force'); }, 300);
+            }
+        }
+
+        // ANIMASI MASUK
+        targetEl.classList.remove('hidden-force');
+        requestAnimationFrame(() => {
+            setTimeout(() => { targetEl.classList.add('active'); }, 10);
+        });
+    }
+
+    // 3. Listener Tombol Back
+    function setupHistoryListener() {
+        history.replaceState({ view: 'homeView' }, '', '#home');
+
+        window.addEventListener('popstate', (event) => {
+            if (event.state && event.state.view) {
+                switchView(event.state.view, false);
+            } else {
+                switchView('homeView', false);
+            }
+        });
+    }
+
+    // 4. Update Navigasi Window
     function updateHomeUI() {
         updateNextPrayer();
         const locText = document.getElementById('homeLocationText');
@@ -134,29 +185,25 @@ function initializeAppLogic() {
     }
 
     window.goHome = () => {
-        hideAllViews();
-        const homeView = document.getElementById('homeView');
-        if(homeView) homeView.classList.remove('hidden-force');
-        updateHomeUI();
-        if(window.lucide) lucide.createIcons();
+        if (location.hash && location.hash !== '#home') {
+            history.back(); 
+        } else {
+            switchView('homeView', false); // False agar tidak nambah history duplikat
+            updateHomeUI();
+            if(window.lucide) lucide.createIcons();
+        }
     };
 
     window.openTracker = () => {
         if (!currentUser) return;
-        hideAllViews();
-        const trackerView = document.getElementById('trackerView');
-        if(trackerView) {
-            trackerView.classList.remove('hidden-force');
-            requestAnimationFrame(() => renderPrayers());
-        }
+        switchView('trackerView');
+        requestAnimationFrame(() => renderPrayers());
         if(window.lucide) lucide.createIcons();
     };
 
     window.openProfile = () => {
         if(!currentUser) return;
-        hideAllViews();
-        const profileView = document.getElementById('profileView');
-        if(profileView) profileView.classList.remove('hidden-force');
+        switchView('profileView');
 
         const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
         const imgEl = document.getElementById('profilePhotoLarge');
@@ -166,23 +213,82 @@ function initializeAppLogic() {
         if(imgEl) {
             imgEl.src = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName)}&background=10b981&color=fff`;
         }
-        const joinDateObj = new Date(currentUser.metadata.creationTime);
-        setSafeText('joinDate', joinDateObj.toLocaleDateString('id-ID'));
+        
+        if (currentUser.metadata) {
+            const joinDateObj = new Date(currentUser.metadata.creationTime);
+            setSafeText('joinDate', joinDateObj.toLocaleDateString('id-ID'));
+            
+            const diffTime = Math.abs(new Date() - joinDateObj);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            setSafeText('statDays', `${diffDays} Hari`);
+        }
         setSafeText('lastLocation', window.lastCity || "Lokasi belum terdeteksi");
-
-        const diffTime = Math.abs(new Date() - joinDateObj);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        setSafeText('statDays', `${diffDays} Hari`);
 
         let wajibDoneCount = 0;
         PRAYER_CONFIG.forEach(p => { if(p.type === 'wajib' && currentRecords[p.id]) wajibDoneCount++; });
         setSafeText('statToday', `${wajibDoneCount}/5`);
 
-        setTimeout(() => loadChartData(7), 100); 
+        setTimeout(() => loadChartData(7), 300); 
         if(window.lucide) lucide.createIcons();
     };
 
     window.closeProfile = () => { window.goHome(); };
+
+    window.openTasbih = () => {
+        switchView('tasbihView');
+        if(window.lucide) lucide.createIcons();
+        updateDhikrDisplay(); 
+    };
+    window.closeTasbih = () => { window.goHome(); };
+
+    window.openQibla = () => {
+        switchView('qiblaView');
+        if(window.lastLat && window.lastLng) calculateQibla(window.lastLat, window.lastLng);
+        startCompass();
+        
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            const btn = document.getElementById('compassPermissionBtn');
+            if(btn) btn.classList.remove('hidden');
+        }
+        const calib = document.getElementById('calibrationWarning');
+        if(calib) { calib.classList.remove('hidden'); setTimeout(() => calib.classList.add('hidden'), 8000); }
+        if(window.lucide) lucide.createIcons();
+    };
+    window.closeQibla = () => { stopCompass(); window.goHome(); };
+
+    window.openQuran = async () => {
+        switchView('quranView');
+        stopCurrentAudio();
+        
+        const slc = document.getElementById('surahListContainer');
+        const alc = document.getElementById('ayahListContainer');
+        const qsc = document.getElementById('quranSearchContainer');
+        const snb = document.getElementById('surahNavButtons');
+        
+        if(slc) slc.classList.remove('-translate-x-full');
+        if(alc) alc.classList.add('translate-x-full');
+        if(qsc) qsc.classList.remove('-translate-y-20');
+        if(snb) snb.classList.add('translate-y-32');
+        
+        currentSurahId = null;
+        if(!surahDataCache) await fetchSurahList();
+        if(window.lucide) lucide.createIcons();
+    };
+    
+    window.handleQuranBack = () => {
+        stopCurrentAudio();
+        if (currentSurahId) {
+            document.getElementById('surahListContainer').classList.remove('-translate-x-full');
+            document.getElementById('ayahListContainer').classList.add('translate-x-full');
+            document.getElementById('quranSearchContainer').classList.remove('-translate-y-20');
+            document.getElementById('surahNavButtons').classList.add('translate-y-32');
+            document.getElementById('quranTitle').innerText = "Al-Qur'an";
+            currentSurahId = null;
+            currentAyahList = [];
+        } else {
+            window.goHome();
+        }
+    };
 
     // === AUTH HANDLERS ===
     const googleLoginBtn = document.getElementById('googleLoginBtn');
@@ -209,7 +315,7 @@ function initializeAppLogic() {
             currentUser = null;
             if(loginOverlay) loginOverlay.classList.remove('hidden-force');
             if(sidebar) sidebar.classList.add('hidden-force');
-            hideAllViews(); 
+            // Hide all except login is handled by structure
         }
 
         if(splash) {
@@ -226,14 +332,6 @@ function initializeAppLogic() {
     }
 
     // === TASBIH FUNCTIONS ===
-    window.openTasbih = () => {
-        hideAllViews();
-        const tasbihView = document.getElementById('tasbihView');
-        if(tasbihView) tasbihView.classList.remove('hidden-force');
-        if(window.lucide) lucide.createIcons();
-        updateDhikrDisplay(); 
-    };
-    window.closeTasbih = () => { window.goHome(); };
     window.countTasbih = () => {
         tasbihCount++;
         const countEl = document.getElementById('tasbihCount');
@@ -357,21 +455,6 @@ function initializeAppLogic() {
     }
 
     // === QIBLA FUNCTIONS ===
-    window.openQibla = () => {
-        hideAllViews();
-        const qiblaView = document.getElementById('qiblaView');
-        if(qiblaView) qiblaView.classList.remove('hidden-force');
-        if(window.lastLat && window.lastLng) calculateQibla(window.lastLat, window.lastLng);
-        startCompass();
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            const btn = document.getElementById('compassPermissionBtn');
-            if(btn) btn.classList.remove('hidden');
-        }
-        const calib = document.getElementById('calibrationWarning');
-        if(calib) { calib.classList.remove('hidden'); setTimeout(() => calib.classList.add('hidden'), 8000); }
-        if(window.lucide) lucide.createIcons();
-    };
-    window.closeQibla = () => { stopCompass(); window.goHome(); };
     window.requestCompassPermission = async () => {
         try {
             const response = await DeviceOrientationEvent.requestPermission();
@@ -539,16 +622,15 @@ function initializeAppLogic() {
     }
 
     async function initApp() {
-        setupViews(); // <--- TAMBAHKAN INI
+        setupViews();
+        setupHistoryListener(); // Listener back button
         initTheme();
         updateDateUI();
         getLocation();
         startPrayerCheckTimer();
         checkNotificationStatus();
         
-        // window.goHome(); // HAPUS ATAU KOMENTAR BARIS INI
-        // Ganti dengan:
-        switchView('homeView'); // Gunakan switchView untuk load awal
+        switchView('homeView', false); // False agar tidak nambah history duplikat saat start
     }
 
     window.changeDate = (days) => {
@@ -734,39 +816,6 @@ function initializeAppLogic() {
     }
 
     // === AL-QURAN FUNCTIONS ===
-    window.openQuran = async () => {
-        hideAllViews();
-        const quranView = document.getElementById('quranView');
-        if(quranView) quranView.classList.remove('hidden-force');
-        stopCurrentAudio();
-        document.getElementById('surahListContainer').classList.remove('-translate-x-full');
-        document.getElementById('ayahListContainer').classList.add('translate-x-full');
-        const searchContainer = document.getElementById('quranSearchContainer');
-        const navButtons = document.getElementById('surahNavButtons');
-        if(searchContainer) searchContainer.classList.remove('-translate-y-20');
-        if(navButtons) navButtons.classList.add('translate-y-32');
-        document.getElementById('quranTitle').innerText = "Al-Qur'an";
-        currentSurahId = null;
-        currentAyahList = [];
-        if(!surahDataCache) await fetchSurahList();
-        if(window.lucide) lucide.createIcons();
-    };
-
-    window.handleQuranBack = () => {
-        stopCurrentAudio();
-        if (currentSurahId) {
-            document.getElementById('surahListContainer').classList.remove('-translate-x-full');
-            document.getElementById('ayahListContainer').classList.add('translate-x-full');
-            document.getElementById('quranSearchContainer').classList.remove('-translate-y-20');
-            document.getElementById('surahNavButtons').classList.add('translate-y-32');
-            document.getElementById('quranTitle').innerText = "Al-Qur'an";
-            currentSurahId = null;
-            currentAyahList = [];
-        } else {
-            window.goHome();
-        }
-    };
-
     function stopCurrentAudio() {
         if(currentAudio) {
             const prevId = currentAudio.getAttribute('data-id');
@@ -1004,153 +1053,6 @@ function initializeAppLogic() {
         }
     }
 
-    // === NAVIGATION FUNCTIONS (SEAMLESS VERSION) ===
-    
-    // 1. Setup awal: Pasang class .app-view ke semua container view
-    function setupViews() {
-        const viewIds = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView'];
-        viewIds.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.classList.add('app-view'); // Tambahkan class animasi base
-                if (!el.classList.contains('hidden-force')) {
-                    el.classList.add('active'); // Jika sedang tampil, set active
-                }
-            }
-        });
-    }
-
-    // 2. Core Function: Pindah View dengan Animasi
-    function switchView(targetId) {
-        const viewIds = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView'];
-        const targetEl = document.getElementById(targetId);
-        
-        if (!targetEl) return;
-
-        // Cari view yang sedang aktif sekarang
-        const currentActive = viewIds.find(id => {
-            const el = document.getElementById(id);
-            return el && el.classList.contains('active');
-        });
-
-        // Jika target sama dengan yang aktif, jangan lakukan apa-apa
-        if (currentActive === targetId) return;
-
-        // ANIMASI KELUAR (View Lama)
-        if (currentActive) {
-            const oldEl = document.getElementById(currentActive);
-            oldEl.classList.remove('active'); // Memicu CSS transition (opacity 0, scale 0.96)
-            
-            // Tunggu animasi selesai (300ms) baru display: none
-            setTimeout(() => {
-                oldEl.classList.add('hidden-force');
-            }, 300);
-        }
-
-        // ANIMASI MASUK (View Baru)
-        // Hapus hidden-force dulu supaya browser merender elemennya
-        targetEl.classList.remove('hidden-force');
-        
-        // Gunakan requestAnimationFrame/setTimeout kecil agar transisi CSS terbaca browser
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                targetEl.classList.add('active'); // Memicu CSS transition (opacity 1, scale 1)
-            }, 10);
-        });
-    }
-
-    // 3. Update Fungsi Navigasi Lama menggunakan switchView
-    window.goHome = () => {
-        switchView('homeView');
-        updateHomeUI();
-        if(window.lucide) lucide.createIcons();
-    };
-
-    window.openTracker = () => {
-        if (!currentUser) return; // Proteksi login
-        switchView('trackerView');
-        requestAnimationFrame(() => renderPrayers());
-        if(window.lucide) lucide.createIcons();
-    };
-
-    window.openProfile = () => {
-        if(!currentUser) return;
-        switchView('profileView');
-
-        // Logika isi data profil (sama seperti sebelumnya)
-        const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
-        const imgEl = document.getElementById('profilePhotoLarge');
-        
-        setSafeText('profileNameLarge', currentUser.displayName);
-        setSafeText('profileEmail', currentUser.email);
-        if(imgEl) {
-            imgEl.src = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName)}&background=10b981&color=fff`;
-        }
-        const joinDateObj = new Date(currentUser.metadata.creationTime);
-        setSafeText('joinDate', joinDateObj.toLocaleDateString('id-ID'));
-        setSafeText('lastLocation', window.lastCity || "Lokasi belum terdeteksi");
-
-        const diffTime = Math.abs(new Date() - joinDateObj);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        setSafeText('statDays', `${diffDays} Hari`);
-
-        let wajibDoneCount = 0;
-        PRAYER_CONFIG.forEach(p => { if(p.type === 'wajib' && currentRecords[p.id]) wajibDoneCount++; });
-        setSafeText('statToday', `${wajibDoneCount}/5`);
-
-        setTimeout(() => loadChartData(7), 300); // Delay chart sedikit agar tidak lag saat animasi
-        if(window.lucide) lucide.createIcons();
-    };
-
-    window.closeProfile = () => { window.goHome(); };
-
-    window.openTasbih = () => {
-        switchView('tasbihView');
-        if(window.lucide) lucide.createIcons();
-        updateDhikrDisplay(); 
-    };
-    window.closeTasbih = () => { window.goHome(); };
-
-    window.openQibla = () => {
-        switchView('qiblaView');
-        if(window.lastLat && window.lastLng) calculateQibla(window.lastLat, window.lastLng);
-        startCompass();
-        // ... sisa logika qibla tetap sama ...
-        if(window.lucide) lucide.createIcons();
-    };
-    window.closeQibla = () => { stopCompass(); window.goHome(); };
-
-    window.openQuran = async () => {
-        switchView('quranView');
-        stopCurrentAudio();
-        // Reset posisi view Quran
-        document.getElementById('surahListContainer').classList.remove('-translate-x-full');
-        document.getElementById('ayahListContainer').classList.add('translate-x-full');
-        document.getElementById('quranSearchContainer').classList.remove('-translate-y-20');
-        document.getElementById('surahNavButtons').classList.add('translate-y-32');
-        
-        currentSurahId = null;
-        if(!surahDataCache) await fetchSurahList();
-        if(window.lucide) lucide.createIcons();
-    };
-    
-    window.handleQuranBack = () => {
-        stopCurrentAudio();
-        if (currentSurahId) {
-            // Logika back internal Quran (Ayat -> List Surat)
-            document.getElementById('surahListContainer').classList.remove('-translate-x-full');
-            document.getElementById('ayahListContainer').classList.add('translate-x-full');
-            document.getElementById('quranSearchContainer').classList.remove('-translate-y-20');
-            document.getElementById('surahNavButtons').classList.add('translate-y-32');
-            document.getElementById('quranTitle').innerText = "Al-Qur'an";
-            currentSurahId = null;
-            currentAyahList = [];
-        } else {
-            // Back ke Home
-            window.goHome();
-        }
-    };
-
     // === LISTENERS ===
     initTheme();
     document.addEventListener('contextmenu', event => { event.preventDefault(); });
@@ -1158,7 +1060,6 @@ function initializeAppLogic() {
 }
 
 // ==========================================
-// 4. STARTUP (FETCH HTML THEN START)
+// 4. STARTUP
 // ==========================================
 document.addEventListener('DOMContentLoaded', loadAllViews);
-
