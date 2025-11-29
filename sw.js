@@ -1,5 +1,5 @@
 // Ganti nama cache biar fresh
-const CACHE_NAME = 'jurnal-ibadah-v10-final'; 
+const CACHE_NAME = 'jurnal-ibadah-v11'; 
 
 const urlsToCache = [
   './',
