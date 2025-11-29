@@ -539,12 +539,16 @@ function initializeAppLogic() {
     }
 
     async function initApp() {
+        setupViews(); // <--- TAMBAHKAN INI
         initTheme();
         updateDateUI();
         getLocation();
         startPrayerCheckTimer();
         checkNotificationStatus();
-        window.goHome();
+        
+        // window.goHome(); // HAPUS ATAU KOMENTAR BARIS INI
+        // Ganti dengan:
+        switchView('homeView'); // Gunakan switchView untuk load awal
     }
 
     window.changeDate = (days) => {
@@ -1000,6 +1004,153 @@ function initializeAppLogic() {
         }
     }
 
+    // === NAVIGATION FUNCTIONS (SEAMLESS VERSION) ===
+    
+    // 1. Setup awal: Pasang class .app-view ke semua container view
+    function setupViews() {
+        const viewIds = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView'];
+        viewIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.add('app-view'); // Tambahkan class animasi base
+                if (!el.classList.contains('hidden-force')) {
+                    el.classList.add('active'); // Jika sedang tampil, set active
+                }
+            }
+        });
+    }
+
+    // 2. Core Function: Pindah View dengan Animasi
+    function switchView(targetId) {
+        const viewIds = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView'];
+        const targetEl = document.getElementById(targetId);
+        
+        if (!targetEl) return;
+
+        // Cari view yang sedang aktif sekarang
+        const currentActive = viewIds.find(id => {
+            const el = document.getElementById(id);
+            return el && el.classList.contains('active');
+        });
+
+        // Jika target sama dengan yang aktif, jangan lakukan apa-apa
+        if (currentActive === targetId) return;
+
+        // ANIMASI KELUAR (View Lama)
+        if (currentActive) {
+            const oldEl = document.getElementById(currentActive);
+            oldEl.classList.remove('active'); // Memicu CSS transition (opacity 0, scale 0.96)
+            
+            // Tunggu animasi selesai (300ms) baru display: none
+            setTimeout(() => {
+                oldEl.classList.add('hidden-force');
+            }, 300);
+        }
+
+        // ANIMASI MASUK (View Baru)
+        // Hapus hidden-force dulu supaya browser merender elemennya
+        targetEl.classList.remove('hidden-force');
+        
+        // Gunakan requestAnimationFrame/setTimeout kecil agar transisi CSS terbaca browser
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                targetEl.classList.add('active'); // Memicu CSS transition (opacity 1, scale 1)
+            }, 10);
+        });
+    }
+
+    // 3. Update Fungsi Navigasi Lama menggunakan switchView
+    window.goHome = () => {
+        switchView('homeView');
+        updateHomeUI();
+        if(window.lucide) lucide.createIcons();
+    };
+
+    window.openTracker = () => {
+        if (!currentUser) return; // Proteksi login
+        switchView('trackerView');
+        requestAnimationFrame(() => renderPrayers());
+        if(window.lucide) lucide.createIcons();
+    };
+
+    window.openProfile = () => {
+        if(!currentUser) return;
+        switchView('profileView');
+
+        // Logika isi data profil (sama seperti sebelumnya)
+        const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
+        const imgEl = document.getElementById('profilePhotoLarge');
+        
+        setSafeText('profileNameLarge', currentUser.displayName);
+        setSafeText('profileEmail', currentUser.email);
+        if(imgEl) {
+            imgEl.src = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName)}&background=10b981&color=fff`;
+        }
+        const joinDateObj = new Date(currentUser.metadata.creationTime);
+        setSafeText('joinDate', joinDateObj.toLocaleDateString('id-ID'));
+        setSafeText('lastLocation', window.lastCity || "Lokasi belum terdeteksi");
+
+        const diffTime = Math.abs(new Date() - joinDateObj);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        setSafeText('statDays', `${diffDays} Hari`);
+
+        let wajibDoneCount = 0;
+        PRAYER_CONFIG.forEach(p => { if(p.type === 'wajib' && currentRecords[p.id]) wajibDoneCount++; });
+        setSafeText('statToday', `${wajibDoneCount}/5`);
+
+        setTimeout(() => loadChartData(7), 300); // Delay chart sedikit agar tidak lag saat animasi
+        if(window.lucide) lucide.createIcons();
+    };
+
+    window.closeProfile = () => { window.goHome(); };
+
+    window.openTasbih = () => {
+        switchView('tasbihView');
+        if(window.lucide) lucide.createIcons();
+        updateDhikrDisplay(); 
+    };
+    window.closeTasbih = () => { window.goHome(); };
+
+    window.openQibla = () => {
+        switchView('qiblaView');
+        if(window.lastLat && window.lastLng) calculateQibla(window.lastLat, window.lastLng);
+        startCompass();
+        // ... sisa logika qibla tetap sama ...
+        if(window.lucide) lucide.createIcons();
+    };
+    window.closeQibla = () => { stopCompass(); window.goHome(); };
+
+    window.openQuran = async () => {
+        switchView('quranView');
+        stopCurrentAudio();
+        // Reset posisi view Quran
+        document.getElementById('surahListContainer').classList.remove('-translate-x-full');
+        document.getElementById('ayahListContainer').classList.add('translate-x-full');
+        document.getElementById('quranSearchContainer').classList.remove('-translate-y-20');
+        document.getElementById('surahNavButtons').classList.add('translate-y-32');
+        
+        currentSurahId = null;
+        if(!surahDataCache) await fetchSurahList();
+        if(window.lucide) lucide.createIcons();
+    };
+    
+    window.handleQuranBack = () => {
+        stopCurrentAudio();
+        if (currentSurahId) {
+            // Logika back internal Quran (Ayat -> List Surat)
+            document.getElementById('surahListContainer').classList.remove('-translate-x-full');
+            document.getElementById('ayahListContainer').classList.add('translate-x-full');
+            document.getElementById('quranSearchContainer').classList.remove('-translate-y-20');
+            document.getElementById('surahNavButtons').classList.add('translate-y-32');
+            document.getElementById('quranTitle').innerText = "Al-Qur'an";
+            currentSurahId = null;
+            currentAyahList = [];
+        } else {
+            // Back ke Home
+            window.goHome();
+        }
+    };
+
     // === LISTENERS ===
     initTheme();
     document.addEventListener('contextmenu', event => { event.preventDefault(); });
@@ -1010,3 +1161,4 @@ function initializeAppLogic() {
 // 4. STARTUP (FETCH HTML THEN START)
 // ==========================================
 document.addEventListener('DOMContentLoaded', loadAllViews);
+
