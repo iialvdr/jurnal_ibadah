@@ -461,14 +461,45 @@ function resetLocationButton() {
 }
 
 function useDefaultLocation() {
-    window.lastLat = DEFAULT_COORDS.lat;
-    window.lastLng = DEFAULT_COORDS.lng;
-    window.lastCity = "Depok (Default)";
+    // HAPUS atau Komentar bagian ini agar tidak pakai koordinat Depok
+    // window.lastLat = DEFAULT_COORDS.lat;
+    // window.lastLng = DEFAULT_COORDS.lng;
+    
+    // Kosongkan variabel lokasi global agar fitur lain tau kita tidak punya lokasi
+    window.lastLat = null;
+    window.lastLng = null;
+
+    // Beri info ke user bahwa GPS mati/gagal
+    window.lastCity = "GPS Tidak Terdeteksi"; 
+    
     const t1 = document.getElementById('locationText');
     const t2 = document.getElementById('homeLocationText');
+    const nextName = document.getElementById('nextPrayerName');
+    const nextTime = document.getElementById('nextPrayerTime');
+
     if(t1) t1.innerText = window.lastCity;
     if(t2) t2.innerText = window.lastCity;
-    fetchJadwal(window.lastLat, window.lastLng);
+    
+    // Ubah tampilan waktu sholat jadi strip (--)
+    if(nextName) nextName.innerText = "Data Kosong";
+    if(nextTime) nextTime.innerText = "--:--";
+
+    // PENTING: Jangan panggil fetchJadwal() di sini.
+    // Kita reset tampilan jadwal ke kosong.
+    resetJadwalToEmpty();
+}
+
+// Tambahkan fungsi helper baru ini di bawah useDefaultLocation
+function resetJadwalToEmpty() {
+    // Reset objek waktu sholat ke default kosong
+    prayerTimes = { 
+        Subuh: '--:--', Dhuha: '--:--', Dzuhur: '--:--', 
+        Ashar: '--:--', Maghrib: '--:--', Isya: '--:--', Tahajud: '03:00' 
+    };
+    
+    // Render ulang tampilan agar perubahannya terlihat
+    renderPrayers(); 
+    updateNextPrayer();
 }
 
 // [PENTING] Pakai BigDataCloud (Gratis & Stabil)
