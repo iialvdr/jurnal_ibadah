@@ -71,27 +71,27 @@ function renderTodayPrayers() {
         const time = state.prayerTimes[name] || '--:--';
         const isDone = state.currentRecords && state.currentRecords[name] === true;
         
-        let cardStyle, textNameStyle, textTimeStyle;
+        let cardStyle, textNameStyle, textTimeStyle, checkIconStyle;
 
         if (isDone) {
             cardStyle = "bg-emerald-500 border-emerald-500 shadow-md shadow-emerald-500/20";
             textNameStyle = "text-emerald-100";
             textTimeStyle = "text-white";
+            checkIconStyle = '<div class="bg-white/20 rounded-full p-0.5 animate-[zoomIn_0.2s_ease-out]"><i data-lucide="check" class="w-3 h-3 text-white"></i></div>';
         } else {
-            cardStyle = "bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/30 shadow-sm";
-            textNameStyle = "text-slate-400 dark:text-slate-500";
-            textTimeStyle = "text-slate-800 dark:text-white";
+            cardStyle = "bg-slate-200 dark:bg-slate-800/60 border-transparent shadow-sm hover:bg-slate-300 dark:hover:bg-slate-700 active:scale-95";
+            textNameStyle = "text-slate-600 dark:text-slate-400";
+            textTimeStyle = "text-slate-900 dark:text-white"; 
+            checkIconStyle = '<div class="w-4 h-4 rounded-full border-2 border-slate-400/50 dark:border-slate-600"></div>';
         }
         
-        // === [LAYOUT BARU] ===
-        // Susunan: Nama -> Waktu -> Checklist (di bawah)
         html += `
-            <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl border transition-all duration-300 ${cardStyle}">
+            <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl border transition-all duration-300 ${cardStyle} cursor-pointer">
                 <span class="text-[10px] font-bold uppercase tracking-wide ${textNameStyle} mb-0.5">${name}</span>
                 <span class="text-xs font-bold font-mono ${textTimeStyle}">${time}</span>
                 
                 <div class="h-4 flex items-center justify-center mt-1">
-                    ${isDone ? '<div class="bg-white/20 rounded-full p-0.5 animate-[zoomIn_0.2s_ease-out]"><i data-lucide="check" class="w-3 h-3 text-white"></i></div>' : '<div class="w-3 h-3"></div>'}
+                    ${checkIconStyle}
                 </div>
             </div>
         `;
@@ -198,8 +198,15 @@ async function fetchJadwal(lat, lng) {
             setPrayerTimes(newTimes);
             
             if (dayData.date.hijri) {
+                const hijriStr = `${dayData.date.hijri.day} ${dayData.date.hijri.month.en} ${dayData.date.hijri.year} H`;
+                
+                // [PERBAIKAN] Update Tanggal Hijriah di HOME
                 const hEl = document.getElementById('hijriDisplay');
-                if(hEl) hEl.innerText = `${dayData.date.hijri.day} ${dayData.date.hijri.month.en} ${dayData.date.hijri.year} H`;
+                if(hEl) hEl.innerText = hijriStr;
+                
+                // [PERBAIKAN] Update Tanggal Hijriah di TRACKER juga
+                const tEl = document.getElementById('trackerHijriDisplay');
+                if(tEl) tEl.innerText = hijriStr;
             }
         }
     }

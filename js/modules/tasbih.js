@@ -20,32 +20,85 @@ export function initTasbih() {
     window.openDhikrMenu = openDhikrMenu;
     window.closeDhikrMenu = () => document.getElementById('dhikrMenuModal').classList.add('hidden');
     window.chooseDhikr = chooseDhikr;
+    
+    updateTargetUI(33);
 }
 
 function countTasbih() {
     tasbihCount++;
-    document.getElementById('tasbihCount').innerText = tasbihCount;
+    const countEl = document.getElementById('tasbihCount');
+    if(countEl) {
+        countEl.innerText = tasbihCount;
+        countEl.classList.remove('scale-110');
+        void countEl.offsetWidth; 
+        countEl.classList.add('scale-110', 'transition-transform', 'duration-100');
+        setTimeout(() => countEl.classList.remove('scale-110'), 100);
+    }
+
     if(isVibroOn && navigator.vibrate) {
-        if(tasbihTarget > 0 && tasbihCount % tasbihTarget === 0) navigator.vibrate([50, 50, 50]);
-        else navigator.vibrate(15);
+        if(tasbihTarget > 0 && tasbihCount % tasbihTarget === 0) {
+            navigator.vibrate([50, 100, 50]);
+        } else {
+            navigator.vibrate(15);
+        }
     }
 }
 
 function resetTasbih() {
     tasbihCount = 0;
-    document.getElementById('tasbihCount').innerText = '0';
+    const el = document.getElementById('tasbihCount');
+    if(el) el.innerText = '0';
+    if(navigator.vibrate) navigator.vibrate(30);
 }
 
 function setTasbihTarget(target) {
     tasbihTarget = target;
-    document.getElementById('tasbihTargetDisplay').innerText = target === 0 ? "Target: ∞" : `Target: ${target}`;
+    document.getElementById('tasbihTargetDisplay').innerText = target === 0 ? "TARGET: ∞" : `TARGET: ${target}`;
     resetTasbih();
+    updateTargetUI(target);
+}
+
+// [UPDATED] Update Style Rounded di sini agar konsisten
+function updateTargetUI(activeTarget) {
+    const btns = [
+        { val: 33, el: document.getElementById('btnTarget33') },
+        { val: 100, el: document.getElementById('btnTarget100') },
+        { val: 0, el: document.getElementById('btnTargetInf') }
+    ];
+
+    btns.forEach(b => {
+        if(!b.el) return;
+        
+        // SAYA UBAH: rounded-2xl JADI rounded-[1.7rem]
+        const baseClass = "h-14 w-full rounded-[1.7rem] font-bold transition-all duration-300 flex items-center justify-center";
+        const fontSize = b.val === 0 ? "text-2xl pb-1" : "text-sm"; 
+
+        if (b.val === activeTarget) {
+            // AKTIF: Kartu Putih
+            b.el.className = `${baseClass} ${fontSize} bg-white dark:bg-slate-800 text-emerald-600 shadow-sm shadow-slate-300/50 dark:shadow-none ring-1 ring-black/5 dark:ring-white/5`;
+        } else {
+            // NON-AKTIF: Transparan
+            b.el.className = `${baseClass} ${fontSize} text-slate-500 dark:text-slate-400 hover:bg-white/40 dark:hover:bg-slate-700/50`;
+        }
+    });
 }
 
 function toggleVibro() {
     isVibroOn = !isVibroOn;
     const txt = document.getElementById('vibroText');
-    if(txt) txt.innerText = isVibroOn ? "Getar On" : "Getar Off";
+    const btn = document.getElementById('vibroBtn');
+    
+    if(isVibroOn) {
+        if(txt) txt.innerText = "GETAR ON";
+        if(btn) {
+            btn.className = "flex items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-bold text-xs shadow-sm transition active:scale-95";
+        }
+    } else {
+        if(txt) txt.innerText = "GETAR OFF";
+        if(btn) {
+            btn.className = "flex items-center justify-center gap-2 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 font-bold text-xs shadow-sm transition active:scale-95";
+        }
+    }
 }
 
 function openDhikrMenu() {
@@ -53,8 +106,15 @@ function openDhikrMenu() {
     if(!list) return;
     let html = '';
     DHIKR_DATA.forEach((item, index) => {
-        html += `<div onclick="chooseDhikr(${index})" class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer mb-2 bg-slate-50 dark:bg-slate-800/50">
-            <div><h4 class="font-bold text-slate-800 dark:text-white">${item.title}</h4><p class="text-xs text-slate-500">${item.latin}</p></div>
+        html += `
+        <div onclick="chooseDhikr(${index})" class="group p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center justify-between cursor-pointer mb-2 bg-white dark:bg-slate-900 hover:border-emerald-500 transition shadow-sm">
+            <div>
+                <h4 class="font-bold text-slate-800 dark:text-white text-base group-hover:text-emerald-600 transition">${item.title}</h4>
+                <p class="text-xs text-slate-500 font-mono mt-1">${item.latin}</p>
+            </div>
+            <div class="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition">
+                <span class="text-[10px] font-bold">${item.target}</span>
+            </div>
         </div>`;
     });
     list.innerHTML = html;

@@ -40,17 +40,23 @@ function renderSurahList(data) {
 
     let html = '';
     data.forEach(surah => {
+        // [UPDATED] Card Style: Rounded Aesthetic
         html += `
-        <div onclick="openSurah(${surah.nomor})" class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition active:scale-98">
-            <div class="w-10 h-10 flex items-center justify-center bg-emerald-100/50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-bold rounded-full text-sm border border-emerald-200/50">
+        <div onclick="openSurah(${surah.nomor})" class="group bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 cursor-pointer active:scale-[0.98] flex items-center gap-4 relative overflow-hidden">
+            
+            <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-50 dark:bg-emerald-900/10 rounded-full blur-2xl -mr-10 -mt-10 opacity-0 group-hover:opacity-100 transition duration-500"></div>
+
+            <div class="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-slate-50 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 font-black rounded-2xl border border-slate-100 dark:border-slate-700 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300 shadow-inner">
                 ${surah.nomor}
             </div>
-            <div class="flex-1">
-                <h4 class="font-bold text-slate-800 dark:text-white text-base">${surah.namaLatin}</h4>
-                <p class="text-xs text-slate-500 dark:text-slate-400">${surah.arti} • ${surah.jumlahAyat} Ayat</p>
+            
+            <div class="flex-1 relative z-10">
+                <h4 class="font-bold text-slate-800 dark:text-white text-lg leading-tight group-hover:text-emerald-600 transition-colors">${surah.namaLatin}</h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">${surah.arti} • <span class="text-emerald-500">${surah.jumlahAyat} Ayat</span></p>
             </div>
-            <div class="text-right">
-                <span class="font-quran text-xl text-slate-700 dark:text-slate-200">${surah.nama}</span>
+            
+            <div class="text-right relative z-10 pl-2">
+                <span class="font-quran text-2xl text-slate-300 dark:text-slate-600 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors duration-300">${surah.nama}</span>
             </div>
         </div>`;
     });
@@ -78,7 +84,6 @@ async function openSurah(nomor) {
 
     if(loader) loader.classList.remove('hidden');
     
-    // [UPDATE] Matikan tombol sementara saat loading biar nggak bisa dispam
     if(navButtons) {
         Array.from(navButtons.children).forEach(btn => btn.disabled = true);
     }
@@ -99,17 +104,16 @@ async function openSurah(nomor) {
                 ayahContainer.classList.remove('translate-x-full');
                 ayahContainer.scrollTop = 0;
             }
-            if(searchContainer) searchContainer.classList.add('-translate-y-full');
+            // Sembunyikan Search Bar saat baca ayat agar bersih
+            if(searchContainer) searchContainer.classList.add('-translate-y-24', 'opacity-0', 'pointer-events-none');
             
-            // [UPDATE] Tampilkan dan aktifkan kembali tombol sesuai logika
             if(navButtons) {
-                navButtons.classList.remove('translate-y-32');
+                navButtons.classList.remove('translate-y-40');
                 const prevBtn = navButtons.children[0];
                 const nextBtn = navButtons.children[1];
                 
-                // Aktifkan kembali (kecuali jika di ujung surat)
-                if(prevBtn) prevBtn.disabled = nomor === 1;   // Disabled jika Al-Fatihah
-                if(nextBtn) nextBtn.disabled = nomor === 114; // Disabled jika An-Nas
+                if(prevBtn) prevBtn.disabled = nomor === 1;
+                if(nextBtn) nextBtn.disabled = nomor === 114;
             }
         }
     } catch (error) {
@@ -127,32 +131,36 @@ function renderAyahs(ayatList) {
     ayatList.forEach(ayat => {
         const audioUrl = ayat.audio['05'] || ayat.audio['01']; 
 
+        // [UPDATED] Ayah Card Style
         html += `
-        <div class="border-b border-slate-100 dark:border-slate-800 pb-6 last:border-0">
-            <div class="flex justify-between items-start mb-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl">
-                <div class="flex items-center gap-3">
-                    <span class="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 px-3 py-1 rounded-lg text-sm font-bold border border-emerald-200/50">
-                        ${ayat.nomorAyat}
-                    </span>
+        <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group">
+            
+            <div class="flex justify-between items-center mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold flex items-center justify-center text-sm border border-emerald-200/50">
+                    ${ayat.nomorAyat}
                 </div>
-                <div class="flex gap-2">
-                    <button onclick="playAudio('${audioUrl}', this)" class="play-audio-btn w-8 h-8 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-emerald-600 shadow-sm border border-slate-200 dark:border-slate-600 transition group">
-                        <i data-lucide="play" class="w-4 h-4 fill-current group-hover:fill-emerald-600"></i>
-                    </button>
-                </div>
+                <button onclick="playAudio('${audioUrl}', this)" class="play-audio-btn w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-emerald-500 shadow-sm border border-slate-200 dark:border-slate-700 transition-all duration-300 active:scale-90 group-btn">
+                    <i data-lucide="play" class="w-4 h-4 fill-current translate-x-0.5"></i>
+                </button>
             </div>
             
-            <div class="text-right mb-4 px-2">
-                <p class="font-quran text-3xl leading-[2.5] text-slate-800 dark:text-slate-100" dir="rtl">
+            <div class="text-right mb-6 pl-2">
+                <p class="font-quran text-3xl leading-[2.6] text-slate-800 dark:text-white" dir="rtl">
                     ${ayat.teksArab}
                 </p>
             </div>
             
-            <div class="space-y-2 px-2">
-                <p class="text-emerald-600 dark:text-emerald-400 text-sm font-medium italic mb-1">
-                    ${ayat.teksLatin}
+            <div class="space-y-3 bg-slate-50 dark:bg-slate-800/50 -mx-6 -mb-6 p-6 border-t border-slate-100 dark:border-slate-800">
+                <p class="text-emerald-600 dark:text-emerald-400 text-sm font-bold tracking-wide mb-1">
+                    Latin
                 </p>
-                <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+                <p class="text-slate-500 dark:text-slate-400 text-sm font-medium italic mb-4 leading-relaxed">
+                    "${ayat.teksLatin}"
+                </p>
+                 <p class="text-emerald-600 dark:text-emerald-400 text-sm font-bold tracking-wide mb-1">
+                    Terjemahan
+                </p>
+                <p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
                     ${ayat.teksIndonesia}
                 </p>
             </div>
@@ -192,10 +200,11 @@ function playAudio(url, btnElement) {
         const allBtns = Array.from(document.querySelectorAll('.play-audio-btn'));
         const currIndex = allBtns.indexOf(btnElement);
         
+        // Auto-play next ayah
         if (currIndex >= 0 && currIndex < allBtns.length - 1) {
             const nextBtn = allBtns[currIndex + 1];
-            nextBtn.closest('.border-b').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            nextBtn.click();
+            nextBtn.closest('.bg-white').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => nextBtn.click(), 500); // Delay dikit biar enak
         }
     };
     
@@ -220,14 +229,16 @@ function stopCurrentAudio() {
 }
 
 function updateButtonUI(btn, state) {
-    btn.innerHTML = `<i data-lucide="${state}" class="w-4 h-4 fill-current"></i>`;
-    
     if (state === 'pause') {
-        btn.classList.add('text-emerald-600', 'border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20');
-        btn.classList.add('animate-pulse');
+        btn.innerHTML = `<i data-lucide="pause" class="w-4 h-4 fill-current"></i>`;
+        // Style Active
+        btn.classList.remove('bg-slate-50', 'dark:bg-slate-800', 'text-slate-400');
+        btn.classList.add('bg-emerald-500', 'text-white', 'scale-110', 'shadow-lg', 'shadow-emerald-500/40', 'border-transparent');
     } else {
-        btn.classList.remove('text-emerald-600', 'border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20');
-        btn.classList.remove('animate-pulse');
+        btn.innerHTML = `<i data-lucide="play" class="w-4 h-4 fill-current translate-x-0.5"></i>`;
+        // Style Inactive (Reset)
+        btn.classList.add('bg-slate-50', 'dark:bg-slate-800', 'text-slate-400');
+        btn.classList.remove('bg-emerald-500', 'text-white', 'scale-110', 'shadow-lg', 'shadow-emerald-500/40', 'border-transparent');
     }
 
     if (window.lucide) {
@@ -251,8 +262,11 @@ function handleQuranBack() {
     
     if (ayahContainer && !ayahContainer.classList.contains('translate-x-full')) {
         ayahContainer.classList.add('translate-x-full');
-        if(searchContainer) searchContainer.classList.remove('-translate-y-full');
-        if(navButtons) navButtons.classList.add('translate-y-32');
+        
+        // Munculkan kembali Search Bar
+        if(searchContainer) searchContainer.classList.remove('-translate-y-24', 'opacity-0', 'pointer-events-none');
+        
+        if(navButtons) navButtons.classList.add('translate-y-40');
         if(title) title.innerText = "Al-Qur'an";
         
         stopCurrentAudio(); 

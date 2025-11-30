@@ -1,5 +1,5 @@
 // Ganti versi cache agar browser mau mengambil file baru
-const CACHE_NAME = 'jurnal-ibadah-v14'; 
+const CACHE_NAME = 'jurnal-ibadah-v15'; 
 
 const urlsToCache = [
   // 1. Root & Config

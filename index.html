@@ -52,15 +52,29 @@
                     <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium tracking-widest uppercase">Ibadah App</p>
                 </div>
             </div>
+            
             <div class="space-y-2 flex-1">
-                <button onclick="goHome()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/40 dark:hover:bg-white/10 transition text-sm font-medium text-slate-700 dark:text-slate-200 group"><i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition"></i>Dashboard</button>
-                <button onclick="openTracker()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/40 dark:hover:bg-white/10 transition text-sm font-medium text-slate-700 dark:text-slate-200 group"><i data-lucide="list-checks" class="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition"></i>Jurnal Harian</button>
-                <button onclick="openTasbih()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/40 dark:hover:bg-white/10 transition text-sm font-medium text-slate-700 dark:text-slate-200 group"><i data-lucide="grip" class="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition"></i>Tasbih Digital</button>
-                <button onclick="openQibla()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/40 dark:hover:bg-white/10 transition text-sm font-medium text-slate-700 dark:text-slate-200 group"><i data-lucide="compass" class="w-5 h-5 text-slate-400 group-hover:text-teal-500 transition"></i>Arah Kiblat</button>
-                <button onclick="openQuran()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/40 dark:hover:bg-white/10 transition text-sm font-medium text-slate-700 dark:text-slate-200 group"><i data-lucide="book-open" class="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition"></i>Al-Qur'an</button>
+                <button id="nav-home" onclick="goHome()" class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition"></i>Dashboard
+                </button>
+                <button id="nav-tracker" onclick="openTracker()" class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group">
+                    <i data-lucide="list-checks" class="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition"></i>Jurnal Harian
+                </button>
+                <button id="nav-tasbih" onclick="openTasbih()" class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group">
+                    <i data-lucide="grip" class="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition"></i>Tasbih Digital
+                </button>
+                <button id="nav-qibla" onclick="openQibla()" class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group">
+                    <i data-lucide="compass" class="w-5 h-5 text-slate-400 group-hover:text-teal-500 transition"></i>Arah Kiblat
+                </button>
+                <button id="nav-quran" onclick="openQuran()" class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group">
+                    <i data-lucide="book-open" class="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition"></i>Al-Qur'an
+                </button>
             </div>
+            
             <div class="pt-4 border-t border-white/10 dark:border-slate-700/30 mt-2">
-                <button onclick="openProfile()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/40 dark:hover:bg-white/10 transition text-sm font-medium text-slate-700 dark:text-slate-200 group"><i data-lucide="user" class="w-5 h-5 text-slate-400 group-hover:text-amber-500 transition"></i>Profil & Statistik</button>
+                <button id="nav-profile" onclick="openProfile()" class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group">
+                    <i data-lucide="user" class="w-5 h-5 text-slate-400 group-hover:text-amber-500 transition"></i>Profil & Statistik
+                </button>
             </div>
         </div>
 
@@ -70,7 +84,6 @@
 
     <script>
         if ('serviceWorker' in navigator) {
-            // [PENTING] Jangan lupa update list cache di sw.js juga ya Valdi!
             window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(console.error); });
         }
     </script>

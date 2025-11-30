@@ -1,83 +1,152 @@
-<div id="profileView" class="hidden-force flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-hidden">
+<div id="profileView" class="hidden-force flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-hidden bg-slate-100 dark:bg-slate-950">
+    
     <div class="px-6 pb-4 pt-[calc(2rem+env(safe-area-inset-top))] flex justify-between items-center relative shrink-0 z-20">
-        <button onclick="closeProfile()" class="p-2 -ml-2 rounded-xl hover:bg-white/20 transition group">
-            <div class="bg-white/40 dark:bg-slate-700/40 p-2 rounded-full backdrop-blur-md shadow-sm border border-white/20 group-hover:border-emerald-500/30 transition">
-                <i data-lucide="arrow-left" class="w-5 h-5 text-slate-600 dark:text-slate-300"></i>
-            </div>
+        <button onclick="closeProfile()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-md border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-emerald-600 group">
+            <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-0.5 transition"></i>
         </button>
-        <h2 class="text-lg font-bold text-slate-800 dark:text-white tracking-tight">Profil Saya</h2>
-        <div class="w-9"></div>
-    </div>
-    <div class="flex-1 px-6 py-2 overflow-y-auto pb-32">
-        <div class="flex flex-col items-center text-center mb-8 mt-2">
-            <div class="relative mb-4 group">
-                <div class="absolute inset-0 bg-emerald-500 blur-xl opacity-20 rounded-full group-hover:opacity-40 transition"></div>
-                <img id="profilePhotoLarge" src="" referrerpolicy="no-referrer" class="relative w-28 h-28 rounded-full border-4 border-white/50 dark:border-slate-700/50 shadow-2xl object-cover">
-                <div class="absolute bottom-1 right-1 bg-emerald-500 text-white p-1.5 rounded-full border-2 border-white dark:border-slate-800 shadow-lg">
-                    <i data-lucide="shield-check" class="w-4 h-4"></i>
-                </div>
-            </div>
-            <h2 id="profileNameLarge" class="text-2xl font-bold text-slate-800 dark:text-white">Nama Pengguna</h2>
-            <p id="profileEmail" class="text-sm text-slate-500 dark:text-slate-400">email@example.com</p>
-        </div>
-        <div class="grid grid-cols-2 gap-3 mb-4">
-            <div class="p-5 rounded-3xl flex flex-col items-center justify-center bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/40 dark:border-slate-700/30 shadow-sm">
-                <div class="bg-emerald-100/50 dark:bg-emerald-900/30 p-2 rounded-full mb-2 text-emerald-600"><i data-lucide="hourglass" class="w-5 h-5"></i></div>
-                <h4 class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">Perjalanan</h4>
-                <p id="statDays" class="text-lg font-black text-slate-800 dark:text-white mt-0.5">0 Hari</p>
-            </div>
-            <div class="p-5 rounded-3xl flex flex-col items-center justify-center bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/40 dark:border-slate-700/30 shadow-sm">
-                <div class="bg-blue-100/50 dark:bg-blue-900/30 p-2 rounded-full mb-2 text-blue-600"><i data-lucide="bar-chart-2" class="w-5 h-5"></i></div>
-                <h4 class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">Hari Ini</h4>
-                <p id="statToday" class="text-lg font-black text-slate-800 dark:text-white mt-0.5">0/5</p>
-            </div>
-        </div>
-        <div class="rounded-3xl p-5 shadow-sm bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/40 dark:border-slate-700/30 mb-4">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Tren Ibadah</h3>
-                <div class="flex bg-slate-100/50 dark:bg-slate-700/50 rounded-lg p-1 gap-1 backdrop-blur-sm">
-                    <button onclick="loadChartData(7)" id="btn7Days" class="px-2 py-1 text-[10px] rounded-md font-medium transition shadow-sm bg-white dark:bg-slate-600 text-emerald-600">7 Hari</button>
-                    <button onclick="loadChartData(14)" id="btn14Days" class="px-2 py-1 text-[10px] rounded-md font-medium transition text-slate-500 hover:text-emerald-600">14 Hari</button>
-                </div>
-            </div>
-            <div class="relative h-48 w-full"><canvas id="activityChart"></canvas></div>
-        </div>
-        <div class="rounded-3xl p-5 shadow-sm bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/40 dark:border-slate-700/30 mb-6">
-            <h3 class="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-4">Informasi Akun</h3>
-            <div class="space-y-4">
-                <div class="flex items-center gap-4">
-                    <div class="bg-white/50 dark:bg-slate-700/50 p-2 rounded-xl text-emerald-600"><i data-lucide="calendar" class="w-5 h-5"></i></div>
-                    <div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Bergabung Sejak</p>
-                        <p id="joinDate" class="font-medium text-slate-800 dark:text-white text-sm">-</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4">
-                    <div class="bg-white/50 dark:bg-slate-700/50 p-2 rounded-xl text-blue-600"><i data-lucide="map-pin" class="w-5 h-5"></i></div>
-                    <div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Lokasi Terakhir</p>
-                        <p id="lastLocation" class="font-medium text-slate-800 dark:text-white text-sm">-</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <button id="logoutBtnProfile" class="w-full mt-2 p-4 rounded-2xl font-bold border transition flex items-center justify-center gap-2 bg-red-50/50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-100/50 dark:border-red-900/30 hover:bg-red-100/50 backdrop-blur-sm hover:scale-[1.02] active:scale-95">
-            <i data-lucide="log-out" class="w-5 h-5"></i> Keluar Aplikasi
+        <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Profil Saya</h2>
+        
+        <button onclick="openEditProfile()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-md border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-emerald-600">
+            <i data-lucide="settings" class="w-5 h-5"></i>
         </button>
-        <p class="text-center text-[10px] text-slate-400 mt-6 pb-8">Jurnal Ibadah v1.0 • By Valdi</p>
     </div>
 
-    <div id="logoutModal" class="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm hidden-force opacity-0 transition-all duration-300">
-        <div class="bg-white/90 dark:bg-slate-900/90 w-[80%] max-w-xs p-6 rounded-3xl shadow-2xl border border-white/20 dark:border-slate-700/50 transform scale-90 transition-all duration-300" id="logoutModalContent">
-            <div class="flex flex-col items-center text-center">
-                <div class="w-14 h-14 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mb-4 shadow-inner">
-                    <i data-lucide="log-out" class="w-7 h-7"></i>
+    <div class="flex-1 overflow-y-auto pb-32 scroll-smooth">
+        
+        <div class="px-6 mb-6">
+            <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-200 dark:border-slate-800 shadow-lg relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                
+                <div class="flex flex-col items-center text-center relative z-10">
+                    <div class="relative mb-4">
+                        <div class="absolute inset-0 bg-emerald-500 blur-xl opacity-20 rounded-full group-hover:opacity-40 transition duration-500"></div>
+                        <img id="profilePhotoLarge" src="" referrerpolicy="no-referrer" class="relative w-24 h-24 rounded-full border-4 border-slate-50 dark:border-slate-800 shadow-xl object-cover transform group-hover:scale-105 transition duration-300">
+                        <div class="absolute bottom-0 right-0 bg-emerald-500 text-white p-1.5 rounded-full border-4 border-white dark:border-slate-900 shadow-sm">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <h2 id="profileNameLarge" class="text-2xl font-black text-slate-800 dark:text-white tracking-tight mb-1">Nama Pengguna</h2>
+                    <p id="profileEmail" class="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">email@example.com</p>
                 </div>
-                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">Konfirmasi Keluar</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">Yakin mau udahan dulu? Sesi kamu akan berakhir setelah ini.</p>
+            </div>
+        </div>
+
+        <div class="px-6 grid grid-cols-3 gap-3 mb-6">
+            <div class="bg-white dark:bg-slate-900 p-4 rounded-[1.7rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center">
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-full mb-2 text-blue-600 dark:text-blue-400">
+                    <i data-lucide="hourglass" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Gabung</span>
+                <span id="statDays" class="text-sm font-black text-slate-800 dark:text-white">0 Hari</span>
+            </div>
+            
+            <div class="bg-white dark:bg-slate-900 p-4 rounded-[1.7rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center">
+                <div class="bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded-full mb-2 text-emerald-600 dark:text-emerald-400">
+                    <i data-lucide="activity" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Mingguan</span>
+                <span id="statConsistency" class="text-sm font-black text-slate-800 dark:text-white">0%</span>
+            </div>
+            
+            <div class="bg-white dark:bg-slate-900 p-4 rounded-[1.7rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center">
+                <div class="bg-amber-50 dark:bg-amber-900/20 p-2 rounded-full mb-2 text-amber-600 dark:text-amber-400">
+                    <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Hari Ini</span>
+                <span id="statToday" class="text-sm font-black text-slate-800 dark:text-white">0/5</span>
+            </div>
+        </div>
+
+        <div class="px-6 mb-6">
+            <div class="bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="font-bold text-slate-800 dark:text-white text-sm">Tren Ibadah</h3>
+                        <p class="text-[10px] text-slate-500">Aktivitas 7 hari terakhir</p>
+                    </div>
+                    <div class="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-1 gap-1">
+                        <button onclick="loadChartData(7)" id="btn7Days" class="px-3 py-1.5 text-[10px] rounded-lg font-bold transition shadow-sm bg-white dark:bg-slate-700 text-emerald-600">7 Hari</button>
+                        <button onclick="loadChartData(14)" id="btn14Days" class="px-3 py-1.5 text-[10px] rounded-lg font-bold transition text-slate-400 hover:text-emerald-600">14 Hari</button>
+                    </div>
+                </div>
+                <div class="relative h-48 w-full">
+                    <canvas id="activityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-6 mb-8 space-y-3">
+            <h3 class="px-2 text-xs font-bold text-slate-400 uppercase tracking-widest">Informasi & Akun</h3>
+            
+            <div class="bg-white dark:bg-slate-900 rounded-[1.5rem] p-1 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div class="p-4 flex items-center gap-4 border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition cursor-pointer">
+                    <div class="w-10 h-10 rounded-full bg-violet-50 dark:bg-violet-900/20 text-violet-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="calendar" class="w-5 h-5"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Bergabung Sejak</p>
+                        <p id="joinDate" class="font-bold text-slate-800 dark:text-white text-sm">-</p>
+                    </div>
+                </div>
+                
+                <div class="p-4 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition cursor-pointer">
+                    <div class="w-10 h-10 rounded-full bg-sky-50 dark:bg-sky-900/20 text-sky-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Lokasi Terakhir</p>
+                        <p id="lastLocation" class="font-bold text-slate-800 dark:text-white text-sm truncate max-w-[200px]">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <button id="logoutBtnProfile" class="w-full p-4 rounded-[1.5rem] font-bold border transition flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border-red-100 dark:border-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/30 hover:shadow-lg hover:shadow-red-500/10 active:scale-98">
+                <i data-lucide="log-out" class="w-5 h-5"></i> Keluar Aplikasi
+            </button>
+            
+            <p class="text-center text-[10px] text-slate-400 pt-4">Jurnal Ibadah v1.5 • By Valdi</p>
+        </div>
+    </div>
+
+    <div id="editProfileModal" class="absolute inset-0 z-[60] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden-force opacity-0 transition-all duration-300">
+        <div class="bg-white dark:bg-slate-900 w-full sm:w-[85%] sm:max-w-xs p-6 rounded-t-[2.5rem] sm:rounded-[2rem] shadow-2xl border-t sm:border border-white/20 dark:border-slate-800 transform translate-y-20 sm:translate-y-0 sm:scale-95 transition-all duration-300" id="editProfileContent">
+            
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-black text-slate-800 dark:text-white">Edit Profil</h3>
+                <button onclick="closeEditProfile()" class="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-red-500 transition"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Nama Tampilan</label>
+                    <input type="text" id="editNameInput" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition" placeholder="Nama Kamu">
+                </div>
+                
+                <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900/30 flex gap-3 items-start">
+                    <i data-lucide="info" class="w-4 h-4 text-blue-500 mt-0.5 shrink-0"></i>
+                    <p class="text-xs text-blue-600 dark:text-blue-300 leading-relaxed">
+                        Saat ini foto profil diambil dari akun Google kamu.
+                    </p>
+                </div>
+
+                <button id="saveProfileBtn" class="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 transition active:scale-95 flex items-center justify-center gap-2">
+                    Simpan Perubahan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="logoutModal" class="absolute inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden-force opacity-0 transition-all duration-300">
+        <div class="bg-white dark:bg-slate-900 w-[85%] max-w-xs p-6 rounded-[2rem] shadow-2xl border border-white/20 dark:border-slate-800 transform scale-90 transition-all duration-300" id="logoutModalContent">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-16 h-16 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mb-4 shadow-inner">
+                    <i data-lucide="log-out" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">Konfirmasi Keluar</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">Yakin mau udahan dulu? Sesi kamu akan berakhir setelah ini.</p>
                 <div class="flex gap-3 w-full">
-                    <button id="cancelLogoutBtn" class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs transition active:scale-95 hover:bg-slate-200 dark:hover:bg-slate-700">Batal</button>
-                    <button id="confirmLogoutBtn" class="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-xs shadow-lg shadow-red-500/30 transition active:scale-95">Ya, Keluar</button>
+                    <button id="cancelLogoutBtn" class="flex-1 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-sm transition active:scale-95 hover:bg-slate-200 dark:hover:bg-slate-700">Batal</button>
+                    <button id="confirmLogoutBtn" class="flex-1 py-3.5 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm shadow-lg shadow-red-500/30 transition active:scale-95">Ya, Keluar</button>
                 </div>
             </div>
         </div>

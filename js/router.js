@@ -6,13 +6,10 @@ export function setupRouter() {
     const handleNavigation = () => {
         // [GUARD] SATPAM: Cek apakah user sudah login?
         if (!state.currentUser) {
-            // Jika user BELUM login tapi ada hash di URL (misal user tekan Back ke #profile),
-            // Kita paksa TIMPA URL tersebut agar kembali bersih.
-            // 'replaceState' tidak menambah history baru, tapi menimpa yang sekarang.
             if (window.location.hash && window.location.hash !== '#home') {
                 history.replaceState(null, null, window.location.pathname);
             }
-            return; // STOP! Jangan izinkan pindah view.
+            return; 
         }
 
         // Ambil hash, default ke 'home'
@@ -27,25 +24,21 @@ export function setupRouter() {
             'profile': 'profileView'
         };
 
-        // Jika hash tidak dikenali, paksa balik ke home (cegah blank page)
         const targetViewId = routes[hash] || 'homeView';
         switchView(targetViewId);
     };
 
-    // Dengarkan perubahan URL (#) dan saat load awal
     window.addEventListener('hashchange', handleNavigation);
     window.addEventListener('load', handleNavigation);
 
-    // 2. FUNGSI TOMBOL GLOBAL (Cukup ubah Hash saja)
+    // 2. FUNGSI TOMBOL GLOBAL
     window.goHome = () => window.location.hash = 'home';
-    
     window.openTracker = () => window.location.hash = 'tracker';
     window.openTasbih = () => window.location.hash = 'tasbih';
     window.openQibla = () => window.location.hash = 'qibla';
     window.openQuran = () => window.location.hash = 'quran';
     window.openProfile = () => window.location.hash = 'profile';
 
-    // Alias tombol Close/Back
     window.closeQibla = () => window.goHome();
     window.closeTasbih = () => window.goHome();
     window.closeProfile = () => window.goHome();
@@ -57,7 +50,7 @@ export function switchView(targetId) {
     
     if (!targetEl) return;
 
-    // 1. Reset SEMUA View (Sembunyikan)
+    // 1. Reset SEMUA View
     allViews.forEach(id => {
         const el = document.getElementById(id);
         if (el && el !== targetEl) { 
@@ -70,9 +63,8 @@ export function switchView(targetId) {
         }
     });
 
-    // 2. Munculkan TARGET dengan Animasi
+    // 2. Munculkan TARGET
     targetEl.classList.remove('hidden-force');
-    
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             targetEl.classList.add('active');
@@ -83,7 +75,47 @@ export function switchView(targetId) {
     if (window.lucide && targetEl.querySelectorAll('i[data-lucide]').length > 0) {
         try { lucide.createIcons({ root: targetEl }); } catch(e) {}
     }
+
+    // 4. Update Sidebar Active State [NEW]
+    updateSidebarUI(targetId);
     
-    // 4. Info ke Modul Lain
+    // 5. Info ke Modul Lain
     window.dispatchEvent(new CustomEvent('viewChanged', { detail: { viewId: targetId } }));
+}
+
+function updateSidebarUI(activeViewId) {
+    // Mapping View ID ke ID Tombol Sidebar
+    const map = {
+        'homeView': 'nav-home',
+        'trackerView': 'nav-tracker',
+        'tasbihView': 'nav-tasbih',
+        'qiblaView': 'nav-qibla',
+        'quranView': 'nav-quran',
+        'profileView': 'nav-profile'
+    };
+
+    const activeBtnId = map[activeViewId];
+    if(!activeBtnId) return;
+
+    // Reset semua tombol sidebar ke state "Inactive"
+    const allBtns = document.querySelectorAll('.sidebar-btn');
+    allBtns.forEach(btn => {
+        // Style Inactive (Transparan & Teks Abu)
+        btn.className = "sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group";
+        
+        // Reset Icon Color
+        const icon = btn.querySelector('i');
+        if(icon) icon.className = "w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition";
+    });
+
+    // Set tombol aktif ke state "Active"
+    const activeBtn = document.getElementById(activeBtnId);
+    if(activeBtn) {
+        // Style Active (Putih/Gelap Solid + Teks Emerald + Shadow)
+        activeBtn.className = "sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-white dark:bg-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none text-sm font-bold text-emerald-600 dark:text-emerald-400 group ring-1 ring-white/50 dark:ring-slate-700";
+        
+        // Icon Active Color
+        const icon = activeBtn.querySelector('i');
+        if(icon) icon.className = "w-5 h-5 text-emerald-500";
+    }
 }
