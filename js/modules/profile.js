@@ -182,11 +182,14 @@ function setupLogoutListeners() {
 
     if(logoutBtn) logoutBtn.addEventListener('click', () => toggleLogoutModal(true));
     if(cancelBtn) cancelBtn.addEventListener('click', () => toggleLogoutModal(false));
+    
+    // === [BAGIAN YANG DIUBAH] ===
     if(confirmBtn) confirmBtn.addEventListener('click', async () => {
         toggleLogoutModal(false);
         try {
             await signOut(auth);
-            // Router akan handle auth state change otomatis di app.js
+            // Refresh halaman agar semua state bersih total
+            window.location.reload(); 
         } catch(e) {
             console.error("Logout error", e);
         }

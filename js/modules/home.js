@@ -1,10 +1,11 @@
 import { state, setPrayerTimes, setLastCity } from '../state.js';
-import { updateProgressBar, loadRecordsFromCloud } from './tracker.js'; // [UPDATE] Import loadRecordsFromCloud
+import { updateProgressBar, loadRecordsFromCloud } from './tracker.js'; 
 import { db } from '../config.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Variable state untuk tema
 let isDarkMode = false;
+let lastNotifiedTime = ""; 
 
 export function initHome() {
     window.refreshLocation = refreshLocation;
@@ -13,7 +14,7 @@ export function initHome() {
 
     initTheme();
     updateDateUI();
-    startPrayerCheckTimer();
+    startPrayerCheckTimer(); 
     checkNotificationStatus();
     
     // Auto get location on init
@@ -29,10 +30,8 @@ export function initHome() {
 export function updateHomeUI() {
     updateNextPrayer();
     
-    // Render awal (agar tidak kosong saat loading)
     renderTodayPrayers(); 
 
-    // [UPDATE] Fetch data ceklis terbaru, lalu render ulang agar warnanya update
     if(state.currentUser) {
         loadRecordsFromCloud().then(() => {
             renderTodayPrayers();
@@ -46,10 +45,8 @@ export function updateHomeUI() {
         const hName = document.getElementById('homeUserName');
         const hPhoto = document.getElementById('homeUserPhoto');
         
-        // Update Nama
         if(hName) hName.innerText = state.currentUser.displayName || "Hamba Allah";
         
-        // Update Foto
         if(hPhoto) {
             const photoUrl = state.currentUser.photoURL || 
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(state.currentUser.displayName || 'User')}&background=10b981&color=fff`;
@@ -63,51 +60,44 @@ export function updateHomeUI() {
     checkNotificationStatus();
 }
 
-// [UPDATE] Fungsi render dengan logika warna ceklis
 function renderTodayPrayers() {
     const container = document.getElementById('todayPrayerGrid');
     if(!container) return;
 
-    // Daftar sholat wajib
     const wajibPrayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
     let html = '';
 
     wajibPrayers.forEach(name => {
         const time = state.prayerTimes[name] || '--:--';
-        
-        // Cek apakah sholat ini sudah diceklis di tracker
-        // Kita akses state.currentRecords yang sudah di-load oleh loadRecordsFromCloud
         const isDone = state.currentRecords && state.currentRecords[name] === true;
         
-        // Tentukan Styling berdasarkan status isDone
         let cardStyle, textNameStyle, textTimeStyle;
 
         if (isDone) {
-            // STYLE: SUDAH DIKERJAKAN (Hijau Emerald & Teks Putih)
             cardStyle = "bg-emerald-500 border-emerald-500 shadow-md shadow-emerald-500/20";
-            textNameStyle = "text-emerald-100"; // Agak transparan dikit
-            textTimeStyle = "text-white";         // Putih tegas
+            textNameStyle = "text-emerald-100";
+            textTimeStyle = "text-white";
         } else {
-            // STYLE: BELUM DIKERJAKAN (Putih/Dark Default)
             cardStyle = "bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/30 shadow-sm";
             textNameStyle = "text-slate-400 dark:text-slate-500";
             textTimeStyle = "text-slate-800 dark:text-white";
         }
         
+        // === [LAYOUT BARU] ===
+        // Susunan: Nama -> Waktu -> Checklist (di bawah)
         html += `
-            <div class="flex flex-col items-center justify-center py-3 px-1 rounded-2xl border transition-all duration-300 ${cardStyle}">
-                <div class="flex items-center gap-1 mb-1">
-                    ${isDone ? '<i data-lucide="check" class="w-3 h-3 text-white"></i>' : ''}
-                    <span class="text-[10px] font-bold uppercase tracking-wide ${textNameStyle}">${name}</span>
-                </div>
+            <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl border transition-all duration-300 ${cardStyle}">
+                <span class="text-[10px] font-bold uppercase tracking-wide ${textNameStyle} mb-0.5">${name}</span>
                 <span class="text-xs font-bold font-mono ${textTimeStyle}">${time}</span>
+                
+                <div class="h-4 flex items-center justify-center mt-1">
+                    ${isDone ? '<div class="bg-white/20 rounded-full p-0.5 animate-[zoomIn_0.2s_ease-out]"><i data-lucide="check" class="w-3 h-3 text-white"></i></div>' : '<div class="w-3 h-3"></div>'}
+                </div>
             </div>
         `;
     });
 
     container.innerHTML = html;
-    
-    // Refresh icon check jika ada
     if(window.lucide) lucide.createIcons({ root: container });
 }
 
@@ -215,7 +205,7 @@ async function fetchJadwal(lat, lng) {
     }
     
     updateNextPrayer();
-    renderTodayPrayers(); // Update grid saat data jadwal baru masuk
+    renderTodayPrayers();
     window.dispatchEvent(new Event('prayerTimesUpdated'));
 }
 
@@ -289,7 +279,7 @@ async function toggleNotification() {
         if (permission === "granted") {
             state.isNotifEnabled = true;
             localStorage.setItem('valdi_notif_enabled', 'true');
-            new Notification("Jurnal Ibadah", { body: "Notifikasi aktif!", icon: "assets/logo.png" });
+            new Notification("Jurnal Ibadah", { body: "Notifikasi aktif! Kamu akan diingatkan waktu sholat.", icon: "assets/logo.png" });
         }
     }
     checkNotificationStatus();
@@ -310,12 +300,21 @@ function checkNotificationStatus() {
 function startPrayerCheckTimer() {
     setInterval(() => {
         if (!state.isNotifEnabled) return;
+        
         const now = new Date();
         const cur = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        
+        if (cur === lastNotifiedTime) return;
+
         for (const [name, time] of Object.entries(state.prayerTimes)) {
             if (time === cur) {
-                 new Notification(`Waktunya Sholat ${name}`, { body: "Mari tunaikan sholat.", icon: "assets/logo.png" });
+                 new Notification(`Waktunya Sholat ${name}`, { 
+                     body: `Mari tunaikan sholat ${name} tepat waktu.`, 
+                     icon: "assets/logo.png",
+                     tag: `adzan-${name}` 
+                 });
+                 lastNotifiedTime = cur;
             }
         }
-    }, 60000);
+    }, 10000); 
 }

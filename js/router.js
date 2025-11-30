@@ -1,8 +1,20 @@
 // js/router.js
+import { state } from './state.js'; 
 
 export function setupRouter() {
     // 1. SYSTEM NAVIGASI SATU PINTU (Hash Listener)
     const handleNavigation = () => {
+        // [GUARD] SATPAM: Cek apakah user sudah login?
+        if (!state.currentUser) {
+            // Jika user BELUM login tapi ada hash di URL (misal user tekan Back ke #profile),
+            // Kita paksa TIMPA URL tersebut agar kembali bersih.
+            // 'replaceState' tidak menambah history baru, tapi menimpa yang sekarang.
+            if (window.location.hash && window.location.hash !== '#home') {
+                history.replaceState(null, null, window.location.pathname);
+            }
+            return; // STOP! Jangan izinkan pindah view.
+        }
+
         // Ambil hash, default ke 'home'
         const hash = window.location.hash.replace('#', '') || 'home';
         
@@ -25,7 +37,6 @@ export function setupRouter() {
     window.addEventListener('load', handleNavigation);
 
     // 2. FUNGSI TOMBOL GLOBAL (Cukup ubah Hash saja)
-    // Ini menjamin tombol Back HP dan tombol Back di aplikasi sinkron
     window.goHome = () => window.location.hash = 'home';
     
     window.openTracker = () => window.location.hash = 'tracker';
@@ -49,18 +60,19 @@ export function switchView(targetId) {
     // 1. Reset SEMUA View (Sembunyikan)
     allViews.forEach(id => {
         const el = document.getElementById(id);
-        if (el && el !== targetEl) { // Jangan sembunyikan target dulu biar transisi mulus
+        if (el && el !== targetEl) { 
             el.classList.remove('active');
-            // Beri waktu sedikit untuk animasi keluar, baru display:none
-            // (Opsional: bisa langsung hidden-force kalau mau instan)
-            setTimeout(() => el.classList.add('hidden-force'), 300); 
+            setTimeout(() => {
+                if (!el.classList.contains('active')) {
+                    el.classList.add('hidden-force');
+                }
+            }, 300); 
         }
     });
 
     // 2. Munculkan TARGET dengan Animasi
     targetEl.classList.remove('hidden-force');
     
-    // [PENTING] Double RAF untuk memicu animasi CSS
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             targetEl.classList.add('active');
