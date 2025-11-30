@@ -84,7 +84,10 @@
 
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(console.error); });
+            window.addEventListener('load', () => { 
+                // [UPDATED] Tambahkan { type: 'module' }
+                navigator.serviceWorker.register('./sw.js', { type: 'module' }).catch(console.error); 
+            });
         }
     </script>
     

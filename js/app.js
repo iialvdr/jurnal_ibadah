@@ -2,6 +2,7 @@ import { auth } from './config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { setCurrentUser } from './state.js';
 import { setupRouter, switchView } from './router.js';
+import { APP_VERSION } from './version.js'; // [BARU] Import Versi
 
 // Import Modules
 import { initAuth } from './modules/auth.js';
@@ -21,7 +22,6 @@ async function loadAllViews() {
     const appContainer = document.getElementById('appContainer');
     if (!appContainer) return;
 
-    // Bersihkan container sebelum memuat ulang (PENTING untuk mencegah duplikasi)
     appContainer.innerHTML = '';
     
     for (const viewPath of VIEWS) {
@@ -33,7 +33,19 @@ async function loadAllViews() {
         } catch (error) { console.error(error); }
     }
     
+    // [BARU] Update Label Versi di UI setelah view dimuat
+    updateVersionLabels();
+    
     initializeApp();
+}
+
+// [BARU] Fungsi update teks versi
+function updateVersionLabels() {
+    const vLogin = document.getElementById('versionTextLogin');
+    if(vLogin) vLogin.innerText = APP_VERSION;
+    
+    const vProfile = document.getElementById('versionTextProfile');
+    if(vProfile) vProfile.innerText = APP_VERSION;
 }
 
 function initializeApp() {
@@ -51,33 +63,23 @@ function initializeApp() {
     onAuthStateChanged(auth, (user) => {
         const splash = document.getElementById('splashScreen');
         const sidebar = document.getElementById('desktopSidebar');
-        const appContainer = document.getElementById('appContainer'); // Ambil container utama
+        const appContainer = document.getElementById('appContainer');
 
         if (user) {
             setCurrentUser(user);
-            
-            // Saat login: Sembunyikan login overlay secara spesifik
             const loginOverlay = document.getElementById('loginOverlay');
             if(loginOverlay) loginOverlay.classList.add('hidden-force');
-            
             if(sidebar) sidebar.classList.remove('hidden-force');
-            
-            // Masuk ke Home saat login berhasil
             switchView('homeView', false);
         } else {
             setCurrentUser(null);
             if(sidebar) sidebar.classList.add('hidden-force');
 
-            // [PERBAIKAN FINAL & ANTI-GAGAL]
-            // Daripada menyebut ID satu per satu, kita loop semua elemen di dalam appContainer.
-            // Logikanya: "Kalau bukan LoginOverlay, Sembunyikan!"
             if (appContainer) {
                 Array.from(appContainer.children).forEach(child => {
                     if (child.id === 'loginOverlay') {
-                        // Ini Halaman Login -> TAMPILKAN
                         child.classList.remove('hidden-force');
                     } else {
-                        // Ini Halaman Lain (Home, Profile, dll) -> SEMBUNYIKAN PAKSA
                         child.classList.add('hidden-force');
                         child.classList.remove('active');
                     }
