@@ -3,12 +3,10 @@ import { signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { state } from '../state.js';
 
-let activityChart = null; // Instance Chart.js
+let activityChart = null; 
 
 export function initProfile() {
     window.loadChartData = loadChartData;
-    
-    // Expose fungsi modal ke window
     window.openEditProfile = openEditProfile;
     window.closeEditProfile = closeEditProfile;
     
@@ -33,7 +31,7 @@ function updateProfileUI() {
     const img = document.getElementById('profilePhotoLarge');
     if(img) img.src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=10b981&color=fff&size=128`;
 
-    // 2. Journey Stats (Bergabung Sejak)
+    // 2. Journey Stats
     if (user.metadata) {
         const joinDate = new Date(user.metadata.creationTime);
         document.getElementById('joinDate').innerText = joinDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -42,7 +40,7 @@ function updateProfileUI() {
         document.getElementById('statDays').innerText = `${diff} Hari`;
     }
     
-    // 3. Load Chart & Advanced Stats
+    // 3. Load Chart
     setTimeout(() => loadChartData(7), 300);
 }
 
@@ -62,13 +60,11 @@ async function loadChartData(days) {
     const today = new Date();
     let totalCompletedInPeriod = 0;
     
-    // Loop mundur dari hari ini
     for (let i = days - 1; i >= 0; i--) {
         const d = new Date();
         d.setDate(today.getDate() - i);
         const dateKey = formatDateKey(d);
         
-        // Label Sumbu X
         labels.push(d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
         
         try {
@@ -78,7 +74,6 @@ async function loadChartData(days) {
             let count = 0;
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                // Hitung total checklist (Wajib + Sunnah)
                 ['Subuh', 'Dhuha', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya', 'Tahajud'].forEach(p => {
                     if (data[p]) count++;
                 });
@@ -86,7 +81,6 @@ async function loadChartData(days) {
             dataPoints.push(count);
             totalCompletedInPeriod += count;
 
-            // Update "Hari Ini" khusus jika i=0
             if(i === 0) {
                  const statToday = document.getElementById('statToday');
                  if(statToday) statToday.innerText = `${count}/7`; 
@@ -103,12 +97,10 @@ async function loadChartData(days) {
 }
 
 function calculateConsistency(totalCompleted, days) {
-    // Target harian = 5 sholat wajib
     const dailyTarget = 5; 
     const maxPotential = days * dailyTarget; 
     
     let percentage = Math.round((totalCompleted / maxPotential) * 100);
-    // Cap visual di 100% jika rajin sunnah
     if(percentage > 100) percentage = 100;
     
     const statEl = document.getElementById('statConsistency');
@@ -164,7 +156,7 @@ function renderChart(labels, data) {
                 pointHoverRadius: 6,
                 pointHoverBorderWidth: 3,
                 fill: true,
-                tension: 0.4
+                tension: 0
             }]
         },
         options: {
@@ -208,7 +200,6 @@ function renderChart(labels, data) {
     });
 }
 
-// === LOGIKA EDIT PROFILE ===
 function openEditProfile() {
     const user = state.currentUser;
     if(!user) return;
@@ -216,8 +207,16 @@ function openEditProfile() {
     const modal = document.getElementById('editProfileModal');
     const content = document.getElementById('editProfileContent');
     const input = document.getElementById('editNameInput');
+    const dmToggle = document.getElementById('darkModeToggleProfile');
 
+    // 1. Isi input nama
     if(input) input.value = user.displayName || "";
+    
+    // 2. [BARU] Set status toggle Dark Mode sesuai tema saat ini
+    if(dmToggle) {
+        const isDark = document.documentElement.classList.contains('dark');
+        dmToggle.checked = isDark;
+    }
 
     if(modal) {
         modal.classList.remove('hidden-force');
@@ -244,6 +243,7 @@ function closeEditProfile() {
 }
 
 function setupEditProfileListeners() {
+    // Listener Tombol Simpan
     const saveBtn = document.getElementById('saveProfileBtn');
     if(saveBtn) {
         saveBtn.addEventListener('click', async () => {
@@ -279,9 +279,18 @@ function setupEditProfileListeners() {
             }
         });
     }
+    
+    // [BARU] Listener Toggle Dark Mode
+    const dmToggle = document.getElementById('darkModeToggleProfile');
+    if(dmToggle) {
+        dmToggle.addEventListener('change', () => {
+            if(window.toggleDarkMode) {
+                window.toggleDarkMode(); // Gunakan fungsi global dari home.js
+            }
+        });
+    }
 }
 
-// === LOGIKA LOGOUT ===
 function setupLogoutListeners() {
     const logoutBtn = document.getElementById('logoutBtnProfile');
     const cancelBtn = document.getElementById('cancelLogoutBtn');

@@ -2,11 +2,12 @@ import { auth } from './config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { setCurrentUser } from './state.js';
 import { setupRouter, switchView } from './router.js';
-import { APP_VERSION } from './version.js'; // [BARU] Import Versi
+import { APP_VERSION } from './version.js';
 
 // Import Modules
 import { initAuth } from './modules/auth.js';
-import { initHome } from './modules/home.js';
+// [UPDATED] Import syncThemeWithCloud
+import { initHome, updateHomeUI, syncThemeWithCloud } from './modules/home.js';
 import { initTracker } from './modules/tracker.js';
 import { initTasbih } from './modules/tasbih.js';
 import { initQibla } from './modules/qibla.js';
@@ -33,13 +34,10 @@ async function loadAllViews() {
         } catch (error) { console.error(error); }
     }
     
-    // [BARU] Update Label Versi di UI setelah view dimuat
     updateVersionLabels();
-    
     initializeApp();
 }
 
-// [BARU] Fungsi update teks versi
 function updateVersionLabels() {
     const vLogin = document.getElementById('versionTextLogin');
     if(vLogin) vLogin.innerText = APP_VERSION;
@@ -51,7 +49,6 @@ function updateVersionLabels() {
 function initializeApp() {
     setupRouter();
     
-    // Init Modules
     initAuth();
     initHome();
     initTracker();
@@ -67,6 +64,10 @@ function initializeApp() {
 
         if (user) {
             setCurrentUser(user);
+            
+            // [BARU] Load tema dari database saat login berhasil
+            syncThemeWithCloud();
+            
             const loginOverlay = document.getElementById('loginOverlay');
             if(loginOverlay) loginOverlay.classList.add('hidden-force');
             if(sidebar) sidebar.classList.remove('hidden-force');

@@ -261,16 +261,15 @@ function handleQuranBack() {
     const title = document.getElementById('quranTitle');
     
     if (ayahContainer && !ayahContainer.classList.contains('translate-x-full')) {
+        // Logic menutup ayat (sliding drawer) tetap sama
         ayahContainer.classList.add('translate-x-full');
-        
-        // Munculkan kembali Search Bar
         if(searchContainer) searchContainer.classList.remove('-translate-y-24', 'opacity-0', 'pointer-events-none');
-        
         if(navButtons) navButtons.classList.add('translate-y-40');
         if(title) title.innerText = "Al-Qur'an";
         
         stopCurrentAudio(); 
     } else {
-        if(window.goHome) window.goHome();
+        // [UPDATED] Gunakan goBack() untuk kembali ke halaman sebelumnya
+        if(window.goBack) window.goBack();
     }
 }

@@ -39,7 +39,6 @@
                 <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Gabung</span>
                 <span id="statDays" class="text-sm font-black text-slate-800 dark:text-white">0 Hari</span>
             </div>
-            
             <div class="bg-white dark:bg-slate-900 p-4 rounded-[1.7rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center">
                 <div class="bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded-full mb-2 text-emerald-600 dark:text-emerald-400">
                     <i data-lucide="activity" class="w-4 h-4"></i>
@@ -47,7 +46,6 @@
                 <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Mingguan</span>
                 <span id="statConsistency" class="text-sm font-black text-slate-800 dark:text-white">0%</span>
             </div>
-            
             <div class="bg-white dark:bg-slate-900 p-4 rounded-[1.7rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center">
                 <div class="bg-amber-50 dark:bg-amber-900/20 p-2 rounded-full mb-2 text-amber-600 dark:text-amber-400">
                     <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
@@ -104,7 +102,7 @@
                 <i data-lucide="log-out" class="w-5 h-5"></i> Keluar Aplikasi
             </button>
             
-            <p class="text-center text-[10px] text-slate-400 pt-4">Jurnal Ibadah <span id="versionTextProfile"></span> • By Valdi</p>
+            <p class="text-center text-[10px] text-slate-400 pt-4">Jurnal Ibadah <span id="versionTextProfile">v1.0</span> • By Valdi</p>
         </div>
     </div>
 
@@ -112,20 +110,38 @@
         <div class="bg-white dark:bg-slate-900 w-full sm:w-[85%] sm:max-w-xs p-6 rounded-t-[2.5rem] sm:rounded-[2rem] shadow-2xl border-t sm:border border-white/20 dark:border-slate-800 transform translate-y-20 sm:translate-y-0 sm:scale-95 transition-all duration-300" id="editProfileContent">
             
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-black text-slate-800 dark:text-white">Edit Profil</h3>
+                <h3 class="text-lg font-black text-slate-800 dark:text-white">Pengaturan</h3>
                 <button onclick="closeEditProfile()" class="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-red-500 transition"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
 
-            <div class="space-y-4">
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Nama Tampilan</label>
-                    <input type="text" id="editNameInput" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition" placeholder="Nama Kamu">
+            <div class="space-y-6">
+                <div class="space-y-3">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Profil Saya</label>
+                    <div>
+                        <input type="text" id="editNameInput" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition" placeholder="Nama Kamu">
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tampilan Aplikasi</label>
+                    <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                                <i data-lucide="moon" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Dark Mode</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="darkModeToggleProfile" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
+                        </label>
+                    </div>
                 </div>
                 
                 <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900/30 flex gap-3 items-start">
                     <i data-lucide="info" class="w-4 h-4 text-blue-500 mt-0.5 shrink-0"></i>
                     <p class="text-xs text-blue-600 dark:text-blue-300 leading-relaxed">
-                        Saat ini foto profil diambil dari akun Google kamu.
+                        Foto profil diambil otomatis dari akun Google kamu.
                     </p>
                 </div>
 

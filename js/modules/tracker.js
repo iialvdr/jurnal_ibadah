@@ -1,9 +1,7 @@
 import { state, setCurrentRecords } from '../state.js';
 import { db } from '../config.js';
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { updateDateUI } from './home.js';
 
-// Konfigurasi Sholat dengan Warna Gradient Premium
 const PRAYER_CONFIG = [
     { id: 'Subuh', type: 'wajib', icon: 'sunrise', color: 'from-sky-400 to-blue-500', shadow: 'shadow-blue-500/30' },
     { id: 'Dhuha', type: 'sunnah', icon: 'sun', color: 'from-amber-300 to-orange-400', shadow: 'shadow-orange-500/30' },
@@ -19,11 +17,13 @@ export function initTracker() {
     window.resetToToday = resetToToday;
     window.togglePrayer = togglePrayer;
     
-    window.addEventListener('prayerTimesUpdated', renderPrayers);
+    // Inisialisasi tanggal tracker ke hari ini saat awal load
+    state.trackerDate = new Date();
+    
     window.addEventListener('viewChanged', (e) => {
         if(e.detail.viewId === 'trackerView') {
+            updateTrackerUI(); // Update UI Tanggal & Hijriah
             loadRecordsFromCloud();
-            renderPrayers();
         }
     });
 }
@@ -34,9 +34,56 @@ function formatDateKey(date) {
     return localDate.toISOString().split('T')[0]; 
 }
 
+// [BARU] Fungsi update UI khusus Tracker
+async function updateTrackerUI() {
+    // 1. Update Teks Tanggal Masehi
+    const elDate = document.getElementById('dateDisplay');
+    if(elDate) {
+        elDate.innerText = state.trackerDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    // 2. Tombol Reset
+    const isToday = state.trackerDate.getDate() === new Date().getDate() && 
+                    state.trackerDate.getMonth() === new Date().getMonth();
+    const resetBtn = document.getElementById('resetDateBtn');
+    if(resetBtn) isToday ? resetBtn.classList.add('hidden') : resetBtn.classList.remove('hidden');
+
+    // 3. Fetch & Update Hijriah untuk Tanggal Tracker
+    if(window.lastLat && window.lastLng) {
+        const d = state.trackerDate;
+        const cacheKey = `sch_${d.getFullYear()}_${d.getMonth()+1}_${window.lastLat.toFixed(1)}_${window.lastLng.toFixed(1)}`;
+        let monthData = state.scheduleCache[cacheKey];
+
+        // Jika tidak ada di cache, fetch dulu (tapi jangan ganggu Home)
+        if (!monthData) {
+            try {
+                const res = await fetch(`https://api.aladhan.com/v1/calendar?latitude=${window.lastLat}&longitude=${window.lastLng}&method=20&month=${d.getMonth()+1}&year=${d.getFullYear()}`);
+                const result = await res.json();
+                if (result.data) {
+                    monthData = result.data;
+                    state.scheduleCache[cacheKey] = monthData;
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        if (monthData) {
+            const dayData = monthData[d.getDate() - 1];
+            if (dayData && dayData.date.hijri) {
+                const hStr = `${dayData.date.hijri.day} ${dayData.date.hijri.month.en} ${dayData.date.hijri.year} H`;
+                const tEl = document.getElementById('trackerHijriDisplay');
+                if(tEl) tEl.innerText = hStr;
+                
+                // Opsional: Update jam sholat di list tracker agar sesuai tanggal yang dipilih
+                // (Kalau mau simple pake jam hari ini juga gapapa, tapi ini lebih akurat)
+                // updateTrackerPrayerTimes(dayData.timings); 
+            }
+        }
+    }
+}
+
 export async function loadRecordsFromCloud() {
     if (!state.currentUser) return;
-    const dateKey = formatDateKey(state.currentDate);
+    const dateKey = formatDateKey(state.trackerDate); // Pakai trackerDate
     const loading = document.getElementById('dataLoading');
     if(loading) loading.classList.remove('hidden');
 
@@ -51,30 +98,25 @@ export async function loadRecordsFromCloud() {
 }
 
 function changeDate(days) {
-    state.currentDate.setDate(state.currentDate.getDate() + days);
-    updateDateUI();
-    if(window.lastLat) window.refreshLocation(); 
+    state.trackerDate.setDate(state.trackerDate.getDate() + days);
+    updateTrackerUI();
     loadRecordsFromCloud();
 }
 
 function resetToToday() {
-    state.currentDate = new Date();
-    updateDateUI();
-    if(window.lastLat) window.refreshLocation();
+    state.trackerDate = new Date();
+    updateTrackerUI();
     loadRecordsFromCloud();
 }
 
 function togglePrayer(id, locked) {
     if (locked) return;
-    
-    // Efek Haptic getar di HP saat ditekan
     if (navigator.vibrate) navigator.vibrate(50);
 
     const newState = !state.currentRecords[id];
     state.currentRecords[id] = newState;
     
-    // Save to DB
-    const dateKey = formatDateKey(state.currentDate);
+    const dateKey = formatDateKey(state.trackerDate); // Pakai trackerDate
     if(state.currentUser) {
         setDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey), { [id]: newState, last_updated: new Date() }, { merge: true });
     }
@@ -91,30 +133,27 @@ export function renderPrayers() {
     
     PRAYER_CONFIG.forEach((p) => {
         const isDone = state.currentRecords[p.id] || false;
-        const time = state.prayerTimes[p.id];
+        // Waktu sholat ambil dari global state (Hari ini) atau cache tanggal tersebut (Advanced).
+        // Untuk simpelnya kita pakai state.prayerTimes (Hari Ini) untuk tampilan jamnya,
+        // TAPI status Locked/Unlocked pakai logika tanggal tracker.
+        const time = state.prayerTimes[p.id]; 
         const status = checkTimeAvailability(time);
         
-        // --- LOGIKA STYLING ---
         let wrapperClass, iconWrapperClass, textClass, timeClass, checkIcon;
 
         if (status.locked) {
-            // STATE: TERKUNCI / BELUM WAKTUNYA
             wrapperClass = "bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 opacity-60 grayscale cursor-not-allowed";
             iconWrapperClass = "bg-slate-200 dark:bg-slate-800 text-slate-400";
             textClass = "text-slate-400 dark:text-slate-600";
             timeClass = "bg-slate-200 dark:bg-slate-800 text-slate-400";
             checkIcon = `<div class="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center"><i data-lucide="lock" class="w-3 h-3 text-slate-400"></i></div>`;
-        
         } else if (isDone) {
-            // STATE: SELESAI
             wrapperClass = "bg-emerald-50/50 dark:bg-slate-900 border-emerald-200 dark:border-emerald-900/50 shadow-sm";
             iconWrapperClass = `bg-gradient-to-br ${p.color} text-white shadow-lg ${p.shadow}`;
             textClass = "text-emerald-700 dark:text-emerald-400 font-bold decoration-emerald-500/30"; 
             timeClass = "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300";
             checkIcon = `<div class="w-8 h-8 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/40 flex items-center justify-center text-white animate-[zoomIn_0.2s_ease-out]"><i data-lucide="check" class="w-5 h-5 font-bold"></i></div>`;
-        
         } else {
-            // STATE: BELUM DIKERJAKAN
             wrapperClass = "bg-white dark:bg-slate-900 border-white dark:border-slate-800 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-98";
             iconWrapperClass = `bg-gradient-to-br ${p.color} text-white shadow-md ${p.shadow}`;
             textClass = "text-slate-700 dark:text-slate-200 font-bold";
@@ -124,12 +163,10 @@ export function renderPrayers() {
 
         html += `
         <div onclick="togglePrayer('${p.id}', ${status.locked})" class="group relative flex items-center justify-between p-4 rounded-[1.5rem] border transition-all duration-300 ${wrapperClass}">
-            
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${iconWrapperClass}">
                     <i data-lucide="${p.icon}" class="w-6 h-6"></i>
                 </div>
-                
                 <div>
                     <h3 class="text-lg ${textClass}">${p.id}</h3>
                     <div class="flex items-center gap-2 mt-1">
@@ -138,10 +175,7 @@ export function renderPrayers() {
                     </div>
                 </div>
             </div>
-
-            <div class="relative z-10">
-                ${checkIcon}
-            </div>
+            <div class="relative z-10">${checkIcon}</div>
         </div>`;
     });
     
@@ -152,29 +186,22 @@ export function renderPrayers() {
 
 export function updateProgressBar() {
     let wT = 0, wD = 0;
-    
-    // Hitung progress hanya untuk sholat WAJIB
     PRAYER_CONFIG.forEach(p => { 
         if(p.type === 'wajib') { 
             wT++; 
             if(state.currentRecords[p.id]) wD++; 
         } 
     });
-    
     const pct = wT === 0 ? 0 : Math.round((wD/wT)*100);
-    
     const pbText = document.getElementById('progressText');
     const pb = document.getElementById('progressBar');
     
     if(pbText) {
-        // Animasi angka (counting up)
         let start = parseInt(pbText.innerText) || 0;
         if(start !== pct) pbText.innerText = pct + '%';
     }
-    
     if(pb) { 
         pb.style.width = pct + '%'; 
-        // Ubah warna bar kalau sudah 100%
         if(pct === 100) {
             pb.classList.remove('from-emerald-400', 'to-teal-500');
             pb.classList.add('from-emerald-500', 'to-emerald-400');
@@ -182,43 +209,31 @@ export function updateProgressBar() {
     }
 }
 
-// [PERBAIKAN LOGIKA]
 function checkTimeAvailability(prayerTimeStr) {
     if (!prayerTimeStr || prayerTimeStr === '--:--') return { locked: true };
     
     const [h, m] = prayerTimeStr.split(':').map(Number);
     
-    // 1. Buat salinan objek tanggal agar state global tidak rusak/berubah
-    const pDate = new Date(state.currentDate.getTime());
-    pDate.setHours(h, m, 0, 0); // Set jam sholat pada tanggal tersebut
+    // Gunakan trackerDate, bukan currentDate
+    const pDate = new Date(state.trackerDate.getTime());
+    pDate.setHours(h, m, 0, 0); 
     
-    const now = new Date(); // Waktu sekarang (real-time)
+    const now = new Date(); 
 
-    // 2. Buat objek khusus untuk membandingkan "Hari" saja (tanpa jam)
     const todayZero = new Date(); 
     todayZero.setHours(0,0,0,0);
     
-    const currentZero = new Date(state.currentDate.getTime());
+    const currentZero = new Date(state.trackerDate.getTime());
     currentZero.setHours(0,0,0,0);
     
-    // LOGIKA PENGECEKAN:
+    // A. Masa Depan -> KUNCI
+    if (currentZero.getTime() > todayZero.getTime()) return { locked: true }; 
     
-    // A. Jika tanggal yang dibuka > hari ini (Masa Depan) -> KUNCI
-    if (currentZero.getTime() > todayZero.getTime()) {
-        return { locked: true }; 
-    }
+    // B. Masa Lalu -> BUKA
+    if (currentZero.getTime() < todayZero.getTime()) return { locked: false };
     
-    // B. Jika tanggal yang dibuka < hari ini (Masa Lalu) -> BUKA (Boleh qadha/isi jurnal kemarin)
-    if (currentZero.getTime() < todayZero.getTime()) {
-        return { locked: false };
-    }
+    // C. Hari Ini -> Cek Jam
+    if (now.getTime() < pDate.getTime()) return { locked: true }; 
     
-    // C. Jika tanggal == hari ini -> Cek jamnya
-    // Kalau jam sekarang < jam sholat, berarti belum waktunya -> KUNCI
-    if (now.getTime() < pDate.getTime()) {
-        return { locked: true }; 
-    }
-    
-    // Kalau sudah lewat waktunya -> BUKA
     return { locked: false }; 
 }

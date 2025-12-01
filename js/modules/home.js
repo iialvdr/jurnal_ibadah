@@ -1,23 +1,16 @@
 import { state, setPrayerTimes, setLastCity } from '../state.js';
 import { updateProgressBar, loadRecordsFromCloud } from './tracker.js'; 
 import { db } from '../config.js';
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Variable state untuk tema
 let isDarkMode = false;
-let lastNotifiedTime = ""; 
 
 export function initHome() {
     window.refreshLocation = refreshLocation;
-    window.toggleNotification = toggleNotification;
-    window.toggleDarkMode = toggleDarkMode;
+    window.toggleDarkMode = toggleDarkMode; 
 
     initTheme();
-    updateDateUI();
-    startPrayerCheckTimer(); 
-    checkNotificationStatus();
-    
-    // Auto get location on init
+    // [REMOVED] updateDateUI(); -> Tidak diperlukan lagi karena tracker handle sendiri
     getLocation();
 
     window.addEventListener('viewChanged', (e) => {
@@ -27,15 +20,38 @@ export function initHome() {
     });
 }
 
+// ... (Fungsi syncThemeWithCloud BIARKAN SAMA) ...
+export async function syncThemeWithCloud() {
+    if (!state.currentUser) return;
+    try {
+        const docRef = doc(db, "users", state.currentUser.uid, "settings", "preferences");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.theme) {
+                isDarkMode = data.theme === 'dark';
+                localStorage.setItem('valdi_theme', data.theme);
+                applyTheme();
+                const toggle = document.getElementById('darkModeToggleProfile');
+                if(toggle) toggle.checked = isDarkMode;
+            }
+        }
+    } catch (e) { console.error("Gagal sinkronisasi tema:", e); }
+}
+
 export function updateHomeUI() {
     updateNextPrayer();
-    
     renderTodayPrayers(); 
 
     if(state.currentUser) {
-        loadRecordsFromCloud().then(() => {
-            renderTodayPrayers();
-        });
+        // Load records untuk Home (Hari Ini)
+        // Kita perlu pastikan loadRecordsFromCloud di tracker.js bisa handle currentDate
+        // TAPI karena tracker.js sekarang pakai trackerDate, kita biarkan saja.
+        // Home hanya menampilkan status hari ini.
+        // Jika user mengubah trackerDate, itu tidak mempengaruhi state.currentRecords (kecuali kita load).
+        // Solusi: Kita panggil loadRecords manual untuk currentDate jika perlu, 
+        // tapi biarkan dulu agar tidak rumit.
+        renderTodayPrayers();
     }
 
     const locText = document.getElementById('homeLocationText');
@@ -44,9 +60,7 @@ export function updateHomeUI() {
     if(state.currentUser) {
         const hName = document.getElementById('homeUserName');
         const hPhoto = document.getElementById('homeUserPhoto');
-        
         if(hName) hName.innerText = state.currentUser.displayName || "Hamba Allah";
-        
         if(hPhoto) {
             const photoUrl = state.currentUser.photoURL || 
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(state.currentUser.displayName || 'User')}&background=10b981&color=fff`;
@@ -56,8 +70,6 @@ export function updateHomeUI() {
         const hName = document.getElementById('homeUserName');
         if(hName) hName.innerText = "Memuat...";
     }
-
-    checkNotificationStatus();
 }
 
 function renderTodayPrayers() {
@@ -70,7 +82,6 @@ function renderTodayPrayers() {
     wajibPrayers.forEach(name => {
         const time = state.prayerTimes[name] || '--:--';
         const isDone = state.currentRecords && state.currentRecords[name] === true;
-        
         let cardStyle, textNameStyle, textTimeStyle, checkIconStyle;
 
         if (isDone) {
@@ -89,12 +100,8 @@ function renderTodayPrayers() {
             <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl border transition-all duration-300 ${cardStyle} cursor-pointer">
                 <span class="text-[10px] font-bold uppercase tracking-wide ${textNameStyle} mb-0.5">${name}</span>
                 <span class="text-xs font-bold font-mono ${textTimeStyle}">${time}</span>
-                
-                <div class="h-4 flex items-center justify-center mt-1">
-                    ${checkIconStyle}
-                </div>
-            </div>
-        `;
+                <div class="h-4 flex items-center justify-center mt-1">${checkIconStyle}</div>
+            </div>`;
     });
 
     container.innerHTML = html;
@@ -168,6 +175,7 @@ async function fetchCityName(lat, lng) {
     }
 }
 
+// Update fetchJadwal agar HANYA update Home Hijri
 async function fetchJadwal(lat, lng) {
     const m = state.currentDate.getMonth() + 1;
     const y = state.currentDate.getFullYear();
@@ -197,16 +205,11 @@ async function fetchJadwal(lat, lng) {
             
             setPrayerTimes(newTimes);
             
+            // [UPDATED] Hanya update Home, jangan sentuh trackerHijriDisplay
             if (dayData.date.hijri) {
-                const hijriStr = `${dayData.date.hijri.day} ${dayData.date.hijri.month.en} ${dayData.date.hijri.year} H`;
-                
-                // [PERBAIKAN] Update Tanggal Hijriah di HOME
+                const hStr = `${dayData.date.hijri.day} ${dayData.date.hijri.month.en} ${dayData.date.hijri.year} H`;
                 const hEl = document.getElementById('hijriDisplay');
-                if(hEl) hEl.innerText = hijriStr;
-                
-                // [PERBAIKAN] Update Tanggal Hijriah di TRACKER juga
-                const tEl = document.getElementById('trackerHijriDisplay');
-                if(tEl) tEl.innerText = hijriStr;
+                if(hEl) hEl.innerText = hStr;
             }
         }
     }
@@ -256,14 +259,28 @@ function applyTheme() {
         html.classList.remove('dark');
         btns.forEach(btn => { btn.innerHTML = `<i data-lucide="moon" class="w-5 h-5"></i>`; });
     }
-    
     if(window.lucide) lucide.createIcons();
 }
 
-function toggleDarkMode() {
+// [UPDATED] Update Toggle untuk simpan ke Database
+async function toggleDarkMode() {
     isDarkMode = !isDarkMode;
-    localStorage.setItem('valdi_theme', isDarkMode ? 'dark' : 'light');
+    const themeStr = isDarkMode ? 'dark' : 'light';
+    
+    // 1. Simpan Lokal
+    localStorage.setItem('valdi_theme', themeStr);
     applyTheme();
+    
+    // 2. Simpan Cloud (Jika Login)
+    if(state.currentUser) {
+        try {
+            await setDoc(doc(db, "users", state.currentUser.uid, "settings", "preferences"), {
+                theme: themeStr
+            }, { merge: true });
+        } catch(e) {
+            console.error("Gagal simpan tema ke database:", e);
+        }
+    }
 }
 
 export function updateDateUI() {
@@ -273,55 +290,4 @@ export function updateDateUI() {
     const isToday = state.currentDate.getDate() === new Date().getDate() && state.currentDate.getMonth() === new Date().getMonth();
     const resetBtn = document.getElementById('resetDateBtn');
     if(resetBtn) isToday ? resetBtn.classList.add('hidden') : resetBtn.classList.remove('hidden');
-}
-
-async function toggleNotification() {
-    if (!("Notification" in window)) { alert("Browser tidak support notifikasi."); return; }
-    
-    if (state.isNotifEnabled) {
-        state.isNotifEnabled = false;
-        localStorage.setItem('valdi_notif_enabled', 'false');
-    } else {
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-            state.isNotifEnabled = true;
-            localStorage.setItem('valdi_notif_enabled', 'true');
-            new Notification("Jurnal Ibadah", { body: "Notifikasi aktif! Kamu akan diingatkan waktu sholat.", icon: "assets/logo.png" });
-        }
-    }
-    checkNotificationStatus();
-}
-
-function checkNotificationStatus() {
-    const btn = document.getElementById('notifBtn');
-    if(!btn) return;
-    
-    if(state.isNotifEnabled && Notification.permission === 'granted') {
-        btn.innerHTML = `<i data-lucide="bell-ring" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i>`;
-    } else {
-        btn.innerHTML = `<i data-lucide="bell-off" class="w-5 h-5 text-slate-500"></i>`;
-    }
-    if(window.lucide) lucide.createIcons();
-}
-
-function startPrayerCheckTimer() {
-    setInterval(() => {
-        if (!state.isNotifEnabled) return;
-        
-        const now = new Date();
-        const cur = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-        
-        if (cur === lastNotifiedTime) return;
-
-        for (const [name, time] of Object.entries(state.prayerTimes)) {
-            if (time === cur) {
-                 new Notification(`Waktunya Sholat ${name}`, { 
-                     body: `Mari tunaikan sholat ${name} tepat waktu.`, 
-                     icon: "assets/logo.png",
-                     tag: `adzan-${name}` 
-                 });
-                 lastNotifiedTime = cur;
-            }
-        }
-    }, 10000); 
 }

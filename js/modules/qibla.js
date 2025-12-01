@@ -2,14 +2,17 @@ const KAABA_COORDS = { lat: 21.422487, lng: 39.826206 };
 
 // === VARIABLE STATE ===
 let currentDiscRotation = 0;
-let previousHeading = 0; // [BARU] Menyimpan heading sebelumnya untuk hitung selisih
+let previousHeading = 0; 
 
 export function initQibla() {
     window.requestCompassPermission = requestCompassPermission;
     
     window.addEventListener('viewChanged', (e) => {
         if(e.detail.viewId === 'qiblaView') {
-            if(window.lastLat) calculateQibla(window.lastLat, window.lastLng);
+            if(window.lastLat) {
+                calculateQibla(window.lastLat, window.lastLng);
+                calculateDistance(window.lastLat, window.lastLng); // [BARU] Hitung Jarak
+            }
             startCompass();
         } else {
             stopCompass();
@@ -27,8 +30,26 @@ function calculateQibla(lat, lng) {
     document.getElementById('qiblaDegree').innerText = `${Math.round(qiblaAngle)}°`;
     const pointer = document.getElementById('qiblaPointer');
     
-    // Pointer menunjuk ke Ka'bah relatif terhadap Utara piringan kompas
     if(pointer) pointer.style.transform = `rotate(${qiblaAngle}deg)`;
+}
+
+// [BARU] Fungsi Hitung Jarak (Haversine Formula)
+function calculateDistance(lat1, lon1) {
+    const R = 6371; // Radius bumi dalam km
+    const dLat = deg2rad(KAABA_COORDS.lat - lat1);
+    const dLon = deg2rad(KAABA_COORDS.lng - lon1);
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(KAABA_COORDS.lat)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const d = Math.round(R * c); // Jarak dalam km
+    
+    const distEl = document.getElementById('qiblaDistance');
+    if(distEl) distEl.innerText = `${d.toLocaleString('id-ID')} km`;
+}
+
+function deg2rad(deg) {
+    return deg * (Math.PI/180);
 }
 
 async function requestCompassPermission() {
@@ -44,7 +65,6 @@ async function requestCompassPermission() {
 }
 
 function startCompass() {
-    // Reset state saat kompas mulai agar tidak loncat
     previousHeading = 0; 
     
     if ('ondeviceorientationabsolute' in window) window.addEventListener('deviceorientationabsolute', handleOrientation, true);
@@ -61,27 +81,16 @@ function handleOrientation(event) {
     
     if (heading != null) {
         document.getElementById('compassHeading').innerText = `${Math.round(heading)}°`;
-
-        // === [LOGIKA PERBAIKAN ROTASI] ===
         
-        // 1. Hitung selisih antara sudut baru dan sudut lama
         let delta = heading - previousHeading;
-
-        // 2. Koreksi lompatan sudut (misal 359 -> 1 atau 1 -> 359)
-        // Jika selisih > 180, berarti dia lompat lewat batas 0/360, kita kurangi 360
         if (delta > 180) delta -= 360;
-        // Jika selisih < -180, kita tambah 360
         if (delta < -180) delta += 360;
 
-        // 3. Akumulasi rotasi (Negatif karena piringan berputar berlawanan arah HP)
         currentDiscRotation -= delta;
-        
-        // 4. Simpan heading sekarang untuk frame berikutnya
         previousHeading = heading;
 
         const disc = document.getElementById('compassDisc');
         if(disc) {
-            // Menggunakan transform langsung
             disc.style.transform = `rotate(${currentDiscRotation}deg)`;
         }
     }
