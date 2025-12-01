@@ -1,5 +1,6 @@
-import { state, setPrayerTimes, setLastCity } from '../state.js';
-import { updateProgressBar, loadRecordsFromCloud } from './tracker.js'; 
+import { state, setPrayerTimes, setLastCity, setTodayRecords } from '../state.js'; // [UPDATED] Import setTodayRecords
+// [UPDATED] Hapus loadRecordsFromCloud dari import tracker
+import { updateProgressBar } from './tracker.js'; 
 import { db } from '../config.js';
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -10,7 +11,6 @@ export function initHome() {
     window.toggleDarkMode = toggleDarkMode; 
 
     initTheme();
-    // [REMOVED] updateDateUI(); -> Tidak diperlukan lagi karena tracker handle sendiri
     getLocation();
 
     window.addEventListener('viewChanged', (e) => {
@@ -20,7 +20,6 @@ export function initHome() {
     });
 }
 
-// ... (Fungsi syncThemeWithCloud BIARKAN SAMA) ...
 export async function syncThemeWithCloud() {
     if (!state.currentUser) return;
     try {
@@ -41,16 +40,11 @@ export async function syncThemeWithCloud() {
 
 export function updateHomeUI() {
     updateNextPrayer();
-    renderTodayPrayers(); 
-
+    
+    // [LOGIKA BARU] Load data khusus Home (Hari Ini)
     if(state.currentUser) {
-        // Load records untuk Home (Hari Ini)
-        // Kita perlu pastikan loadRecordsFromCloud di tracker.js bisa handle currentDate
-        // TAPI karena tracker.js sekarang pakai trackerDate, kita biarkan saja.
-        // Home hanya menampilkan status hari ini.
-        // Jika user mengubah trackerDate, itu tidak mempengaruhi state.currentRecords (kecuali kita load).
-        // Solusi: Kita panggil loadRecords manual untuk currentDate jika perlu, 
-        // tapi biarkan dulu agar tidak rumit.
+        loadHomeRecords(); // Panggil fungsi fetching khusus Home
+    } else {
         renderTodayPrayers();
     }
 
@@ -72,6 +66,26 @@ export function updateHomeUI() {
     }
 }
 
+// [BARU] Fungsi Fetch Data Khusus Home (Selalu Hari Ini)
+async function loadHomeRecords() {
+    if (!state.currentUser) return;
+    
+    // Format tanggal hari ini (currentDate)
+    const offset = state.currentDate.getTimezoneOffset(); 
+    const localDate = new Date(state.currentDate.getTime() - (offset*60*1000)); 
+    const dateKey = localDate.toISOString().split('T')[0];
+
+    try {
+        const docSnap = await getDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey));
+        // Simpan ke state.todayRecords (Bukan currentRecords punya tracker)
+        setTodayRecords(docSnap.exists() ? docSnap.data() : {});
+    } catch (e) { 
+        console.error(e); 
+    } finally { 
+        renderTodayPrayers(); 
+    }
+}
+
 function renderTodayPrayers() {
     const container = document.getElementById('todayPrayerGrid');
     if(!container) return;
@@ -81,7 +95,10 @@ function renderTodayPrayers() {
 
     wajibPrayers.forEach(name => {
         const time = state.prayerTimes[name] || '--:--';
-        const isDone = state.currentRecords && state.currentRecords[name] === true;
+        
+        // [UPDATED] Baca dari state.todayRecords
+        const isDone = state.todayRecords && state.todayRecords[name] === true;
+        
         let cardStyle, textNameStyle, textTimeStyle, checkIconStyle;
 
         if (isDone) {
@@ -115,13 +132,9 @@ function refreshLocation() {
 
     if(text) text.innerText = "Mencari...";
     if(btn) btn.classList.add('animate-pulse');
-    
     if(icon) {
-        // [UPDATED] Ikon Loading Putih Bersih
         icon.classList.add('animate-spin'); 
-        icon.classList.remove('drop-shadow-md'); // Hilangkan shadow saat loading
-        // Hapus penambahan 'text-emerald-500' agar tetap putih (default HTML)
-        
+        icon.classList.remove('drop-shadow-md'); 
         icon.setAttribute('data-lucide', 'loader-2');
     }
     if(window.lucide) lucide.createIcons();
@@ -154,12 +167,9 @@ function resetLocationButton() {
     const btn = document.getElementById('locationBtn');
     const icon = document.getElementById('locIcon');
     if(btn) btn.classList.remove('animate-pulse');
-    
     if(icon) {
-        // [UPDATED] Kembalikan ke Ikon Map Pin Normal
         icon.classList.remove('animate-spin');
-        icon.classList.add('drop-shadow-md'); // Kembalikan shadow
-        
+        icon.classList.add('drop-shadow-md');
         icon.setAttribute('data-lucide', 'map-pin');
     }
     if(window.lucide) lucide.createIcons();
@@ -184,7 +194,6 @@ async function fetchCityName(lat, lng) {
     }
 }
 
-// Update fetchJadwal agar HANYA update Home Hijri
 async function fetchJadwal(lat, lng) {
     const m = state.currentDate.getMonth() + 1;
     const y = state.currentDate.getFullYear();
@@ -214,7 +223,6 @@ async function fetchJadwal(lat, lng) {
             
             setPrayerTimes(newTimes);
             
-            // [UPDATED] Hanya update Home, jangan sentuh trackerHijriDisplay
             if (dayData.date.hijri) {
                 const hStr = `${dayData.date.hijri.day} ${dayData.date.hijri.month.en} ${dayData.date.hijri.year} H`;
                 const hEl = document.getElementById('hijriDisplay');
@@ -271,32 +279,16 @@ function applyTheme() {
     if(window.lucide) lucide.createIcons();
 }
 
-// [UPDATED] Update Toggle untuk simpan ke Database
 async function toggleDarkMode() {
     isDarkMode = !isDarkMode;
     const themeStr = isDarkMode ? 'dark' : 'light';
-    
-    // 1. Simpan Lokal
     localStorage.setItem('valdi_theme', themeStr);
     applyTheme();
-    
-    // 2. Simpan Cloud (Jika Login)
     if(state.currentUser) {
         try {
             await setDoc(doc(db, "users", state.currentUser.uid, "settings", "preferences"), {
                 theme: themeStr
             }, { merge: true });
-        } catch(e) {
-            console.error("Gagal simpan tema ke database:", e);
-        }
+        } catch(e) { console.error(e); }
     }
-}
-
-export function updateDateUI() {
-    const elDate = document.getElementById('dateDisplay');
-    if(elDate) elDate.innerText = state.currentDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    
-    const isToday = state.currentDate.getDate() === new Date().getDate() && state.currentDate.getMonth() === new Date().getMonth();
-    const resetBtn = document.getElementById('resetDateBtn');
-    if(resetBtn) isToday ? resetBtn.classList.add('hidden') : resetBtn.classList.remove('hidden');
 }

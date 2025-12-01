@@ -1,10 +1,9 @@
 import { state } from './state.js'; 
 
-// Variabel untuk melacak status modal exit
 let isExitModalOpen = false;
+let isExiting = false; // [BARU] Flag untuk menandai proses keluar
 
 export function setupRouter() {
-    // 1. SYSTEM NAVIGASI SATU PINTU (Hash Listener)
     const handleNavigation = () => {
         if (!state.currentUser) {
             if (window.location.hash && window.location.hash !== '#home') {
@@ -31,23 +30,37 @@ export function setupRouter() {
     window.addEventListener('hashchange', handleNavigation);
     window.addEventListener('load', handleNavigation);
 
-    // [BARU] LOGIKA BACK BUTTON TRAP (UNTUK HOME)
-    // Saat tombol back ditekan (popstate)
+    // LOGIKA BACK BUTTON TRAP
     window.addEventListener('popstate', (event) => {
-        // Jika hash kosong atau #home, dan modal belum terbuka
-        if ((!location.hash || location.hash === '#home') && !isExitModalOpen) {
-            // Tampilkan Modal Konfirmasi
-            toggleExitModal(true);
-            
-            // Push state lagi agar URL tetap di aplikasi (mencegah keluar langsung)
-            history.pushState(null, null, location.href); 
+        // [BARU] Jika sedang proses keluar (tombol Ya ditekan), abaikan trap ini!
+        if (isExiting) return; 
+
+        if (!state.currentUser) return;
+
+        // Jika modal terbuka, tombol Back menutup modal (Batal)
+        if (isExitModalOpen) {
+            toggleExitModal(false);
+            history.pushState({ page: 'home_trap' }, '', '#home'); 
+            return;
+        }
+
+        const isHomeUrl = !location.hash || location.hash === '#home';
+        
+        if (isHomeUrl) {
+             // Jika state bukan 'home_trap', berarti user mau keluar
+             if (!event.state || event.state.page !== 'home_trap') {
+                 // Tampilkan modal
+                 toggleExitModal(true);
+                 
+                 // Push lagi biar gak langsung keluar (Trap)
+                 history.pushState({ page: 'home_trap' }, '', '#home');
+             }
         }
     });
 
-    // 2. FUNGSI TOMBOL GLOBAL
+    // FUNGSI GLOBAL
     window.goHome = () => window.location.hash = 'home';
     
-    // Fungsi GoBack (Smart Back)
     window.goBack = () => {
         if (window.history.length > 1) {
             window.history.back();
@@ -66,7 +79,6 @@ export function setupRouter() {
     window.closeTasbih = () => window.goBack();
     window.closeProfile = () => window.goBack();
 
-    // [BARU] Init Listener Tombol Modal Exit
     setupExitModalListeners();
 }
 
@@ -76,16 +88,13 @@ export function switchView(targetId) {
     
     if (!targetEl) return;
 
-    // [BARU] Jika masuk ke HOME, pasang "Jebakan History"
+    // Pasang Trap saat masuk Home
     if (targetId === 'homeView') {
-        // Push state dummy agar ada history untuk di-pop saat back ditekan
-        // Cek agar tidak menumpuk history terlalu banyak
-        if (!history.state || history.state.page !== 'home') {
-            history.pushState({ page: 'home' }, '', '#home');
+        if (!history.state || history.state.page !== 'home_trap') {
+             history.pushState({ page: 'home_trap' }, '', '#home');
         }
     }
 
-    // 1. Reset SEMUA View
     allViews.forEach(id => {
         const el = document.getElementById(id);
         if (el && el !== targetEl) { 
@@ -98,7 +107,6 @@ export function switchView(targetId) {
         }
     });
 
-    // 2. Munculkan TARGET
     targetEl.classList.remove('hidden-force');
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -106,15 +114,11 @@ export function switchView(targetId) {
         });
     });
 
-    // 3. Render Icon
     if (window.lucide && targetEl.querySelectorAll('i[data-lucide]').length > 0) {
         try { lucide.createIcons({ root: targetEl }); } catch(e) {}
     }
 
-    // 4. Update Sidebar
     updateSidebarUI(targetId);
-    
-    // 5. Info ke Modul Lain
     window.dispatchEvent(new CustomEvent('viewChanged', { detail: { viewId: targetId } }));
 }
 
@@ -146,29 +150,41 @@ function updateSidebarUI(activeViewId) {
     }
 }
 
-// [BARU] Fungsi Helper Modal Exit
+// FUNGSI MODAL DENGAN SCROLL LOCK YANG BENAR
 function toggleExitModal(show) {
     const modal = document.getElementById('exitAppModal');
     const content = document.getElementById('exitAppContent');
+    // [PERBAIKAN] Ambil view yang sedang aktif untuk dikunci scroll-nya
+    const activeView = document.querySelector('.active'); 
+    
     if(!modal) return;
 
     isExitModalOpen = show;
 
     if(show) {
         modal.classList.remove('hidden-force');
+        
+        // [PERBAIKAN] Kunci scroll pada View Aktif (bukan Body saja)
+        if(activeView) activeView.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden'; // Backup lock
+        
         requestAnimationFrame(() => {
             modal.classList.remove('opacity-0');
             if(content) content.classList.remove('scale-90');
         });
     } else {
         modal.classList.add('opacity-0');
+        
+        // [PERBAIKAN] Buka kunci scroll
+        if(activeView) activeView.style.overflow = '';
+        document.body.style.overflow = ''; 
+        
         if(content) content.classList.add('scale-90');
         setTimeout(() => modal.classList.add('hidden-force'), 300);
     }
 }
 
 function setupExitModalListeners() {
-    // Tombol Batal
     const cancelBtn = document.getElementById('cancelExitBtn');
     if(cancelBtn) {
         cancelBtn.addEventListener('click', () => {
@@ -176,17 +192,25 @@ function setupExitModalListeners() {
         });
     }
 
-    // Tombol Ya, Keluar
     const confirmBtn = document.getElementById('confirmExitBtn');
     if(confirmBtn) {
         confirmBtn.addEventListener('click', () => {
-            // Coba tutup window (biasanya diblokir browser modern, tapi worth a try untuk PWA)
-            // Trik PWA: Mundur history sebanyak mungkin
+            // [PERBAIKAN UTAMA] Logika Keluar
+            isExiting = true; // Set flag agar popstate listener tidak memblokir
+            
+            // Coba metode standar dulu
             try {
-                window.history.go(-(window.history.length + 1));
-                window.close(); 
-            } catch(e) {
-                console.log("Exit attempt");
+                window.close();
+            } catch(e){}
+
+            // Strategi PWA: Mundur 2 langkah
+            // Langkah 1: Undo "Trap" yang baru saja kita push
+            // Langkah 2: Mundur ke halaman sebelum PWA dibuka (Exit)
+            if (window.history.length > 1) {
+                window.history.go(-2); 
+            } else {
+                // Fallback jika history kosong
+                navigator.app.exitApp(); 
             }
         });
     }
