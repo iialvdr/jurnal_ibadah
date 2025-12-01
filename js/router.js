@@ -2,6 +2,8 @@ import { state } from './state.js';
 
 let isExitModalOpen = false;
 let isExiting = false; 
+// [BARU] Penanda untuk navigasi tombol
+let isExplicitNavigation = false;
 
 export function setupRouter() {
     const handleNavigation = () => {
@@ -33,10 +35,14 @@ export function setupRouter() {
     // LOGIKA BACK BUTTON TRAP
     window.addEventListener('popstate', (event) => {
         if (isExiting) return; 
-
         if (!state.currentUser) return;
 
-        // Jika modal terbuka, tombol Back menutup modal (Batal)
+        // [PERBAIKAN] Jika ini navigasi dari tombol sidebar/menu, JANGAN munculkan modal
+        if (isExplicitNavigation) {
+            isExplicitNavigation = false; // Reset flag
+            return;
+        }
+
         if (isExitModalOpen) {
             toggleExitModal(false);
             history.pushState({ page: 'home_trap' }, '', '#home'); 
@@ -53,9 +59,24 @@ export function setupRouter() {
         }
     });
 
-    // FUNGSI GLOBAL
-    window.goHome = () => window.location.hash = 'home';
-    
+    // [BARU] Helper untuk navigasi aman (Set Flag)
+    const navigateTo = (hash) => {
+        isExplicitNavigation = true;
+        window.location.hash = hash;
+        
+        // Reset otomatis jika event tidak terpanggil (safety)
+        setTimeout(() => { isExplicitNavigation = false; }, 300);
+    };
+
+    // UPDATE FUNGSI GLOBAL
+    window.goHome = () => navigateTo('home');
+    window.openTracker = () => navigateTo('tracker');
+    window.openTasbih = () => navigateTo('tasbih');
+    window.openQibla = () => navigateTo('qibla');
+    window.openQuran = () => navigateTo('quran');
+    window.openProfile = () => navigateTo('profile');
+
+    // goBack biarkan natural (jangan pakai navigateTo)
     window.goBack = () => {
         if (window.history.length > 1) {
             window.history.back();
@@ -63,12 +84,6 @@ export function setupRouter() {
             window.location.hash = 'home';
         }
     };
-    
-    window.openTracker = () => window.location.hash = 'tracker';
-    window.openTasbih = () => window.location.hash = 'tasbih';
-    window.openQibla = () => window.location.hash = 'qibla';
-    window.openQuran = () => window.location.hash = 'quran';
-    window.openProfile = () => window.location.hash = 'profile';
 
     window.closeQibla = () => window.goBack();
     window.closeTasbih = () => window.goBack();
@@ -144,7 +159,6 @@ function updateSidebarUI(activeViewId) {
     }
 }
 
-// [UPDATED] Fungsi Modal: Scroll ke Atas & Kunci Scroll
 function toggleExitModal(show) {
     const modal = document.getElementById('exitAppModal');
     const content = document.getElementById('exitAppContent');
@@ -156,11 +170,8 @@ function toggleExitModal(show) {
 
     if(show) {
         modal.classList.remove('hidden-force');
-        
         if(activeView) {
-            // 1. Scroll halaman ke paling atas
             activeView.scrollTop = 0; 
-            // 2. Kunci scroll agar user tidak bisa scroll ke bawah lagi
             activeView.style.overflow = 'hidden';
         }
         document.body.style.overflow = 'hidden'; 
@@ -171,8 +182,6 @@ function toggleExitModal(show) {
         });
     } else {
         modal.classList.add('opacity-0');
-        
-        // Buka kembali kunci scroll
         if(activeView) activeView.style.overflow = '';
         document.body.style.overflow = ''; 
         
@@ -193,11 +202,7 @@ function setupExitModalListeners() {
     if(confirmBtn) {
         confirmBtn.addEventListener('click', () => {
             isExiting = true; 
-            
-            try {
-                window.close();
-            } catch(e){}
-
+            try { window.close(); } catch(e){}
             if (window.history.length > 1) {
                 window.history.go(-2); 
             } else {
