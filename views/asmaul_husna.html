@@ -1,0 +1,46 @@
+<div id="asmaulHusnaView" class="hidden-force flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-hidden bg-slate-100 dark:bg-slate-950">
+    
+    <div class="px-6 pb-4 pt-[calc(2rem+env(safe-area-inset-top))] flex justify-between items-center relative shrink-0 z-30 bg-slate-100/90 dark:bg-slate-950/90 backdrop-blur-md">
+        <button onclick="goBack()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-md border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-emerald-600 group">
+            <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-0.5 transition"></i>
+        </button>
+        <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Asmaul Husna</h2>
+        <div class="w-11"></div> 
+    </div>
+
+    <div class="px-6 pb-2 pt-2 z-20 transition-all duration-300">
+        <div class="relative group">
+            <div class="absolute inset-0 bg-emerald-500/20 rounded-[1.5rem] blur-md opacity-0 group-hover:opacity-100 transition duration-500"></div>
+            <div class="relative bg-white dark:bg-slate-900 rounded-[1.5rem] shadow-sm border border-slate-200 dark:border-slate-800 flex items-center px-4 py-3.5 transition group-focus-within:border-emerald-500 group-focus-within:ring-1 group-focus-within:ring-emerald-500/50">
+                <i data-lucide="search" class="w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition"></i>
+                <input type="text" id="asmaSearchInput" onkeyup="searchAsma(this.value)" placeholder="Cari nama Allah..." class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 ml-3 h-full outline-none">
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-6 space-y-3 scroll-smooth pb-32" id="asmaListContainer">
+        <div id="asmaList" class="space-y-3">
+            </div>
+    </div>
+
+    <div id="asmaDetailModal" class="absolute inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden-force opacity-0 transition-all duration-300">
+        <div class="bg-white dark:bg-slate-900 w-[85%] max-w-sm p-8 rounded-[2.5rem] shadow-2xl border border-white/20 dark:border-slate-800 transform scale-90 transition-all duration-300 relative overflow-hidden" id="asmaDetailContent">
+            
+            <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+            
+            <button onclick="closeAsmaDetail()" class="absolute top-6 right-6 p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-red-500 transition active:scale-90 z-20">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="flex flex-col items-center text-center relative z-10 pt-2">
+                <div class="w-24 h-24 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mb-6 border-4 border-emerald-100 dark:border-emerald-800/50 shadow-inner">
+                    <span id="detailNumber" class="text-3xl font-black text-emerald-600 dark:text-emerald-400">1</span>
+                </div>
+                
+                <h2 id="detailArabic" class="font-quran text-6xl mb-4 text-slate-800 dark:text-white drop-shadow-sm leading-relaxed">...</h2>
+                <h3 id="detailLatin" class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mb-3 tracking-tight">...</h3>
+                <p id="detailMeaning" class="text-base font-medium text-slate-500 dark:text-slate-400 leading-relaxed px-2">...</p>
+            </div>
+        </div>
+    </div>
+</div>

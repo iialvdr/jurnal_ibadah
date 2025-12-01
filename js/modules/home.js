@@ -1,14 +1,17 @@
-import { state, setPrayerTimes, setLastCity, setTodayRecords } from '../state.js'; // [UPDATED] Import setTodayRecords
-// [UPDATED] Hapus loadRecordsFromCloud dari import tracker
+import { state, setPrayerTimes, setLastCity, setTodayRecords } from '../state.js';
 import { updateProgressBar } from './tracker.js'; 
 import { db } from '../config.js';
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { switchView } from '../router.js'; // Kita butuh ini untuk pindah ke Quran
 
 let isDarkMode = false;
 
 export function initHome() {
     window.refreshLocation = refreshLocation;
     window.toggleDarkMode = toggleDarkMode; 
+    
+    // [BARU] Fungsi Navigasi Langsung ke Bookmark
+    window.continueReading = continueReading;
 
     initTheme();
     getLocation();
@@ -17,6 +20,11 @@ export function initHome() {
         if (e.detail.viewId === 'homeView') {
             updateHomeUI();
         }
+    });
+    
+    // [BARU] Listener jika bookmark diupdate dari Quran, refresh Home card
+    window.addEventListener('bookmarkUpdated', () => {
+        loadLastReadCard();
     });
 }
 
@@ -41,11 +49,14 @@ export async function syncThemeWithCloud() {
 export function updateHomeUI() {
     updateNextPrayer();
     
-    // [LOGIKA BARU] Load data khusus Home (Hari Ini)
     if(state.currentUser) {
-        loadHomeRecords(); // Panggil fungsi fetching khusus Home
+        loadHomeRecords(); 
+        loadLastReadCard(); // [BARU] Load kartu terakhir baca
     } else {
         renderTodayPrayers();
+        // Sembunyikan kartu jika belum login
+        const c = document.getElementById('homeLastReadContainer');
+        if(c) c.classList.add('hidden');
     }
 
     const locText = document.getElementById('homeLocationText');
@@ -66,18 +77,77 @@ export function updateHomeUI() {
     }
 }
 
-// [BARU] Fungsi Fetch Data Khusus Home (Selalu Hari Ini)
+// [BARU] Fungsi Render Kartu Terakhir Baca
+async function loadLastReadCard() {
+    if (!state.currentUser) return;
+    const container = document.getElementById('homeLastReadContainer');
+    if(!container) return;
+
+    try {
+        const docRef = doc(db, "users", state.currentUser.uid, "quran", "last_read");
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            // Simpan di window agar bisa diakses saat klik
+            window.lastReadData = data; 
+            
+            container.innerHTML = `
+                <div onclick="continueReading()" class="relative w-full bg-white dark:bg-slate-900 rounded-[1.8rem] p-5 border border-slate-200 dark:border-slate-800 shadow-lg cursor-pointer group hover:border-emerald-300 dark:hover:border-emerald-700 transition-all active:scale-[0.98]">
+                    <div class="absolute right-0 top-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-2xl -mr-5 -mt-5"></div>
+                    <div class="flex items-center justify-between relative z-10">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-100 dark:border-emerald-800 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300 shadow-inner">
+                                <i data-lucide="bookmark" class="w-6 h-6 fill-current"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Terakhir Dibaca</p>
+                                <h3 class="text-lg font-black text-slate-800 dark:text-white leading-tight">QS. ${data.name}</h3>
+                                <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400">Ayat ${data.ayat}</p>
+                            </div>
+                        </div>
+                        <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-emerald-500 transition">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.classList.remove('hidden');
+            if(window.lucide) lucide.createIcons({ root: container });
+        } else {
+            container.classList.add('hidden');
+        }
+    } catch(e) {
+        console.error("Gagal load last read:", e);
+    }
+}
+
+// [BARU] Fungsi Navigasi ke Quran
+function continueReading() {
+    if(window.lastReadData) {
+        const { surah, ayat } = window.lastReadData;
+        
+        // Pindah ke View Quran
+        window.location.hash = 'quran'; // Trigger router
+        
+        // Tunggu sebentar agar view quran loading, lalu buka surat
+        setTimeout(() => {
+            if(window.openSurah) {
+                window.openSurah(surah, ayat); // Buka surat & scroll ke ayat
+            }
+        }, 100);
+    }
+}
+
+// ... (Sisa fungsi loadHomeRecords, renderTodayPrayers, dll TETAP SAMA seperti sebelumnya) ...
 async function loadHomeRecords() {
     if (!state.currentUser) return;
-    
-    // Format tanggal hari ini (currentDate)
     const offset = state.currentDate.getTimezoneOffset(); 
     const localDate = new Date(state.currentDate.getTime() - (offset*60*1000)); 
     const dateKey = localDate.toISOString().split('T')[0];
 
     try {
         const docSnap = await getDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey));
-        // Simpan ke state.todayRecords (Bukan currentRecords punya tracker)
         setTodayRecords(docSnap.exists() ? docSnap.data() : {});
     } catch (e) { 
         console.error(e); 
@@ -95,10 +165,7 @@ function renderTodayPrayers() {
 
     wajibPrayers.forEach(name => {
         const time = state.prayerTimes[name] || '--:--';
-        
-        // [UPDATED] Baca dari state.todayRecords
         const isDone = state.todayRecords && state.todayRecords[name] === true;
-        
         let cardStyle, textNameStyle, textTimeStyle, checkIconStyle;
 
         if (isDone) {

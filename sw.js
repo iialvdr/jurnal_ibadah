@@ -22,6 +22,8 @@ const urlsToCache = [
   './js/modules/quran.js',
   './js/modules/tasbih.js',
   './js/modules/tracker.js',
+  './js/modules/doa.js',
+  './js/modules/asmaul_husna.js',
 
   './views/login.html',
   './views/home.html',
@@ -30,6 +32,11 @@ const urlsToCache = [
   './views/qibla.html',
   './views/tracker.html',
   './views/quran.html',
+  './views/doa.html',
+  './views/asmaul_husna.html',
+  
+  './assets/icons/icon-192.png',
+  './assets/icons/icon-512.png',
 
   './assets/logo.png',
   './assets/favicon/android-chrome-192x192.png'

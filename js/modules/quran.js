@@ -1,9 +1,12 @@
-// jurnal_ibadah/js/modules/quran.js
+import { db } from '../config.js';
+import { doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { state } from '../state.js';
 
 let allSurahs = [];
 let currentSurahNumber = 0;
 let activeAudio = null;
 let activeBtn = null;
+let lastReadData = null; 
 
 export function initQuran() {
     window.handleQuranBack = handleQuranBack;
@@ -11,6 +14,7 @@ export function initQuran() {
     window.openSurah = openSurah;
     window.changeSurah = changeSurah;
     window.playAudio = playAudio;
+    window.toggleBookmark = toggleBookmark;
 
     fetchSurahList();
 }
@@ -27,11 +31,30 @@ async function fetchSurahList() {
             allSurahs = result.data;
             renderSurahList(allSurahs);
         }
+        
+        if(state.currentUser) {
+            fetchLastRead();
+        }
+
     } catch (error) {
         console.error("Gagal memuat daftar surat:", error);
     } finally {
         if(loader) loader.classList.add('hidden');
     }
+}
+
+async function fetchLastRead() {
+    if(!state.currentUser) return;
+    try {
+        const docRef = doc(db, "users", state.currentUser.uid, "quran", "last_read");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            lastReadData = docSnap.data();
+            renderSurahList(allSurahs); // Re-render list untuk update badge
+        } else {
+            lastReadData = null; 
+        }
+    } catch(e) { console.error("Gagal ambil bookmark:", e); }
 }
 
 function renderSurahList(data) {
@@ -40,9 +63,21 @@ function renderSurahList(data) {
 
     let html = '';
     data.forEach(surah => {
-        // [UPDATED] Card Style: Rounded Aesthetic
+        const isLastRead = lastReadData && lastReadData.surah === surah.nomor;
+        
+        // [PERBAIKAN] Badge sekarang berupa div biasa (bukan absolute) dan diletakkan di atas Nama Latin
+        const badge = isLastRead ? 
+            `<div class="mb-1.5 animate-[fadeIn_0.5s_ease-out]">
+                <span class="text-[9px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold border border-emerald-200 dark:border-emerald-800">
+                    Terakhir Baca: Ayat ${lastReadData.ayat}
+                </span>
+            </div>` 
+            : '';
+            
+        const borderClass = isLastRead ? 'border-emerald-400 ring-1 ring-emerald-400/50' : 'border-slate-200 dark:border-slate-800';
+
         html += `
-        <div onclick="openSurah(${surah.nomor})" class="group bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 cursor-pointer active:scale-[0.98] flex items-center gap-4 relative overflow-hidden">
+        <div onclick="openSurah(${surah.nomor})" class="group bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border ${borderClass} shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 cursor-pointer active:scale-[0.98] flex items-center gap-4 relative overflow-hidden">
             
             <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-50 dark:bg-emerald-900/10 rounded-full blur-2xl -mr-10 -mt-10 opacity-0 group-hover:opacity-100 transition duration-500"></div>
 
@@ -50,12 +85,13 @@ function renderSurahList(data) {
                 ${surah.nomor}
             </div>
             
-            <div class="flex-1 relative z-10">
-                <h4 class="font-bold text-slate-800 dark:text-white text-lg leading-tight group-hover:text-emerald-600 transition-colors">${surah.namaLatin}</h4>
+            <div class="flex-1 relative z-10 min-w-0">
+                ${badge}
+                <h4 class="font-bold text-slate-800 dark:text-white text-lg leading-tight group-hover:text-emerald-600 transition-colors truncate pr-2">${surah.namaLatin}</h4>
                 <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">${surah.arti} • <span class="text-emerald-500">${surah.jumlahAyat} Ayat</span></p>
             </div>
             
-            <div class="text-right relative z-10 pl-2">
+            <div class="text-right relative z-10 pl-2 shrink-0">
                 <span class="font-quran text-2xl text-slate-300 dark:text-slate-600 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors duration-300">${surah.nama}</span>
             </div>
         </div>`;
@@ -73,7 +109,7 @@ function searchSurah(query) {
     renderSurahList(filtered);
 }
 
-async function openSurah(nomor) {
+async function openSurah(nomor, targetAyah = null) {
     currentSurahNumber = nomor;
     
     const loader = document.getElementById('quranLoading');
@@ -83,10 +119,7 @@ async function openSurah(nomor) {
     const title = document.getElementById('quranTitle');
 
     if(loader) loader.classList.remove('hidden');
-    
-    if(navButtons) {
-        Array.from(navButtons.children).forEach(btn => btn.disabled = true);
-    }
+    if(navButtons) Array.from(navButtons.children).forEach(btn => btn.disabled = true);
     
     stopCurrentAudio();
 
@@ -98,22 +131,30 @@ async function openSurah(nomor) {
             const data = result.data;
             
             if(title) title.innerText = data.namaLatin;
-            renderAyahs(data.ayat);
+            
+            renderAyahs(data.ayat, data.namaLatin);
             
             if(ayahContainer) {
                 ayahContainer.classList.remove('translate-x-full');
                 ayahContainer.scrollTop = 0;
             }
-            // Sembunyikan Search Bar saat baca ayat agar bersih
             if(searchContainer) searchContainer.classList.add('-translate-y-24', 'opacity-0', 'pointer-events-none');
             
             if(navButtons) {
                 navButtons.classList.remove('translate-y-40');
-                const prevBtn = navButtons.children[0];
-                const nextBtn = navButtons.children[1];
-                
-                if(prevBtn) prevBtn.disabled = nomor === 1;
-                if(nextBtn) nextBtn.disabled = nomor === 114;
+                navButtons.children[0].disabled = nomor === 1;
+                navButtons.children[1].disabled = nomor === 114;
+            }
+
+            if (targetAyah) {
+                setTimeout(() => {
+                    const el = document.getElementById(`ayah-${targetAyah}`);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.classList.add('ring-2', 'ring-emerald-400');
+                        setTimeout(() => el.classList.remove('ring-2', 'ring-emerald-400'), 2000);
+                    }
+                }, 600);
             }
         }
     } catch (error) {
@@ -123,22 +164,31 @@ async function openSurah(nomor) {
     }
 }
 
-function renderAyahs(ayatList) {
+function renderAyahs(ayatList, surahName) {
     const container = document.getElementById('ayahsContent');
     if (!container) return;
 
     let html = '';
     ayatList.forEach(ayat => {
         const audioUrl = ayat.audio['05'] || ayat.audio['01']; 
+        
+        const isBookmarked = lastReadData && lastReadData.surah === currentSurahNumber && lastReadData.ayat === ayat.nomorAyat;
+        const bookmarkIconClass = isBookmarked ? "fill-emerald-500 text-emerald-500" : "text-slate-300 hover:text-emerald-500";
 
-        // [UPDATED] Ayah Card Style
         html += `
-        <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group">
+        <div id="ayah-${ayat.nomorAyat}" class="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group transition-all duration-300">
             
             <div class="flex justify-between items-center mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-                <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold flex items-center justify-center text-sm border border-emerald-200/50">
-                    ${ayat.nomorAyat}
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold flex items-center justify-center text-sm border border-emerald-200/50">
+                        ${ayat.nomorAyat}
+                    </div>
+                    
+                    <button onclick="toggleBookmark(${currentSurahNumber}, ${ayat.nomorAyat}, '${surahName}')" class="w-10 h-10 rounded-full bg-transparent hover:bg-emerald-50 dark:hover:bg-emerald-900/20 flex items-center justify-center transition active:scale-90" title="Tandai Terakhir Baca">
+                        <i data-lucide="bookmark" class="w-5 h-5 ${bookmarkIconClass} transition-colors" id="btn-bookmark-${ayat.nomorAyat}"></i>
+                    </button>
                 </div>
+
                 <button onclick="playAudio('${audioUrl}', this)" class="play-audio-btn w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-emerald-500 shadow-sm border border-slate-200 dark:border-slate-700 transition-all duration-300 active:scale-90 group-btn">
                     <i data-lucide="play" class="w-4 h-4 fill-current translate-x-0.5"></i>
                 </button>
@@ -151,24 +201,65 @@ function renderAyahs(ayatList) {
             </div>
             
             <div class="space-y-3 bg-slate-50 dark:bg-slate-800/50 -mx-6 -mb-6 p-6 border-t border-slate-100 dark:border-slate-800">
-                <p class="text-emerald-600 dark:text-emerald-400 text-sm font-bold tracking-wide mb-1">
-                    Latin
-                </p>
-                <p class="text-slate-500 dark:text-slate-400 text-sm font-medium italic mb-4 leading-relaxed">
-                    "${ayat.teksLatin}"
-                </p>
-                 <p class="text-emerald-600 dark:text-emerald-400 text-sm font-bold tracking-wide mb-1">
-                    Terjemahan
-                </p>
-                <p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
-                    ${ayat.teksIndonesia}
-                </p>
+                <p class="text-emerald-600 dark:text-emerald-400 text-sm font-bold tracking-wide mb-1">Latin</p>
+                <p class="text-slate-500 dark:text-slate-400 text-sm font-medium italic mb-4 leading-relaxed">"${ayat.teksLatin}"</p>
+                
+                <p class="text-emerald-600 dark:text-emerald-400 text-sm font-bold tracking-wide mb-1">Terjemahan</p>
+                <p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">${ayat.teksIndonesia}</p>
             </div>
         </div>`;
     });
 
     container.innerHTML = html;
     if(window.lucide) lucide.createIcons();
+}
+
+async function toggleBookmark(surahNum, ayatNum, surahName) {
+    if(!state.currentUser) {
+        alert("Silakan login untuk menyimpan penanda bacaan.");
+        return;
+    }
+
+    // Logic Un-bookmark (Hapus)
+    const isDeleting = lastReadData && lastReadData.surah === surahNum && lastReadData.ayat === ayatNum;
+
+    if (isDeleting) {
+        lastReadData = null;
+        const targetIcon = document.getElementById(`btn-bookmark-${ayatNum}`);
+        if(targetIcon) {
+            targetIcon.classList.remove('fill-emerald-500', 'text-emerald-500');
+            targetIcon.classList.add('text-slate-300');
+        }
+        try {
+            await deleteDoc(doc(db, "users", state.currentUser.uid, "quran", "last_read"));
+            window.dispatchEvent(new Event('bookmarkUpdated'));
+        } catch(e) { console.error("Gagal hapus:", e); }
+
+    } else {
+        // Logic Set Bookmark Baru
+        document.querySelectorAll('[id^="btn-bookmark-"]').forEach(el => {
+            el.classList.remove('fill-emerald-500', 'text-emerald-500');
+            el.classList.add('text-slate-300');
+        });
+
+        const targetIcon = document.getElementById(`btn-bookmark-${ayatNum}`);
+        if(targetIcon) {
+            targetIcon.classList.remove('text-slate-300');
+            targetIcon.classList.add('fill-emerald-500', 'text-emerald-500');
+            targetIcon.parentElement.classList.add('scale-125');
+            setTimeout(() => targetIcon.parentElement.classList.remove('scale-125'), 200);
+        }
+
+        lastReadData = { surah: surahNum, ayat: ayatNum, name: surahName, timestamp: new Date() };
+
+        try {
+            await setDoc(doc(db, "users", state.currentUser.uid, "quran", "last_read"), lastReadData);
+            window.dispatchEvent(new Event('bookmarkUpdated'));
+        } catch(e) {
+            console.error("Gagal simpan:", e);
+            alert("Gagal menyimpan. Periksa koneksi.");
+        }
+    }
 }
 
 function playAudio(url, btnElement) {
@@ -200,11 +291,10 @@ function playAudio(url, btnElement) {
         const allBtns = Array.from(document.querySelectorAll('.play-audio-btn'));
         const currIndex = allBtns.indexOf(btnElement);
         
-        // Auto-play next ayah
         if (currIndex >= 0 && currIndex < allBtns.length - 1) {
             const nextBtn = allBtns[currIndex + 1];
             nextBtn.closest('.bg-white').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setTimeout(() => nextBtn.click(), 500); // Delay dikit biar enak
+            setTimeout(() => nextBtn.click(), 500); 
         }
     };
     
@@ -231,19 +321,14 @@ function stopCurrentAudio() {
 function updateButtonUI(btn, state) {
     if (state === 'pause') {
         btn.innerHTML = `<i data-lucide="pause" class="w-4 h-4 fill-current"></i>`;
-        // Style Active
         btn.classList.remove('bg-slate-50', 'dark:bg-slate-800', 'text-slate-400');
         btn.classList.add('bg-emerald-500', 'text-white', 'scale-110', 'shadow-lg', 'shadow-emerald-500/40', 'border-transparent');
     } else {
         btn.innerHTML = `<i data-lucide="play" class="w-4 h-4 fill-current translate-x-0.5"></i>`;
-        // Style Inactive (Reset)
         btn.classList.add('bg-slate-50', 'dark:bg-slate-800', 'text-slate-400');
         btn.classList.remove('bg-emerald-500', 'text-white', 'scale-110', 'shadow-lg', 'shadow-emerald-500/40', 'border-transparent');
     }
-
-    if (window.lucide) {
-        lucide.createIcons({ root: btn });
-    }
+    if (window.lucide) lucide.createIcons({ root: btn });
 }
 
 function changeSurah(direction) {
@@ -261,15 +346,14 @@ function handleQuranBack() {
     const title = document.getElementById('quranTitle');
     
     if (ayahContainer && !ayahContainer.classList.contains('translate-x-full')) {
-        // Logic menutup ayat (sliding drawer) tetap sama
         ayahContainer.classList.add('translate-x-full');
         if(searchContainer) searchContainer.classList.remove('-translate-y-24', 'opacity-0', 'pointer-events-none');
         if(navButtons) navButtons.classList.add('translate-y-40');
         if(title) title.innerText = "Al-Qur'an";
-        
         stopCurrentAudio(); 
+        
+        fetchSurahList(); // Refresh list agar badge muncul/update
     } else {
-        // [UPDATED] Gunakan goBack() untuk kembali ke halaman sebelumnya
         if(window.goBack) window.goBack();
     }
 }

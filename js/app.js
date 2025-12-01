@@ -6,17 +6,20 @@ import { APP_VERSION } from './version.js';
 
 // Import Modules
 import { initAuth } from './modules/auth.js';
-// [UPDATED] Import syncThemeWithCloud
 import { initHome, updateHomeUI, syncThemeWithCloud } from './modules/home.js';
 import { initTracker } from './modules/tracker.js';
 import { initTasbih } from './modules/tasbih.js';
 import { initQibla } from './modules/qibla.js';
 import { initQuran } from './modules/quran.js';
 import { initProfile } from './modules/profile.js';
+import { initDoa } from './modules/doa.js'; // [BARU] Import Doa Module
+import { initAsmaulHusna } from './modules/asmaul_husna.js';
 
+// [UPDATED] Tambahkan 'views/doa.html' ke list view
 const VIEWS = [
     'views/login.html', 'views/home.html', 'views/profile.html',
-    'views/tasbih.html', 'views/qibla.html', 'views/tracker.html', 'views/quran.html'
+    'views/tasbih.html', 'views/qibla.html', 'views/tracker.html', 'views/quran.html',
+    'views/doa.html', 'views/asmaul_husna.html'
 ];
 
 async function loadAllViews() {
@@ -55,6 +58,8 @@ function initializeApp() {
     initTasbih();
     initQibla();
     initQuran();
+    initDoa(); // [BARU] Init Doa
+    initAsmaulHusna();
     initProfile();
 
     onAuthStateChanged(auth, (user) => {
@@ -65,7 +70,6 @@ function initializeApp() {
         if (user) {
             setCurrentUser(user);
             
-            // [BARU] Load tema dari database saat login berhasil
             syncThemeWithCloud();
             
             const loginOverlay = document.getElementById('loginOverlay');

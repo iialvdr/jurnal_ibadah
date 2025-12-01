@@ -53,6 +53,9 @@
         </div>
     </div>
 
+    <div id="homeLastReadContainer" class="px-6 mb-6 hidden animate-[slideUp_0.5s_ease-out]">
+        </div>
+
     <div class="px-6 mb-8">
         <div class="flex items-center justify-between mb-4 px-1">
              <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 uppercase tracking-wide">
@@ -73,6 +76,7 @@
             <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Jurnal</h3>
             <p class="text-xs text-slate-500 font-medium mt-1">Checklist Harian</p>
         </button>
+
         <button onclick="openTasbih()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-200 transition-all duration-300 text-left active:scale-95">
             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 shadow-lg shadow-blue-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
                 <i data-lucide="grip" class="w-7 h-7"></i>
@@ -80,6 +84,7 @@
             <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Tasbih</h3>
             <p class="text-xs text-slate-500 font-medium mt-1">Counter Dzikir</p>
         </button>
+
         <button onclick="openQuran()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-purple-500/10 hover:border-purple-200 transition-all duration-300 text-left active:scale-95">
             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-400 to-purple-600 shadow-lg shadow-purple-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
                 <i data-lucide="book-open" class="w-7 h-7"></i>
@@ -87,6 +92,7 @@
             <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Al-Qur'an</h3>
             <p class="text-xs text-slate-500 font-medium mt-1">Baca & Terjemah</p>
         </button>
+
         <button onclick="openQibla()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-teal-500/10 hover:border-teal-200 transition-all duration-300 text-left active:scale-95">
             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-400 to-teal-600 shadow-lg shadow-teal-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
                 <i data-lucide="compass" class="w-7 h-7"></i>
@@ -94,15 +100,34 @@
             <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Kiblat</h3>
             <p class="text-xs text-slate-500 font-medium mt-1">Arah Ka'bah</p>
         </button>
+        
+        <button onclick="openDoa()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-pink-500/10 hover:border-pink-200 transition-all duration-300 text-left active:scale-95">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-400 to-rose-500 shadow-lg shadow-pink-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
+                <i data-lucide="book-heart" class="w-7 h-7"></i>
+            </div>
+            <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Doa</h3>
+            <p class="text-xs text-slate-500 font-medium mt-1">Harian & Tahlil</p>
+        </button>
+
+        <button onclick="openAsma()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-200 transition-all duration-300 text-left active:scale-95">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-500 shadow-lg shadow-indigo-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
+                <i data-lucide="grid" class="w-7 h-7"></i>
+            </div>
+            <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Asmaul Husna</h3>
+            <p class="text-xs text-slate-500 font-medium mt-1">99 Nama Allah</p>
+        </button>
+        
         <button onclick="openProfile()" class="col-span-2 relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-amber-500/10 hover:border-amber-200 transition-all duration-300 text-left flex items-center gap-5 active:scale-95">
             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-lg shadow-amber-500/30 flex items-center justify-center text-white shrink-0 group-hover:rotate-12 transition duration-300">
                 <i data-lucide="user" class="w-7 h-7"></i>
             </div>
-            <div class="relative z-10">
+            
+            <div class="relative z-10 flex-1">
                 <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Profil Saya</h3>
                 <p class="text-xs text-slate-500 font-medium mt-1">Statistik & Akun</p>
             </div>
-            <div class="ml-auto bg-slate-50 dark:bg-slate-800 p-2.5 rounded-xl text-slate-400 group-hover:translate-x-1 transition relative z-10 border border-slate-100 dark:border-slate-700">
+            
+            <div class="bg-slate-50 dark:bg-slate-800 p-2.5 rounded-xl text-slate-400 group-hover:translate-x-1 transition relative z-10 border border-slate-100 dark:border-slate-700">
                 <i data-lucide="chevron-right" class="w-5 h-5"></i>
             </div>
         </button>

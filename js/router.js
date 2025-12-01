@@ -2,7 +2,6 @@ import { state } from './state.js';
 
 let isExitModalOpen = false;
 let isExiting = false; 
-// [BARU] Penanda untuk navigasi tombol
 let isExplicitNavigation = false;
 
 export function setupRouter() {
@@ -22,9 +21,12 @@ export function setupRouter() {
             'tasbih': 'tasbihView',
             'qibla': 'qiblaView',
             'quran': 'quranView',
-            'profile': 'profileView'
+            'profile': 'profileView',
+            'doa': 'doaView',
+            'asmaul-husna': 'asmaulHusnaView' // [UBAH DI SINI] Jangan disingkat
         };
 
+        // Fallback jika user mengetik hash yang tidak dikenal
         const targetViewId = routes[hash] || 'homeView';
         switchView(targetViewId);
     };
@@ -37,9 +39,8 @@ export function setupRouter() {
         if (isExiting) return; 
         if (!state.currentUser) return;
 
-        // [PERBAIKAN] Jika ini navigasi dari tombol sidebar/menu, JANGAN munculkan modal
         if (isExplicitNavigation) {
-            isExplicitNavigation = false; // Reset flag
+            isExplicitNavigation = false; 
             return;
         }
 
@@ -59,12 +60,9 @@ export function setupRouter() {
         }
     });
 
-    // [BARU] Helper untuk navigasi aman (Set Flag)
     const navigateTo = (hash) => {
         isExplicitNavigation = true;
         window.location.hash = hash;
-        
-        // Reset otomatis jika event tidak terpanggil (safety)
         setTimeout(() => { isExplicitNavigation = false; }, 300);
     };
 
@@ -75,8 +73,11 @@ export function setupRouter() {
     window.openQibla = () => navigateTo('qibla');
     window.openQuran = () => navigateTo('quran');
     window.openProfile = () => navigateTo('profile');
+    window.openDoa = () => navigateTo('doa');
+    
+    // [UBAH DI SINI] Menggunakan hash lengkap
+    window.openAsma = () => navigateTo('asmaul-husna'); 
 
-    // goBack biarkan natural (jangan pakai navigateTo)
     window.goBack = () => {
         if (window.history.length > 1) {
             window.history.back();
@@ -88,12 +89,13 @@ export function setupRouter() {
     window.closeQibla = () => window.goBack();
     window.closeTasbih = () => window.goBack();
     window.closeProfile = () => window.goBack();
+    window.closeAsmaDetail = () => { /* Dihandle di module */ };
 
     setupExitModalListeners();
 }
 
 export function switchView(targetId) {
-    const allViews = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView'];
+    const allViews = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView'];
     const targetEl = document.getElementById(targetId);
     
     if (!targetEl) return;
@@ -138,7 +140,9 @@ function updateSidebarUI(activeViewId) {
         'tasbihView': 'nav-tasbih',
         'qiblaView': 'nav-qibla',
         'quranView': 'nav-quran',
-        'profileView': 'nav-profile'
+        'profileView': 'nav-profile',
+        'doaView': 'nav-doa',
+        'asmaulHusnaView': 'nav-asma'
     };
 
     const activeBtnId = map[activeViewId];
@@ -155,7 +159,15 @@ function updateSidebarUI(activeViewId) {
     if(activeBtn) {
         activeBtn.className = "sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-white dark:bg-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none text-sm font-bold text-emerald-600 dark:text-emerald-400 group ring-1 ring-white/50 dark:ring-slate-700";
         const icon = activeBtn.querySelector('i');
-        if(icon) icon.className = "w-5 h-5 text-emerald-500";
+        
+        let iconColorClass = "text-emerald-500";
+        if(activeBtnId === 'nav-tasbih') iconColorClass = "text-blue-500";
+        if(activeBtnId === 'nav-qibla') iconColorClass = "text-teal-500";
+        if(activeBtnId === 'nav-profile') iconColorClass = "text-amber-500";
+        if(activeBtnId === 'nav-doa') iconColorClass = "text-pink-500";
+        if(activeBtnId === 'nav-asma') iconColorClass = "text-indigo-500";
+        
+        if(icon) icon.className = `w-5 h-5 ${iconColorClass}`;
     }
 }
 
