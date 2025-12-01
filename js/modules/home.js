@@ -115,8 +115,13 @@ function refreshLocation() {
 
     if(text) text.innerText = "Mencari...";
     if(btn) btn.classList.add('animate-pulse');
+    
     if(icon) {
-        icon.classList.add('animate-spin', 'text-emerald-500'); 
+        // [UPDATED] Ikon Loading Putih Bersih
+        icon.classList.add('animate-spin'); 
+        icon.classList.remove('drop-shadow-md'); // Hilangkan shadow saat loading
+        // Hapus penambahan 'text-emerald-500' agar tetap putih (default HTML)
+        
         icon.setAttribute('data-lucide', 'loader-2');
     }
     if(window.lucide) lucide.createIcons();
@@ -149,8 +154,12 @@ function resetLocationButton() {
     const btn = document.getElementById('locationBtn');
     const icon = document.getElementById('locIcon');
     if(btn) btn.classList.remove('animate-pulse');
+    
     if(icon) {
-        icon.classList.remove('animate-spin', 'text-emerald-500');
+        // [UPDATED] Kembalikan ke Ikon Map Pin Normal
+        icon.classList.remove('animate-spin');
+        icon.classList.add('drop-shadow-md'); // Kembalikan shadow
+        
         icon.setAttribute('data-lucide', 'map-pin');
     }
     if(window.lucide) lucide.createIcons();
