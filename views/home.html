@@ -120,4 +120,33 @@
         <div class="w-12 h-1 bg-slate-300 dark:bg-slate-800 rounded-full mx-auto mb-2"></div>
         <p class="text-[10px] font-bold text-slate-400 dark:text-slate-600 tracking-widest uppercase">Jurnal Ibadah App</p>
     </div>
+    <div class="text-center pb-8 opacity-60">
+        <div class="w-12 h-1 bg-slate-300 dark:bg-slate-800 rounded-full mx-auto mb-2"></div>
+        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-600 tracking-widest uppercase">Jurnal Ibadah App</p>
+    </div>
+
+    <div id="exitAppModal" class="absolute inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden-force opacity-0 transition-all duration-300">
+        <div class="bg-white dark:bg-slate-900 w-[80%] max-w-xs p-6 rounded-[2rem] shadow-2xl border border-white/20 dark:border-slate-800 transform scale-90 transition-all duration-300" id="exitAppContent">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-16 h-16 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mb-4 shadow-inner animate-pulse">
+                    <i data-lucide="door-open" class="w-8 h-8"></i>
+                </div>
+                
+                <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">Keluar Aplikasi?</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+                    Kamu yakin ingin menutup aplikasi Jurnal Ibadah?
+                </p>
+                
+                <div class="flex gap-3 w-full">
+                    <button id="cancelExitBtn" class="flex-1 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-sm transition active:scale-95 hover:bg-slate-200 dark:hover:bg-slate-700">
+                        Batal
+                    </button>
+                    
+                    <button id="confirmExitBtn" class="flex-1 py-3.5 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm shadow-lg shadow-red-500/30 transition active:scale-95">
+                        Ya, Keluar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

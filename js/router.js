@@ -1,5 +1,8 @@
 import { state } from './state.js'; 
 
+// Variabel untuk melacak status modal exit
+let isExitModalOpen = false;
+
 export function setupRouter() {
     // 1. SYSTEM NAVIGASI SATU PINTU (Hash Listener)
     const handleNavigation = () => {
@@ -28,16 +31,27 @@ export function setupRouter() {
     window.addEventListener('hashchange', handleNavigation);
     window.addEventListener('load', handleNavigation);
 
+    // [BARU] LOGIKA BACK BUTTON TRAP (UNTUK HOME)
+    // Saat tombol back ditekan (popstate)
+    window.addEventListener('popstate', (event) => {
+        // Jika hash kosong atau #home, dan modal belum terbuka
+        if ((!location.hash || location.hash === '#home') && !isExitModalOpen) {
+            // Tampilkan Modal Konfirmasi
+            toggleExitModal(true);
+            
+            // Push state lagi agar URL tetap di aplikasi (mencegah keluar langsung)
+            history.pushState(null, null, location.href); 
+        }
+    });
+
     // 2. FUNGSI TOMBOL GLOBAL
     window.goHome = () => window.location.hash = 'home';
     
-    // [BARU] Fungsi GoBack (Smart Back)
+    // Fungsi GoBack (Smart Back)
     window.goBack = () => {
-        // Cek apakah ada history sebelumnya di session ini
         if (window.history.length > 1) {
             window.history.back();
         } else {
-            // Jika tidak ada history (misal buka tab baru langsung ke #tasbih), paksa ke Home
             window.location.hash = 'home';
         }
     };
@@ -48,10 +62,12 @@ export function setupRouter() {
     window.openQuran = () => window.location.hash = 'quran';
     window.openProfile = () => window.location.hash = 'profile';
 
-    // [UPDATED] Alias tombol Close sekarang pakai goBack()
     window.closeQibla = () => window.goBack();
     window.closeTasbih = () => window.goBack();
     window.closeProfile = () => window.goBack();
+
+    // [BARU] Init Listener Tombol Modal Exit
+    setupExitModalListeners();
 }
 
 export function switchView(targetId) {
@@ -59,6 +75,15 @@ export function switchView(targetId) {
     const targetEl = document.getElementById(targetId);
     
     if (!targetEl) return;
+
+    // [BARU] Jika masuk ke HOME, pasang "Jebakan History"
+    if (targetId === 'homeView') {
+        // Push state dummy agar ada history untuk di-pop saat back ditekan
+        // Cek agar tidak menumpuk history terlalu banyak
+        if (!history.state || history.state.page !== 'home') {
+            history.pushState({ page: 'home' }, '', '#home');
+        }
+    }
 
     // 1. Reset SEMUA View
     allViews.forEach(id => {
@@ -86,7 +111,7 @@ export function switchView(targetId) {
         try { lucide.createIcons({ root: targetEl }); } catch(e) {}
     }
 
-    // 4. Update Sidebar Active State
+    // 4. Update Sidebar
     updateSidebarUI(targetId);
     
     // 5. Info ke Modul Lain
@@ -118,5 +143,51 @@ function updateSidebarUI(activeViewId) {
         activeBtn.className = "sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-white dark:bg-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none text-sm font-bold text-emerald-600 dark:text-emerald-400 group ring-1 ring-white/50 dark:ring-slate-700";
         const icon = activeBtn.querySelector('i');
         if(icon) icon.className = "w-5 h-5 text-emerald-500";
+    }
+}
+
+// [BARU] Fungsi Helper Modal Exit
+function toggleExitModal(show) {
+    const modal = document.getElementById('exitAppModal');
+    const content = document.getElementById('exitAppContent');
+    if(!modal) return;
+
+    isExitModalOpen = show;
+
+    if(show) {
+        modal.classList.remove('hidden-force');
+        requestAnimationFrame(() => {
+            modal.classList.remove('opacity-0');
+            if(content) content.classList.remove('scale-90');
+        });
+    } else {
+        modal.classList.add('opacity-0');
+        if(content) content.classList.add('scale-90');
+        setTimeout(() => modal.classList.add('hidden-force'), 300);
+    }
+}
+
+function setupExitModalListeners() {
+    // Tombol Batal
+    const cancelBtn = document.getElementById('cancelExitBtn');
+    if(cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            toggleExitModal(false);
+        });
+    }
+
+    // Tombol Ya, Keluar
+    const confirmBtn = document.getElementById('confirmExitBtn');
+    if(confirmBtn) {
+        confirmBtn.addEventListener('click', () => {
+            // Coba tutup window (biasanya diblokir browser modern, tapi worth a try untuk PWA)
+            // Trik PWA: Mundur history sebanyak mungkin
+            try {
+                window.history.go(-(window.history.length + 1));
+                window.close(); 
+            } catch(e) {
+                console.log("Exit attempt");
+            }
+        });
     }
 }
