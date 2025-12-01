@@ -1,7 +1,7 @@
 import { state } from './state.js'; 
 
 let isExitModalOpen = false;
-let isExiting = false; // [BARU] Flag untuk menandai proses keluar
+let isExiting = false; 
 
 export function setupRouter() {
     const handleNavigation = () => {
@@ -32,7 +32,6 @@ export function setupRouter() {
 
     // LOGIKA BACK BUTTON TRAP
     window.addEventListener('popstate', (event) => {
-        // [BARU] Jika sedang proses keluar (tombol Ya ditekan), abaikan trap ini!
         if (isExiting) return; 
 
         if (!state.currentUser) return;
@@ -47,12 +46,8 @@ export function setupRouter() {
         const isHomeUrl = !location.hash || location.hash === '#home';
         
         if (isHomeUrl) {
-             // Jika state bukan 'home_trap', berarti user mau keluar
              if (!event.state || event.state.page !== 'home_trap') {
-                 // Tampilkan modal
                  toggleExitModal(true);
-                 
-                 // Push lagi biar gak langsung keluar (Trap)
                  history.pushState({ page: 'home_trap' }, '', '#home');
              }
         }
@@ -88,7 +83,6 @@ export function switchView(targetId) {
     
     if (!targetEl) return;
 
-    // Pasang Trap saat masuk Home
     if (targetId === 'homeView') {
         if (!history.state || history.state.page !== 'home_trap') {
              history.pushState({ page: 'home_trap' }, '', '#home');
@@ -150,11 +144,10 @@ function updateSidebarUI(activeViewId) {
     }
 }
 
-// FUNGSI MODAL DENGAN SCROLL LOCK YANG BENAR
+// [UPDATED] Fungsi Modal: Scroll ke Atas & Kunci Scroll
 function toggleExitModal(show) {
     const modal = document.getElementById('exitAppModal');
     const content = document.getElementById('exitAppContent');
-    // [PERBAIKAN] Ambil view yang sedang aktif untuk dikunci scroll-nya
     const activeView = document.querySelector('.active'); 
     
     if(!modal) return;
@@ -164,9 +157,13 @@ function toggleExitModal(show) {
     if(show) {
         modal.classList.remove('hidden-force');
         
-        // [PERBAIKAN] Kunci scroll pada View Aktif (bukan Body saja)
-        if(activeView) activeView.style.overflow = 'hidden';
-        document.body.style.overflow = 'hidden'; // Backup lock
+        if(activeView) {
+            // 1. Scroll halaman ke paling atas
+            activeView.scrollTop = 0; 
+            // 2. Kunci scroll agar user tidak bisa scroll ke bawah lagi
+            activeView.style.overflow = 'hidden';
+        }
+        document.body.style.overflow = 'hidden'; 
         
         requestAnimationFrame(() => {
             modal.classList.remove('opacity-0');
@@ -175,7 +172,7 @@ function toggleExitModal(show) {
     } else {
         modal.classList.add('opacity-0');
         
-        // [PERBAIKAN] Buka kunci scroll
+        // Buka kembali kunci scroll
         if(activeView) activeView.style.overflow = '';
         document.body.style.overflow = ''; 
         
@@ -195,21 +192,15 @@ function setupExitModalListeners() {
     const confirmBtn = document.getElementById('confirmExitBtn');
     if(confirmBtn) {
         confirmBtn.addEventListener('click', () => {
-            // [PERBAIKAN UTAMA] Logika Keluar
-            isExiting = true; // Set flag agar popstate listener tidak memblokir
+            isExiting = true; 
             
-            // Coba metode standar dulu
             try {
                 window.close();
             } catch(e){}
 
-            // Strategi PWA: Mundur 2 langkah
-            // Langkah 1: Undo "Trap" yang baru saja kita push
-            // Langkah 2: Mundur ke halaman sebelum PWA dibuka (Exit)
             if (window.history.length > 1) {
                 window.history.go(-2); 
             } else {
-                // Fallback jika history kosong
                 navigator.app.exitApp(); 
             }
         });
