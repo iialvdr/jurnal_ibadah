@@ -1,7 +1,5 @@
 import { state } from './state.js'; 
 
-let isExitModalOpen = false;
-let isExiting = false; 
 let isExplicitNavigation = false;
 
 export function setupRouter() {
@@ -23,42 +21,15 @@ export function setupRouter() {
             'quran': 'quranView',
             'profile': 'profileView',
             'doa': 'doaView',
-            'asmaul-husna': 'asmaulHusnaView' // [UBAH DI SINI] Jangan disingkat
+            'asmaul-husna': 'asmaulHusnaView'
         };
 
-        // Fallback jika user mengetik hash yang tidak dikenal
         const targetViewId = routes[hash] || 'homeView';
         switchView(targetViewId);
     };
 
     window.addEventListener('hashchange', handleNavigation);
     window.addEventListener('load', handleNavigation);
-
-    // LOGIKA BACK BUTTON TRAP
-    window.addEventListener('popstate', (event) => {
-        if (isExiting) return; 
-        if (!state.currentUser) return;
-
-        if (isExplicitNavigation) {
-            isExplicitNavigation = false; 
-            return;
-        }
-
-        if (isExitModalOpen) {
-            toggleExitModal(false);
-            history.pushState({ page: 'home_trap' }, '', '#home'); 
-            return;
-        }
-
-        const isHomeUrl = !location.hash || location.hash === '#home';
-        
-        if (isHomeUrl) {
-             if (!event.state || event.state.page !== 'home_trap') {
-                 toggleExitModal(true);
-                 history.pushState({ page: 'home_trap' }, '', '#home');
-             }
-        }
-    });
 
     const navigateTo = (hash) => {
         isExplicitNavigation = true;
@@ -74,8 +45,6 @@ export function setupRouter() {
     window.openQuran = () => navigateTo('quran');
     window.openProfile = () => navigateTo('profile');
     window.openDoa = () => navigateTo('doa');
-    
-    // [UBAH DI SINI] Menggunakan hash lengkap
     window.openAsma = () => navigateTo('asmaul-husna'); 
 
     window.goBack = () => {
@@ -90,8 +59,6 @@ export function setupRouter() {
     window.closeTasbih = () => window.goBack();
     window.closeProfile = () => window.goBack();
     window.closeAsmaDetail = () => { /* Dihandle di module */ };
-
-    setupExitModalListeners();
 }
 
 export function switchView(targetId) {
@@ -100,11 +67,7 @@ export function switchView(targetId) {
     
     if (!targetEl) return;
 
-    if (targetId === 'homeView') {
-        if (!history.state || history.state.page !== 'home_trap') {
-             history.pushState({ page: 'home_trap' }, '', '#home');
-        }
-    }
+    // Logika pushState 'home_trap' SUDAH DIHAPUS agar tidak menahan tombol back
 
     allViews.forEach(id => {
         const el = document.getElementById(id);
@@ -168,58 +131,5 @@ function updateSidebarUI(activeViewId) {
         if(activeBtnId === 'nav-asma') iconColorClass = "text-indigo-500";
         
         if(icon) icon.className = `w-5 h-5 ${iconColorClass}`;
-    }
-}
-
-function toggleExitModal(show) {
-    const modal = document.getElementById('exitAppModal');
-    const content = document.getElementById('exitAppContent');
-    const activeView = document.querySelector('.active'); 
-    
-    if(!modal) return;
-
-    isExitModalOpen = show;
-
-    if(show) {
-        modal.classList.remove('hidden-force');
-        if(activeView) {
-            activeView.scrollTop = 0; 
-            activeView.style.overflow = 'hidden';
-        }
-        document.body.style.overflow = 'hidden'; 
-        
-        requestAnimationFrame(() => {
-            modal.classList.remove('opacity-0');
-            if(content) content.classList.remove('scale-90');
-        });
-    } else {
-        modal.classList.add('opacity-0');
-        if(activeView) activeView.style.overflow = '';
-        document.body.style.overflow = ''; 
-        
-        if(content) content.classList.add('scale-90');
-        setTimeout(() => modal.classList.add('hidden-force'), 300);
-    }
-}
-
-function setupExitModalListeners() {
-    const cancelBtn = document.getElementById('cancelExitBtn');
-    if(cancelBtn) {
-        cancelBtn.addEventListener('click', () => {
-            toggleExitModal(false);
-        });
-    }
-
-    const confirmBtn = document.getElementById('confirmExitBtn');
-    if(confirmBtn) {
-        confirmBtn.addEventListener('click', () => {
-            isExiting = true; 
-            try { window.close(); } catch(e){}
-            if (window.history.length > 1) {
-                window.history.go(-2); 
-            } else {
-                navigator.app.exitApp(); 
-            }
-        });
     }
 }

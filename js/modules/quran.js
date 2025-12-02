@@ -167,6 +167,7 @@ async function openSurah(nomor, targetAyah = null) {
 function renderAyahs(ayatList, surahName) {
     const container = document.getElementById('ayahsContent');
     if (!container) return;
+    const safeSurahName = surahName.replace(/'/g, "\\'");
 
     let html = '';
     ayatList.forEach(ayat => {
@@ -184,7 +185,7 @@ function renderAyahs(ayatList, surahName) {
                         ${ayat.nomorAyat}
                     </div>
                     
-                    <button onclick="toggleBookmark(${currentSurahNumber}, ${ayat.nomorAyat}, '${surahName}')" class="w-10 h-10 rounded-full bg-transparent hover:bg-emerald-50 dark:hover:bg-emerald-900/20 flex items-center justify-center transition active:scale-90" title="Tandai Terakhir Baca">
+                    <button onclick="toggleBookmark(${currentSurahNumber}, ${ayat.nomorAyat}, '${safeSurahName}')" class="w-10 h-10 rounded-full bg-transparent hover:bg-emerald-50 dark:hover:bg-emerald-900/20 flex items-center justify-center transition active:scale-90" title="Tandai Terakhir Baca">
                         <i data-lucide="bookmark" class="w-5 h-5 ${bookmarkIconClass} transition-colors" id="btn-bookmark-${ayat.nomorAyat}"></i>
                     </button>
                 </div>
