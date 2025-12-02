@@ -2,18 +2,20 @@ import { state, setPrayerTimes, setLastCity, setTodayRecords } from '../state.js
 import { updateProgressBar } from './tracker.js'; 
 import { db } from '../config.js';
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { switchView } from '../router.js'; // Kita butuh ini untuk pindah ke Quran
+import { switchView } from '../router.js'; 
 
 let isDarkMode = false;
 
 export function initHome() {
     window.refreshLocation = refreshLocation;
     window.toggleDarkMode = toggleDarkMode; 
-    
-    // [BARU] Fungsi Navigasi Langsung ke Bookmark
     window.continueReading = continueReading;
 
     initTheme();
+    
+    // [BARU] Load Cache Lokasi Terakhir (Agar tidak blank saat loading)
+    loadCachedLocation();
+
     getLocation();
 
     window.addEventListener('viewChanged', (e) => {
@@ -22,10 +24,27 @@ export function initHome() {
         }
     });
     
-    // [BARU] Listener jika bookmark diupdate dari Quran, refresh Home card
     window.addEventListener('bookmarkUpdated', () => {
         loadLastReadCard();
     });
+}
+
+// [BARU] Fungsi Load Cache
+function loadCachedLocation() {
+    const cachedCity = localStorage.getItem('last_city_name');
+    const cachedLat = localStorage.getItem('last_lat');
+    const cachedLng = localStorage.getItem('last_lng');
+
+    if (cachedCity) {
+        setLastCity(cachedCity);
+    }
+
+    if (cachedLat && cachedLng) {
+        window.lastLat = parseFloat(cachedLat);
+        window.lastLng = parseFloat(cachedLng);
+        // Langsung coba fetch jadwal pakai lokasi lama sambil nunggu GPS baru
+        fetchJadwal(window.lastLat, window.lastLng);
+    }
 }
 
 export async function syncThemeWithCloud() {
@@ -51,15 +70,15 @@ export function updateHomeUI() {
     
     if(state.currentUser) {
         loadHomeRecords(); 
-        loadLastReadCard(); // [BARU] Load kartu terakhir baca
+        loadLastReadCard(); 
     } else {
         renderTodayPrayers();
-        // Sembunyikan kartu jika belum login
         const c = document.getElementById('homeLastReadContainer');
         if(c) c.classList.add('hidden');
     }
 
     const locText = document.getElementById('homeLocationText');
+    // Jika state.lastCity masih default, tampilkan "Mencari...", tapi kalau sudah ada cache, dia akan tampil
     if(locText) locText.innerText = state.lastCity || "Mencari...";
     
     if(state.currentUser) {
@@ -77,7 +96,6 @@ export function updateHomeUI() {
     }
 }
 
-// [BARU] Fungsi Render Kartu Terakhir Baca
 async function loadLastReadCard() {
     if (!state.currentUser) return;
     const container = document.getElementById('homeLastReadContainer');
@@ -89,7 +107,6 @@ async function loadLastReadCard() {
         
         if (docSnap.exists()) {
             const data = docSnap.data();
-            // Simpan di window agar bisa diakses saat klik
             window.lastReadData = data; 
             
             container.innerHTML = `
@@ -122,24 +139,18 @@ async function loadLastReadCard() {
     }
 }
 
-// [BARU] Fungsi Navigasi ke Quran
 function continueReading() {
     if(window.lastReadData) {
         const { surah, ayat } = window.lastReadData;
-        
-        // Pindah ke View Quran
-        window.location.hash = 'quran'; // Trigger router
-        
-        // Tunggu sebentar agar view quran loading, lalu buka surat
+        window.location.hash = 'quran'; 
         setTimeout(() => {
             if(window.openSurah) {
-                window.openSurah(surah, ayat); // Buka surat & scroll ke ayat
+                window.openSurah(surah, ayat); 
             }
         }, 100);
     }
 }
 
-// ... (Sisa fungsi loadHomeRecords, renderTodayPrayers, dll TETAP SAMA seperti sebelumnya) ...
 async function loadHomeRecords() {
     if (!state.currentUser) return;
     const offset = state.currentDate.getTimezoneOffset(); 
@@ -215,6 +226,11 @@ function getLocation(isManualRefresh = false) {
             (pos) => {
                 window.lastLat = pos.coords.latitude;
                 window.lastLng = pos.coords.longitude;
+                
+                // [BARU] Simpan koordinat ke cache agar besok cepat
+                localStorage.setItem('last_lat', window.lastLat);
+                localStorage.setItem('last_lng', window.lastLng);
+
                 fetchJadwal(window.lastLat, window.lastLng);
                 fetchCityName(window.lastLat, window.lastLng);
                 if(isManualRefresh) resetLocationButton();
@@ -243,21 +259,33 @@ function resetLocationButton() {
 }
 
 function useDefaultLocation() {
-    setLastCity("GPS Tidak Terdeteksi");
-    updateHomeUI();
+    // Kalau gagal GPS, cek dulu ada cache gak, kalau gak ada baru "GPS Tidak Terdeteksi"
+    if(!state.lastCity || state.lastCity === "Menunggu GPS...") {
+        setLastCity("GPS Tidak Terdeteksi");
+        updateHomeUI();
+    }
 }
 
 async function fetchCityName(lat, lng) {
     try {
         const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=id`);
         const data = await res.json();
-        setLastCity(data.locality || data.city || data.principalSubdivision || "Lokasi Anda");
+        const cityName = data.locality || data.city || data.principalSubdivision || "Lokasi Anda";
+        
+        setLastCity(cityName);
+        
+        // [BARU] Simpan nama kota ke cache
+        localStorage.setItem('last_city_name', cityName);
+        
         updateHomeUI();
         const t1 = document.getElementById('locationText');
         if(t1) t1.innerText = state.lastCity;
     } catch (e) { 
-        setLastCity("Lokasi Terdeteksi");
-        updateHomeUI();
+        // Jangan timpa kalau sudah ada cache yang benar
+        if(!state.lastCity || state.lastCity === "Menunggu GPS...") {
+            setLastCity("Lokasi Terdeteksi");
+            updateHomeUI();
+        }
     }
 }
 
