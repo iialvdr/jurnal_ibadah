@@ -106,3 +106,93 @@ body, div, button, span, h1, h2, h3, p, i, svg {
 .hidden-force {
     display: none !important;
 }
+
+/* --- ANIMASI BACKGROUND (Updated) --- */
+.animate-blob {
+    animation: blob 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animation-delay-2000 {
+    animation-delay: 2s;
+}
+
+.animation-delay-3000 {
+    animation-delay: 3s;
+}
+
+.animation-delay-4000 {
+    animation-delay: 4s;
+}
+
+@keyframes blob {
+    0% {
+        transform: translate(0px, 0px) scale(1);
+    }
+    33% {
+        transform: translate(30px, -50px) scale(1.1);
+    }
+    66% {
+        transform: translate(-20px, 20px) scale(0.9);
+    }
+    100% {
+        transform: translate(0px, 0px) scale(1);
+    }
+}
+
+/* Tambahan: Glass Gloss Reflection (Kilau Kaca) */
+/* Gunakan class 'glass-shine' di div kartu jika ingin efek lebih kuat */
+.glass-shine {
+    position: relative;
+    overflow: hidden;
+}
+.glass-shine::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+        to right,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    transform: rotate(45deg);
+    animation: shine 6s infinite;
+    pointer-events: none;
+}
+.dark .glass-shine::before {
+    background: linear-gradient(
+        to right,
+        transparent,
+        rgba(255, 255, 255, 0.03),
+        transparent
+    );
+}
+
+@keyframes shine {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    20% { transform: translateX(100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+}
+
+/* --- UTILITY: HIDE SCROLLBAR (New) --- */
+/* Untuk Chrome, Safari, Opera */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+/* Untuk IE, Edge, Firefox */
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+/* Skeleton Animation Helper (untuk memastikan animasi pulse halus) */
+.skeleton {
+    background: #e2e8f0;
+    border-radius: 0.5rem;
+}
+.dark .skeleton {
+    background: #1e293b;
+}

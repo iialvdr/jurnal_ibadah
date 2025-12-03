@@ -1,4 +1,4 @@
-<div id="homeView" class="hidden-force flex flex-col h-full absolute inset-0 z-40 transition-all duration-300 overflow-y-auto pb-32 pt-[calc(2rem+env(safe-area-inset-top))] bg-slate-100 dark:bg-slate-950">
+<div id="homeView" class="hidden-force flex flex-col h-full absolute inset-0 z-40 transition-all duration-300 overflow-y-auto pb-32 pt-[calc(2rem+env(safe-area-inset-top))] bg-slate-100 dark:bg-slate-950 no-scrollbar">
     
     <div class="px-6 pb-6 flex justify-between items-end">
         <div>
@@ -13,11 +13,11 @@
         </div>
         
         <div class="flex items-center gap-3">
-            <button onclick="toggleDarkMode()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-600 dark:text-slate-400 shadow-md border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-amber-500 group">
+            <button onclick="vibrateSoft(); toggleDarkMode()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-600 dark:text-slate-400 shadow-md border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-amber-500 group">
                 <i data-lucide="moon" class="w-5 h-5 group-hover:rotate-12 transition"></i>
             </button>
             
-            <div onclick="openProfile()" class="relative group cursor-pointer ml-1">
+            <div onclick="vibrateSoft(); openProfile()" class="relative group cursor-pointer ml-1">
                 <div class="absolute inset-0 bg-emerald-500/30 rounded-2xl blur-md opacity-0 group-hover:opacity-100 transition duration-500"></div>
                 <img id="homeUserPhoto" src="" referrerpolicy="no-referrer" class="relative w-11 h-11 rounded-2xl border-2 border-white dark:border-slate-800 object-cover shadow-lg hover:scale-105 transition transform">
             </div>
@@ -25,7 +25,7 @@
     </div>
 
     <div class="px-6 mb-8">
-        <div class="relative w-full group cursor-pointer" onclick="refreshLocation()">
+        <div class="relative w-full group cursor-pointer glass-shine" onclick="vibrateSoft(); refreshLocation()">
             <div class="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-[2rem] blur opacity-30 group-hover:opacity-50 transition duration-500"></div>
             <div class="relative bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[1.8rem] p-7 text-white shadow-2xl shadow-emerald-500/30 overflow-hidden ring-1 ring-white/20">
                 <div class="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
@@ -53,23 +53,49 @@
         </div>
     </div>
 
-    <div id="homeLastReadContainer" class="px-6 mb-6 hidden animate-[slideUp_0.5s_ease-out]">
-        </div>
+    <div id="homeLastReadContainer" class="px-6 mb-6 hidden animate-[slideUp_0.5s_ease-out]"></div>
 
     <div class="px-6 mb-8">
         <div class="flex items-center justify-between mb-4 px-1">
              <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 uppercase tracking-wide">
                 <i data-lucide="calendar-days" class="w-4 h-4 text-emerald-600"></i> Jadwal Hari Ini
              </h3>
-             <span id="hijriDisplay" class="text-[10px] font-bold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">Loading...</span>
+             <span id="hijriDisplay" class="text-[10px] font-bold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+                 Loading...
+             </span>
         </div>
+        
         <div id="todayPrayerGrid" class="grid grid-cols-5 gap-2">
-            <div class="animate-pulse bg-white dark:bg-slate-800 h-24 rounded-2xl col-span-5 border border-slate-200 dark:border-slate-800 shadow-sm"></div>
+            <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm animate-pulse">
+                <div class="h-2 w-8 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div>
+                <div class="h-3 w-10 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div>
+                <div class="h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-800"></div>
+            </div>
+            <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm animate-pulse delay-75">
+                <div class="h-2 w-8 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div>
+                <div class="h-3 w-10 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div>
+                <div class="h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-800"></div>
+            </div>
+            <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm animate-pulse delay-150">
+                <div class="h-2 w-8 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div>
+                <div class="h-3 w-10 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div>
+                <div class="h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-800"></div>
+            </div>
+            <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm animate-pulse delay-200">
+                <div class="h-2 w-8 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div>
+                <div class="h-3 w-10 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div>
+                <div class="h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-800"></div>
+            </div>
+            <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm animate-pulse delay-300">
+                <div class="h-2 w-8 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div>
+                <div class="h-3 w-10 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div>
+                <div class="h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-800"></div>
+            </div>
         </div>
     </div>
 
     <div class="px-6 grid grid-cols-2 gap-5 pb-10">
-        <button onclick="openTracker()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-200 transition-all duration-300 text-left active:scale-95">
+        <button onclick="vibrateSoft(); openTracker()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-200 transition-all duration-300 text-left active:scale-95">
             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-lg shadow-emerald-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
                 <i data-lucide="list-checks" class="w-7 h-7"></i>
             </div>
@@ -77,7 +103,7 @@
             <p class="text-xs text-slate-500 font-medium mt-1">Checklist Harian</p>
         </button>
 
-        <button onclick="openTasbih()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-200 transition-all duration-300 text-left active:scale-95">
+        <button onclick="vibrateSoft(); openTasbih()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-200 transition-all duration-300 text-left active:scale-95">
             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 shadow-lg shadow-blue-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
                 <i data-lucide="grip" class="w-7 h-7"></i>
             </div>
@@ -85,7 +111,7 @@
             <p class="text-xs text-slate-500 font-medium mt-1">Counter Dzikir</p>
         </button>
 
-        <button onclick="openQuran()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-purple-500/10 hover:border-purple-200 transition-all duration-300 text-left active:scale-95">
+        <button onclick="vibrateSoft(); openQuran()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-purple-500/10 hover:border-purple-200 transition-all duration-300 text-left active:scale-95">
             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-400 to-purple-600 shadow-lg shadow-purple-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
                 <i data-lucide="book-open" class="w-7 h-7"></i>
             </div>
@@ -93,7 +119,7 @@
             <p class="text-xs text-slate-500 font-medium mt-1">Baca & Terjemah</p>
         </button>
 
-        <button onclick="openQibla()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-teal-500/10 hover:border-teal-200 transition-all duration-300 text-left active:scale-95">
+        <button onclick="vibrateSoft(); openQibla()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-teal-500/10 hover:border-teal-200 transition-all duration-300 text-left active:scale-95">
             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-400 to-teal-600 shadow-lg shadow-teal-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
                 <i data-lucide="compass" class="w-7 h-7"></i>
             </div>
@@ -101,7 +127,7 @@
             <p class="text-xs text-slate-500 font-medium mt-1">Arah Ka'bah</p>
         </button>
         
-        <button onclick="openDoa()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-pink-500/10 hover:border-pink-200 transition-all duration-300 text-left active:scale-95">
+        <button onclick="vibrateSoft(); openDoa()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-pink-500/10 hover:border-pink-200 transition-all duration-300 text-left active:scale-95">
             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-400 to-rose-500 shadow-lg shadow-pink-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
                 <i data-lucide="book-heart" class="w-7 h-7"></i>
             </div>
@@ -109,7 +135,7 @@
             <p class="text-xs text-slate-500 font-medium mt-1">Harian & Tahlil</p>
         </button>
 
-        <button onclick="openAsma()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-200 transition-all duration-300 text-left active:scale-95">
+        <button onclick="vibrateSoft(); openAsma()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-200 transition-all duration-300 text-left active:scale-95">
             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-500 shadow-lg shadow-indigo-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
                 <i data-lucide="grid" class="w-7 h-7"></i>
             </div>
@@ -117,7 +143,7 @@
             <p class="text-xs text-slate-500 font-medium mt-1">99 Nama Allah</p>
         </button>
         
-        <button onclick="openProfile()" class="col-span-2 relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-amber-500/10 hover:border-amber-200 transition-all duration-300 text-left flex items-center gap-5 active:scale-95">
+        <button onclick="vibrateSoft(); openProfile()" class="col-span-2 relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-amber-500/10 hover:border-amber-200 transition-all duration-300 text-left flex items-center gap-5 active:scale-95">
             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-lg shadow-amber-500/30 flex items-center justify-center text-white shrink-0 group-hover:rotate-12 transition duration-300">
                 <i data-lucide="user" class="w-7 h-7"></i>
             </div>

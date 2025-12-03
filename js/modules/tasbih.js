@@ -18,16 +18,15 @@ export function initTasbih() {
     window.setTasbihTarget = setTasbihTarget;
     window.toggleVibro = toggleVibro;
     window.openDhikrMenu = openDhikrMenu;
-    window.closeDhikrMenu = () => document.getElementById('dhikrMenuModal').classList.add('hidden');
+    window.closeDhikrMenu = closeDhikrMenu;
     window.chooseDhikr = chooseDhikr;
     
-    // [BARU] Tutup modal saat klik backdrop
+    // Tutup modal saat klik backdrop (area gelap)
     const menuModal = document.getElementById('dhikrMenuModal');
     if (menuModal) {
         menuModal.addEventListener('click', (e) => {
             if (e.target === menuModal) {
-                // Panggil fungsi tutup manual karena di tasbih fungsi tutupnya inline arrow function
-                menuModal.classList.add('hidden');
+                closeDhikrMenu();
             }
         });
     }
@@ -48,9 +47,9 @@ function countTasbih() {
 
     if(isVibroOn && navigator.vibrate) {
         if(tasbihTarget > 0 && tasbihCount % tasbihTarget === 0) {
-            navigator.vibrate([50, 100, 50]);
+            navigator.vibrate([50, 100, 50]); // Getar panjang saat target tercapai
         } else {
-            navigator.vibrate(15);
+            navigator.vibrate(15); // Getar pendek tiap klik
         }
     }
 }
@@ -60,6 +59,16 @@ function resetTasbih() {
     const el = document.getElementById('tasbihCount');
     if(el) el.innerText = '0';
     if(navigator.vibrate) navigator.vibrate(30);
+
+    // [BARU] Animasi Putar Icon Reset
+    const btn = document.getElementById('resetTasbihBtn');
+    if(btn) {
+        const icon = btn.querySelector('i');
+        if(icon) {
+            icon.classList.add('-rotate-180');
+            setTimeout(() => icon.classList.remove('-rotate-180'), 500);
+        }
+    }
 }
 
 function setTasbihTarget(target) {
@@ -69,7 +78,6 @@ function setTasbihTarget(target) {
     updateTargetUI(target);
 }
 
-// [UPDATED] Update Style Rounded di sini agar konsisten
 function updateTargetUI(activeTarget) {
     const btns = [
         { val: 33, el: document.getElementById('btnTarget33') },
@@ -79,16 +87,12 @@ function updateTargetUI(activeTarget) {
 
     btns.forEach(b => {
         if(!b.el) return;
-        
-        // SAYA UBAH: rounded-2xl JADI rounded-[1.7rem]
         const baseClass = "h-14 w-full rounded-[1.7rem] font-bold transition-all duration-300 flex items-center justify-center";
         const fontSize = b.val === 0 ? "text-2xl pb-1" : "text-sm"; 
 
         if (b.val === activeTarget) {
-            // AKTIF: Kartu Putih
             b.el.className = `${baseClass} ${fontSize} bg-white dark:bg-slate-800 text-emerald-600 shadow-sm shadow-slate-300/50 dark:shadow-none ring-1 ring-black/5 dark:ring-white/5`;
         } else {
-            // NON-AKTIF: Transparan
             b.el.className = `${baseClass} ${fontSize} text-slate-500 dark:text-slate-400 hover:bg-white/40 dark:hover:bg-slate-700/50`;
         }
     });
@@ -112,13 +116,19 @@ function toggleVibro() {
     }
 }
 
+// [MODIFIED] Animasi Open (Slide Up)
 function openDhikrMenu() {
     const list = document.getElementById('dhikrListContainer');
-    if(!list) return;
+    const modal = document.getElementById('dhikrMenuModal');
+    const content = document.getElementById('dhikrModalContent');
+    
+    if(!list || !modal) return;
+    
+    // Render List
     let html = '';
     DHIKR_DATA.forEach((item, index) => {
         html += `
-        <div onclick="chooseDhikr(${index})" class="group p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center justify-between cursor-pointer mb-2 bg-white dark:bg-slate-900 hover:border-emerald-500 transition shadow-sm">
+        <div onclick="vibrateSoft(); chooseDhikr(${index})" class="group p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center justify-between cursor-pointer mb-2 bg-white dark:bg-slate-900 hover:border-emerald-500 transition shadow-sm active:scale-[0.98]">
             <div>
                 <h4 class="font-bold text-slate-800 dark:text-white text-base group-hover:text-emerald-600 transition">${item.title}</h4>
                 <p class="text-xs text-slate-500 font-mono mt-1">${item.latin}</p>
@@ -129,7 +139,27 @@ function openDhikrMenu() {
         </div>`;
     });
     list.innerHTML = html;
-    document.getElementById('dhikrMenuModal').classList.remove('hidden');
+
+    // Animasi Masuk
+    modal.classList.remove('hidden-force');
+    requestAnimationFrame(() => {
+        modal.classList.remove('opacity-0');
+        if(content) content.classList.remove('translate-y-full');
+    });
+}
+
+// [MODIFIED] Animasi Close (Slide Down)
+function closeDhikrMenu() {
+    const modal = document.getElementById('dhikrMenuModal');
+    const content = document.getElementById('dhikrModalContent');
+
+    if(modal) {
+        modal.classList.add('opacity-0');
+        if(content) content.classList.add('translate-y-full');
+        
+        // Tunggu animasi CSS selesai (300ms) baru hide element
+        setTimeout(() => modal.classList.add('hidden-force'), 300);
+    }
 }
 
 function chooseDhikr(index) {
@@ -141,6 +171,6 @@ function chooseDhikr(index) {
         document.getElementById('dhikrLatinDisplay').innerText = data.latin;
         document.getElementById('dhikrDisplayArea').classList.remove('hidden');
     }
-    document.getElementById('dhikrMenuModal').classList.add('hidden');
+    closeDhikrMenu();
     resetTasbih();
 }

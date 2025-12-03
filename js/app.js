@@ -12,10 +12,18 @@ import { initTasbih } from './modules/tasbih.js';
 import { initQibla } from './modules/qibla.js';
 import { initQuran } from './modules/quran.js';
 import { initProfile } from './modules/profile.js';
-import { initDoa } from './modules/doa.js'; // [BARU] Import Doa Module
+import { initDoa } from './modules/doa.js';
 import { initAsmaulHusna } from './modules/asmaul_husna.js';
 
-// [UPDATED] Tambahkan 'views/doa.html' ke list view
+// [BARU] Helper Global untuk Haptic Feedback
+window.vibrateSoft = () => {
+    if (navigator.vibrate) navigator.vibrate(10); // Getar sangat halus (klik)
+};
+
+window.vibrateSuccess = () => {
+    if (navigator.vibrate) navigator.vibrate([10, 30, 10]); // Getar sukses
+};
+
 const VIEWS = [
     'views/login.html', 'views/home.html', 'views/profile.html',
     'views/tasbih.html', 'views/qibla.html', 'views/tracker.html', 'views/quran.html',
@@ -58,7 +66,7 @@ function initializeApp() {
     initTasbih();
     initQibla();
     initQuran();
-    initDoa(); // [BARU] Init Doa
+    initDoa();
     initAsmaulHusna();
     initProfile();
 
@@ -69,7 +77,6 @@ function initializeApp() {
 
         if (user) {
             setCurrentUser(user);
-            
             syncThemeWithCloud();
             
             const loginOverlay = document.getElementById('loginOverlay');

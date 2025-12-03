@@ -1,20 +1,20 @@
 <div id="tasbihView" class="hidden-force flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-hidden bg-slate-100 dark:bg-slate-950">
     
     <div class="px-6 pb-4 pt-[calc(2rem+env(safe-area-inset-top))] shrink-0 relative z-30 flex justify-between items-center bg-slate-100/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50">
-        <button onclick="goBack()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-emerald-600 group">
+        <button onclick="vibrateSoft(); goBack()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-emerald-600 group">
             <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-0.5 transition"></i>
         </button>
         <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Tasbih Digital</h2>
-        <button onclick="openDhikrMenu()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-emerald-600">
+        <button onclick="vibrateSoft(); openDhikrMenu()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-emerald-600">
             <i data-lucide="book-open" class="w-5 h-5"></i>
         </button>
     </div>
 
     <div class="flex-1 flex flex-col items-center justify-between py-6 px-6 relative">
         <div class="grid grid-cols-3 gap-2 p-1.5 bg-slate-200 dark:bg-slate-900 rounded-[2rem] w-full max-w-[300px] mx-auto relative shadow-inner border border-slate-200/50 dark:border-slate-800">
-            <button onclick="setTasbihTarget(33)" id="btnTarget33" class="h-14 w-full rounded-[1.7rem] text-sm font-bold transition-all duration-200 flex items-center justify-center">33</button>
-            <button onclick="setTasbihTarget(100)" id="btnTarget100" class="h-14 w-full rounded-[1.7rem] text-sm font-bold transition-all duration-200 flex items-center justify-center">100</button>
-            <button onclick="setTasbihTarget(0)" id="btnTargetInf" class="h-14 w-full rounded-[1.7rem] text-2xl font-bold transition-all duration-200 flex items-center justify-center pb-1">∞</button>
+            <button onclick="vibrateSoft(); setTasbihTarget(33)" id="btnTarget33" class="h-14 w-full rounded-[1.7rem] text-sm font-bold transition-all duration-200 flex items-center justify-center">33</button>
+            <button onclick="vibrateSoft(); setTasbihTarget(100)" id="btnTarget100" class="h-14 w-full rounded-[1.7rem] text-sm font-bold transition-all duration-200 flex items-center justify-center">100</button>
+            <button onclick="vibrateSoft(); setTasbihTarget(0)" id="btnTargetInf" class="h-14 w-full rounded-[1.7rem] text-2xl font-bold transition-all duration-200 flex items-center justify-center pb-1">∞</button>
         </div>
 
         <div id="dhikrDisplayArea" class="hidden w-full text-center space-y-4 animate-[fadeIn_0.5s_ease-out] bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-lg border border-slate-200 dark:border-slate-800 mx-4 max-w-md mt-2">
@@ -35,25 +35,27 @@
         </div>
 
         <div class="grid grid-cols-2 gap-5 w-full max-w-md mx-auto mb-6">
-            <button onclick="resetTasbih()" class="flex items-center justify-center gap-2 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 font-bold text-xs shadow-sm hover:text-red-500 hover:border-red-100 transition active:scale-95 hover:shadow-md">
-                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> RESET
+            <button onclick="vibrateSoft(); resetTasbih()" id="resetTasbihBtn" class="group flex items-center justify-center gap-2 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 font-bold text-xs shadow-sm hover:text-red-500 hover:border-red-100 transition active:scale-95 hover:shadow-md">
+                <i data-lucide="rotate-ccw" class="w-4 h-4 transition-transform duration-500 group-hover:-rotate-180"></i> RESET
             </button>
-            <button onclick="toggleVibro()" id="vibroBtn" class="flex items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-bold text-xs shadow-sm transition active:scale-95 hover:shadow-md">
+            <button onclick="vibrateSoft(); toggleVibro()" id="vibroBtn" class="flex items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-bold text-xs shadow-sm transition active:scale-95 hover:shadow-md">
                 <i data-lucide="vibrate" class="w-4 h-4"></i> <span id="vibroText">GETAR ON</span>
             </button>
         </div>
     </div>
     
-    <div id="dhikrMenuModal" class="absolute inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm hidden flex flex-col justify-end transition-opacity duration-300">
-        <div class="bg-slate-50 dark:bg-slate-950 rounded-t-[2.5rem] p-6 h-[75%] flex flex-col animate-[slideUp_0.3s_ease-out] shadow-2xl">
-            <div class="flex justify-between items-center mb-6 px-2">
+    <div id="dhikrMenuModal" class="absolute inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm hidden-force opacity-0 flex flex-col justify-end transition-all duration-300">
+        <div id="dhikrModalContent" class="bg-slate-50 dark:bg-slate-950 rounded-t-[2.5rem] p-6 h-[75%] flex flex-col shadow-2xl transform translate-y-full transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1)">
+            <div class="flex justify-between items-center mb-6 px-2 shrink-0">
                 <div>
                     <h3 class="font-black text-xl text-slate-800 dark:text-white">Pilih Bacaan</h3>
                     <p class="text-xs text-slate-500 mt-1">Pilih dzikir untuk memulai target</p>
                 </div>
-                <button onclick="closeDhikrMenu()" class="p-2 bg-slate-200 dark:bg-slate-800 rounded-full text-slate-500 hover:bg-slate-300 transition active:scale-90"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="closeDhikrMenu()" class="p-2 bg-slate-200 dark:bg-slate-800 rounded-full text-slate-500 hover:bg-slate-300 transition active:scale-90">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
             </div>
-            <div id="dhikrListContainer" class="flex-1 overflow-y-auto space-y-3 pb-10 pr-1 custom-scrollbar"></div>
+            <div id="dhikrListContainer" class="flex-1 overflow-y-auto space-y-3 pb-10 pr-1 no-scrollbar"></div>
         </div>
     </div>
 </div>

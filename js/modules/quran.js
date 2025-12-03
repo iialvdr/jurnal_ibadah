@@ -65,7 +65,6 @@ function renderSurahList(data) {
     data.forEach(surah => {
         const isLastRead = lastReadData && lastReadData.surah === surah.nomor;
         
-        // [PERBAIKAN] Badge sekarang berupa div biasa (bukan absolute) dan diletakkan di atas Nama Latin
         const badge = isLastRead ? 
             `<div class="mb-1.5 animate-[fadeIn_0.5s_ease-out]">
                 <span class="text-[9px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold border border-emerald-200 dark:border-emerald-800">
@@ -119,7 +118,12 @@ async function openSurah(nomor, targetAyah = null) {
     const title = document.getElementById('quranTitle');
 
     if(loader) loader.classList.remove('hidden');
-    if(navButtons) Array.from(navButtons.children).forEach(btn => btn.disabled = true);
+    
+    // [MODIFIED] Logika Tombol Satu Aja & Lebar
+    if(navButtons) {
+        // Matikan semua dulu biar aman saat loading
+        Array.from(navButtons.children).forEach(btn => btn.disabled = true);
+    }
     
     stopCurrentAudio();
 
@@ -140,10 +144,27 @@ async function openSurah(nomor, targetAyah = null) {
             }
             if(searchContainer) searchContainer.classList.add('-translate-y-24', 'opacity-0', 'pointer-events-none');
             
+            // [MODIFIED] Update logika tampilan tombol
             if(navButtons) {
                 navButtons.classList.remove('translate-y-40');
-                navButtons.children[0].disabled = nomor === 1;
-                navButtons.children[1].disabled = nomor === 114;
+                
+                const prevBtn = navButtons.children[0];
+                const nextBtn = navButtons.children[1];
+
+                // Reset: Aktifkan dan Tampilkan Semua dulu
+                prevBtn.disabled = false;
+                nextBtn.disabled = false;
+                prevBtn.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+
+                // Logika Hide & Seek
+                if (nomor === 1) {
+                    // Surat Pertama: Hide tombol 'Sebelumnya' -> Tombol 'Selanjutnya' otomatis melebar
+                    prevBtn.classList.add('hidden'); 
+                } else if (nomor === 114) {
+                    // Surat Terakhir: Hide tombol 'Selanjutnya' -> Tombol 'Sebelumnya' otomatis melebar
+                    nextBtn.classList.add('hidden');
+                }
             }
 
             if (targetAyah) {
@@ -185,7 +206,7 @@ function renderAyahs(ayatList, surahName) {
                         ${ayat.nomorAyat}
                     </div>
                     
-                    <button onclick="toggleBookmark(${currentSurahNumber}, ${ayat.nomorAyat}, '${safeSurahName}')" class="w-10 h-10 rounded-full bg-transparent hover:bg-emerald-50 dark:hover:bg-emerald-900/20 flex items-center justify-center transition active:scale-90" title="Tandai Terakhir Baca">
+                    <button onclick="vibrateSoft(); toggleBookmark(${currentSurahNumber}, ${ayat.nomorAyat}, '${safeSurahName}')" class="w-10 h-10 rounded-full bg-transparent hover:bg-emerald-50 dark:hover:bg-emerald-900/20 flex items-center justify-center transition active:scale-90" title="Tandai Terakhir Baca">
                         <i data-lucide="bookmark" class="w-5 h-5 ${bookmarkIconClass} transition-colors" id="btn-bookmark-${ayat.nomorAyat}"></i>
                     </button>
                 </div>
@@ -221,7 +242,6 @@ async function toggleBookmark(surahNum, ayatNum, surahName) {
         return;
     }
 
-    // Logic Un-bookmark (Hapus)
     const isDeleting = lastReadData && lastReadData.surah === surahNum && lastReadData.ayat === ayatNum;
 
     if (isDeleting) {
@@ -237,7 +257,6 @@ async function toggleBookmark(surahNum, ayatNum, surahName) {
         } catch(e) { console.error("Gagal hapus:", e); }
 
     } else {
-        // Logic Set Bookmark Baru
         document.querySelectorAll('[id^="btn-bookmark-"]').forEach(el => {
             el.classList.remove('fill-emerald-500', 'text-emerald-500');
             el.classList.add('text-slate-300');
@@ -353,7 +372,7 @@ function handleQuranBack() {
         if(title) title.innerText = "Al-Qur'an";
         stopCurrentAudio(); 
         
-        fetchSurahList(); // Refresh list agar badge muncul/update
+        fetchSurahList(); 
     } else {
         if(window.goBack) window.goBack();
     }

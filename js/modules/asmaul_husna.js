@@ -1,13 +1,14 @@
 // Variabel untuk menyimpan data setelah di-fetch
 let asmaulHusnaData = [];
-let currentDetail = null;
+let currentDetailIndex = 0; // [BARU] Menyimpan index yang sedang dibuka
 
 export function initAsmaulHusna() {
     window.searchAsma = searchAsma;
     window.openAsmaDetail = openAsmaDetail;
     window.closeAsmaDetail = closeAsmaDetail;
+    window.changeAsma = changeAsma; // [BARU] Expose fungsi navigasi
 
-    // [BARU] Tutup modal saat klik backdrop
+    // Tutup modal saat klik backdrop
     const detailModal = document.getElementById('asmaDetailModal');
     if (detailModal) {
         detailModal.addEventListener('click', (e) => {
@@ -19,7 +20,6 @@ export function initAsmaulHusna() {
 
     window.addEventListener('viewChanged', (e) => {
         if(e.detail.viewId === 'asmaulHusnaView') {
-            // Cek apakah data sudah ada, kalau belum fetch dari API
             if (asmaulHusnaData.length === 0) {
                 fetchAsmaulHusna();
             } else {
@@ -31,21 +31,20 @@ export function initAsmaulHusna() {
 
 async function fetchAsmaulHusna() {
     const container = document.getElementById('asmaList');
-    if(container) {
-        container.innerHTML = `
+    // Jika masih ada spinner manual, biarkan. Jika sudah pakai skeleton di HTML, ini bisa dikosongkan.
+    // Tapi untuk aman, kita cek dulu kalau container kosong baru kasih loader
+    if(container && container.children.length === 0) {
+         container.innerHTML = `
             <div class="flex flex-col items-center justify-center pt-20">
                 <i data-lucide="loader-2" class="w-8 h-8 animate-spin text-emerald-500 mb-2"></i>
                 <p class="text-xs font-bold text-slate-400">Mengambil Data API...</p>
             </div>`;
-        if(window.lucide) lucide.createIcons({ root: container });
     }
 
     try {
-        // Menggunakan API publik yang stabil (Raw JSON dari GitHub)
         const response = await fetch('https://raw.githubusercontent.com/mikqi/dzikir-counter/master/www/asmaul-husna.json');
         const result = await response.json();
         
-        // Mapping data API ke format aplikasi kita
         asmaulHusnaData = result.map(item => ({
             index: item.urutan,
             latin: item.latin,
@@ -117,12 +116,19 @@ function openAsmaDetail(index) {
     const data = asmaulHusnaData.find(d => d.index === index);
     if(!data) return;
 
-    currentDetail = data;
+    currentDetailIndex = index; // [BARU] Simpan index saat ini
 
     document.getElementById('detailNumber').innerText = data.index;
     document.getElementById('detailArabic').innerText = data.arabic;
     document.getElementById('detailLatin').innerText = data.latin;
     document.getElementById('detailMeaning').innerText = data.meaning;
+
+    // [BARU] Update status tombol (Disable jika di ujung awal/akhir)
+    const btnPrev = document.getElementById('btnPrevAsma');
+    const btnNext = document.getElementById('btnNextAsma');
+    
+    if(btnPrev) btnPrev.disabled = (index <= 1);
+    if(btnNext) btnNext.disabled = (index >= 99);
 
     const modal = document.getElementById('asmaDetailModal');
     const content = document.getElementById('asmaDetailContent');
@@ -133,6 +139,14 @@ function openAsmaDetail(index) {
             modal.classList.remove('opacity-0');
             content.classList.remove('scale-90');
         });
+    }
+}
+
+// [BARU] Fungsi Navigasi
+function changeAsma(direction) {
+    const newIndex = currentDetailIndex + direction;
+    if (newIndex >= 1 && newIndex <= 99) {
+        openAsmaDetail(newIndex);
     }
 }
 

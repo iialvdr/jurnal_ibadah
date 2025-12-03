@@ -5,14 +5,10 @@
             <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-0.5 transition"></i>
         </button>
         <h2 id="quranTitle" class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Al-Qur'an</h2>
-        <div class="w-11"></div> </div>
+        <div class="w-11"></div> 
+    </div>
 
     <div class="flex-1 relative overflow-hidden flex flex-col">
-        
-        <div id="quranLoading" class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-slate-100/80 dark:bg-slate-950/80 backdrop-blur-sm hidden">
-            <div class="animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-emerald-500 mb-2"></div>
-            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Memuat Data...</p>
-        </div>
         
         <div id="quranSearchContainer" class="px-6 pt-4 pb-2 z-20 transition-all duration-300">
             <div class="relative group">
@@ -24,10 +20,44 @@
             </div>
         </div>
         
-        <div id="surahListContainer" class="flex-1 overflow-y-auto p-6 pt-2 space-y-3 scroll-smooth pb-32">
+        <div id="surahListContainer" class="flex-1 overflow-y-auto p-6 pt-2 space-y-3 scroll-smooth pb-32 no-scrollbar">
+            <div class="animate-pulse space-y-3">
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800"></div>
+                    <div class="flex-1">
+                        <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-24 mb-2"></div>
+                        <div class="h-2 bg-slate-200 dark:bg-slate-800 rounded w-16"></div>
+                    </div>
+                    <div class="h-4 w-4 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800"></div>
+                    <div class="flex-1">
+                        <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-32 mb-2"></div>
+                        <div class="h-2 bg-slate-200 dark:bg-slate-800 rounded w-20"></div>
+                    </div>
+                    <div class="h-4 w-4 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800"></div>
+                    <div class="flex-1">
+                        <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-28 mb-2"></div>
+                        <div class="h-2 bg-slate-200 dark:bg-slate-800 rounded w-14"></div>
+                    </div>
+                    <div class="h-4 w-4 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800"></div>
+                    <div class="flex-1">
+                        <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20 mb-2"></div>
+                        <div class="h-2 bg-slate-200 dark:bg-slate-800 rounded w-12"></div>
+                    </div>
+                    <div class="h-4 w-4 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                </div>
             </div>
+        </div>
             
-        <div id="ayahListContainer" class="absolute inset-0 overflow-y-auto p-6 pb-40 space-y-6 bg-slate-100 dark:bg-slate-950 translate-x-full transition-transform duration-300 z-10 scroll-smooth">
+        <div id="ayahListContainer" class="absolute inset-0 overflow-y-auto p-6 pb-40 space-y-6 bg-slate-100 dark:bg-slate-950 translate-x-full transition-transform duration-300 z-10 scroll-smooth no-scrollbar">
             <div class="text-center py-8 mb-4 relative">
                 <div class="absolute inset-x-10 top-1/2 h-px bg-gradient-to-r from-transparent via-slate-300 dark:via-slate-700 to-transparent"></div>
                 <span class="relative bg-slate-100 dark:bg-slate-950 px-4 font-quran text-2xl text-emerald-600 dark:text-emerald-400 drop-shadow-sm">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
@@ -36,10 +66,11 @@
         </div>
         
         <div id="surahNavButtons" class="absolute bottom-8 left-6 right-6 flex justify-between gap-4 z-40 transition-transform duration-300 translate-y-40">
-            <button onclick="changeSurah(-1)" class="flex-1 bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-white py-4 rounded-[1.5rem] font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed">
+            <button onclick="vibrateSoft(); changeSurah(-1)" class="flex-1 bg-white/70 dark:bg-slate-900/60 backdrop-blur-md shadow-lg shadow-slate-200/30 dark:shadow-black/20 border border-white/40 dark:border-slate-700/50 text-slate-700 dark:text-slate-200 py-4 rounded-[1.5rem] font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition hover:bg-white/90 dark:hover:bg-slate-800/80 disabled:opacity-50 disabled:cursor-not-allowed">
                 <i data-lucide="chevron-left" class="w-4 h-4"></i> Sebelumnya
             </button>
-            <button onclick="changeSurah(1)" class="flex-1 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-xl shadow-emerald-500/30 py-4 rounded-[1.5rem] font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed">
+            
+            <button onclick="vibrateSoft(); changeSurah(1)" class="flex-1 bg-emerald-500/85 dark:bg-emerald-600/80 backdrop-blur-md border border-emerald-400/30 shadow-lg shadow-emerald-500/30 text-white py-4 rounded-[1.5rem] font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition hover:bg-emerald-500 dark:hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed">
                 Selanjutnya <i data-lucide="chevron-right" class="w-4 h-4"></i>
             </button>
         </div>
