@@ -1,12 +1,11 @@
 <div id="quranView" class="hidden-force flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-hidden bg-slate-100 dark:bg-slate-950">
     
-    <div class="px-6 pb-4 pt-[calc(2rem+env(safe-area-inset-top))] flex justify-between items-center relative shrink-0 z-30 bg-slate-100/90 dark:bg-slate-950/90 backdrop-blur-md">
-        <button onclick="handleQuranBack()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-md border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-emerald-600 group">
+    <div class="px-6 pb-4 pt-[calc(2rem+env(safe-area-inset-top))] flex justify-between items-center relative shrink-0 z-30 bg-slate-100/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50">
+        <button onclick="handleQuranBack()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-emerald-600 group">
             <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-0.5 transition"></i>
         </button>
         <h2 id="quranTitle" class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Al-Qur'an</h2>
-        <div class="w-11"></div>
-    </div>
+        <div class="w-11"></div> </div>
 
     <div class="flex-1 relative overflow-hidden flex flex-col">
         
@@ -15,7 +14,7 @@
             <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Memuat Data...</p>
         </div>
         
-        <div id="quranSearchContainer" class="px-6 pb-2 pt-2 z-20 transition-all duration-300">
+        <div id="quranSearchContainer" class="px-6 pt-4 pb-2 z-20 transition-all duration-300">
             <div class="relative group">
                 <div class="absolute inset-0 bg-emerald-500/20 rounded-[1.5rem] blur-md opacity-0 group-hover:opacity-100 transition duration-500"></div>
                 <div class="relative bg-white dark:bg-slate-900 rounded-[1.5rem] shadow-sm border border-slate-200 dark:border-slate-800 flex items-center px-4 py-3.5 transition group-focus-within:border-emerald-500 group-focus-within:ring-1 group-focus-within:ring-emerald-500/50">
@@ -25,16 +24,14 @@
             </div>
         </div>
         
-        <div id="surahListContainer" class="flex-1 overflow-y-auto p-6 space-y-3 scroll-smooth pb-32">
+        <div id="surahListContainer" class="flex-1 overflow-y-auto p-6 pt-2 space-y-3 scroll-smooth pb-32">
             </div>
             
         <div id="ayahListContainer" class="absolute inset-0 overflow-y-auto p-6 pb-40 space-y-6 bg-slate-100 dark:bg-slate-950 translate-x-full transition-transform duration-300 z-10 scroll-smooth">
-            
             <div class="text-center py-8 mb-4 relative">
                 <div class="absolute inset-x-10 top-1/2 h-px bg-gradient-to-r from-transparent via-slate-300 dark:via-slate-700 to-transparent"></div>
                 <span class="relative bg-slate-100 dark:bg-slate-950 px-4 font-quran text-2xl text-emerald-600 dark:text-emerald-400 drop-shadow-sm">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
             </div>
-            
             <div id="ayahsContent" class="space-y-6"></div>
         </div>
         

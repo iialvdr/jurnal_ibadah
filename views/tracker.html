@@ -1,12 +1,15 @@
 <div id="trackerView" class="hidden-force flex flex-col h-full absolute inset-0 z-40 transition-all duration-300 overflow-hidden bg-slate-100 dark:bg-slate-950">
-    <div class="px-6 pb-4 pt-[calc(2rem+env(safe-area-inset-top))] shrink-0 relative z-20 bg-slate-100 dark:bg-slate-950 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] dark:shadow-none z-30">
-        <div class="flex items-center gap-4 mb-6">
-             <button onclick="goBack()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-md border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-emerald-600 group">
-                <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-0.5 transition"></i>
-            </button>
-            <h2 class="text-2xl font-black text-slate-800 dark:text-white tracking-tight">Jurnal Harian</h2>
-        </div>
-        <div class="bg-white dark:bg-slate-900 p-2 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none flex items-center justify-between mb-6">
+    
+    <div class="px-6 pb-4 pt-[calc(2rem+env(safe-area-inset-top))] flex justify-between items-center relative shrink-0 z-30 bg-slate-100/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50">
+        <button onclick="goBack()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-emerald-600 group">
+            <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-0.5 transition"></i>
+        </button>
+        <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Jurnal Harian</h2>
+        <div class="w-11"></div> </div>
+
+    <div class="px-6 pt-4 pb-2 shrink-0 z-20 space-y-4">
+        
+        <div class="bg-white dark:bg-slate-900 p-2 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
             <button onclick="changeDate(-1)" class="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 hover:text-emerald-600 transition active:scale-90">
                 <i data-lucide="chevron-left" class="w-5 h-5"></i>
             </button>
@@ -18,12 +21,14 @@
                 <i data-lucide="chevron-right" class="w-5 h-5"></i>
             </button>
         </div>
-        <div class="text-center mb-4">
-            <button id="resetDateBtn" onclick="resetToToday()" class="hidden text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 py-1.5 px-4 rounded-full border border-emerald-200 dark:border-emerald-800 active:scale-95 transition hover:bg-emerald-200">
+        
+        <div class="text-center">
+            <button id="resetDateBtn" onclick="resetToToday()" class="hidden text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 py-1.5 px-4 rounded-full border border-emerald-200 dark:border-emerald-800 active:scale-95 transition hover:bg-emerald-200 mb-1">
                 Kembali ke Hari Ini
             </button>
         </div>
-        <div id="progressContainer" class="px-1">
+
+        <div id="progressContainer" class="px-1 pb-2">
             <div class="flex justify-between items-end mb-2">
                 <div>
                     <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Capaian Harian</span>
@@ -40,11 +45,12 @@
             </div>
         </div>
     </div>
-    <div class="flex-1 px-6 py-4 overflow-y-auto relative scroll-smooth" id="trackerContent">
+
+    <div class="flex-1 px-6 py-2 overflow-y-auto relative scroll-smooth" id="trackerContent">
         <div id="dataLoading" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-100/80 dark:bg-slate-950/80 backdrop-blur-sm hidden">
             <div class="animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-emerald-500 mb-2"></div>
             <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Memuat Data...</p>
         </div>
         <div id="prayerList" class="space-y-4 pb-32"></div>
     </div>
-</div>
+</div>  

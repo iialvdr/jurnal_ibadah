@@ -8,10 +8,18 @@ export function initDoa() {
     window.searchDoa = searchDoa;
     window.openDoaDetail = openDoaDetail;
     window.closeDoaDetail = closeDoaDetail;
-    
-    // [BARU] Fungsi kontrol custom dropdown
     window.toggleFilter = toggleFilter;
     window.selectFilter = selectFilter;
+    
+    // [BARU] Tutup modal saat klik backdrop
+    const detailModal = document.getElementById('doaDetailModal');
+    if (detailModal) {
+        detailModal.addEventListener('click', (e) => {
+            if (e.target === detailModal) {
+                closeDoaDetail();
+            }
+        });
+    }
     
     // Fetch data saat view doa pertama kali dibuka
     window.addEventListener('viewChanged', (e) => {

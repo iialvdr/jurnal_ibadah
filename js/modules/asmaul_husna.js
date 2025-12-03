@@ -7,6 +7,16 @@ export function initAsmaulHusna() {
     window.openAsmaDetail = openAsmaDetail;
     window.closeAsmaDetail = closeAsmaDetail;
 
+    // [BARU] Tutup modal saat klik backdrop
+    const detailModal = document.getElementById('asmaDetailModal');
+    if (detailModal) {
+        detailModal.addEventListener('click', (e) => {
+            if (e.target === detailModal) {
+                closeAsmaDetail();
+            }
+        });
+    }
+
     window.addEventListener('viewChanged', (e) => {
         if(e.detail.viewId === 'asmaulHusnaView') {
             // Cek apakah data sudah ada, kalau belum fetch dari API

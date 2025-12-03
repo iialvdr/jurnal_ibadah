@@ -70,7 +70,7 @@ body, div, button, span, h1, h2, h3, p, i, svg {
 /* --- SYSTEM TAMPILAN ANIMASI (POP STYLE) --- */
 
 /* State Awal: Sedikit lebih kecil (Zoom Out) dan Transparan */
-#homeView, #trackerView, #tasbihView, #qiblaView, #quranView, #profileView {
+#homeView, #trackerView, #tasbihView, #qiblaView, #quranView, #profileView, #doaView, #asmaulHusnaView {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -91,7 +91,6 @@ body, div, button, span, h1, h2, h3, p, i, svg {
     pointer-events: none;
     
     /* [PENTING] Pastikan background tidak transparan agar tidak bertumpuk jelek saat transisi */
-    /* Kita set background transparan di sini, tapi pastikan elemen child punya background */
     background-color: transparent; 
 }
 

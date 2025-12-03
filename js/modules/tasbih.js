@@ -21,6 +21,17 @@ export function initTasbih() {
     window.closeDhikrMenu = () => document.getElementById('dhikrMenuModal').classList.add('hidden');
     window.chooseDhikr = chooseDhikr;
     
+    // [BARU] Tutup modal saat klik backdrop
+    const menuModal = document.getElementById('dhikrMenuModal');
+    if (menuModal) {
+        menuModal.addEventListener('click', (e) => {
+            if (e.target === menuModal) {
+                // Panggil fungsi tutup manual karena di tasbih fungsi tutupnya inline arrow function
+                menuModal.classList.add('hidden');
+            }
+        });
+    }
+    
     updateTargetUI(33);
 }
 

@@ -74,7 +74,8 @@ async function loadChartData(days) {
             let count = 0;
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                ['Subuh', 'Dhuha', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya', 'Tahajud'].forEach(p => {
+                // [UBAH] Hanya hitung sholat WAJIB (5 Waktu)
+                ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'].forEach(p => {
                     if (data[p]) count++;
                 });
             }
@@ -83,7 +84,8 @@ async function loadChartData(days) {
 
             if(i === 0) {
                  const statToday = document.getElementById('statToday');
-                 if(statToday) statToday.innerText = `${count}/7`; 
+                 // Menampilkan x/5 karena targetnya sekarang 5
+                 if(statToday) statToday.innerText = `${count}/5`; 
             }
 
         } catch (e) {
@@ -97,7 +99,7 @@ async function loadChartData(days) {
 }
 
 function calculateConsistency(totalCompleted, days) {
-    const dailyTarget = 5; 
+    const dailyTarget = 5; // Target sudah sesuai (5 waktu)
     const maxPotential = days * dailyTarget; 
     
     let percentage = Math.round((totalCompleted / maxPotential) * 100);
@@ -139,7 +141,7 @@ function renderChart(labels, data) {
         data: {
             labels: labels,
             datasets: [{
-                label: 'Ibadah',
+                label: 'Sholat Wajib',
                 data: data,
                 borderColor: '#10b981',
                 backgroundColor: (context) => {
@@ -173,7 +175,7 @@ function renderChart(labels, data) {
                     displayColors: false,
                     callbacks: {
                         label: function(context) {
-                            return context.parsed.y + ' Ibadah';
+                            return context.parsed.y + ' Wajib';
                         }
                     }
                 }
@@ -181,7 +183,7 @@ function renderChart(labels, data) {
             scales: {
                 y: {
                     beginAtZero: true,
-                    suggestedMax: 7,
+                    suggestedMax: 5, // [UBAH] Max jadi 5 (sebelumnya 7)
                     display: false 
                 },
                 x: {
@@ -212,7 +214,7 @@ function openEditProfile() {
     // 1. Isi input nama
     if(input) input.value = user.displayName || "";
     
-    // 2. [BARU] Set status toggle Dark Mode sesuai tema saat ini
+    // 2. Set status toggle Dark Mode sesuai tema saat ini
     if(dmToggle) {
         const isDark = document.documentElement.classList.contains('dark');
         dmToggle.checked = isDark;
@@ -280,12 +282,22 @@ function setupEditProfileListeners() {
         });
     }
     
-    // [BARU] Listener Toggle Dark Mode
+    // Listener Toggle Dark Mode
     const dmToggle = document.getElementById('darkModeToggleProfile');
     if(dmToggle) {
         dmToggle.addEventListener('change', () => {
             if(window.toggleDarkMode) {
-                window.toggleDarkMode(); // Gunakan fungsi global dari home.js
+                window.toggleDarkMode(); 
+            }
+        });
+    }
+
+    // [BARU] Tutup modal saat klik backdrop (area gelap)
+    const editModal = document.getElementById('editProfileModal');
+    if (editModal) {
+        editModal.addEventListener('click', (e) => {
+            if (e.target === editModal) {
+                closeEditProfile();
             }
         });
     }
