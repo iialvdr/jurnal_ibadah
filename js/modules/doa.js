@@ -2,7 +2,7 @@ let allDoa = [];
 let currentGrup = '';
 let currentTag = '';
 let isFiltersLoaded = false;
-let activeDropdown = null; // Melacak dropdown mana yang sedang terbuka
+let activeDropdown = null;
 
 export function initDoa() {
     window.searchDoa = searchDoa;
@@ -11,31 +11,60 @@ export function initDoa() {
     window.toggleFilter = toggleFilter;
     window.selectFilter = selectFilter;
     
-    // [BARU] Tutup modal saat klik backdrop
-    const detailModal = document.getElementById('doaDetailModal');
-    if (detailModal) {
-        detailModal.addEventListener('click', (e) => {
-            if (e.target === detailModal) {
-                closeDoaDetail();
-            }
+    // --- [AUTO-PATCH HTML & CSS LEWAT JS] ---
+    const modal = document.getElementById('doaDetailModal');
+    const content = document.getElementById('doaDetailContent');
+    const listContainer = document.getElementById('doaListContainer');
+
+    // 1. STABILISASI BACKGROUND (FIX FLICKER LIST)
+    // Kita paksa list container masuk ke layer GPU sendiri biar gak repaint saat ketumpuk modal
+    if (listContainer) {
+        listContainer.style.transform = "translate3d(0,0,0)";
+        listContainer.style.backfaceVisibility = "hidden";
+        listContainer.style.perspective = "1000px";
+        listContainer.style.willChange = "transform, scroll-position";
+    }
+
+    // 2. STABILISASI MODAL
+    if (modal) {
+        modal.classList.remove('hidden-force');
+        // Hapus efek berat
+        modal.classList.remove('backdrop-blur-sm', 'transition-all');
+        // Setup Invisible state
+        modal.classList.add('invisible', 'opacity-0', 'pointer-events-none');
+        // Transisi ringan (Opacity only)
+        modal.classList.add('transition-opacity', 'duration-300', 'ease-out');
+        
+        // Fix Background: Solid tapi transparan (tanpa blur)
+        if(modal.classList.contains('bg-slate-900/60')) {
+            modal.classList.remove('bg-slate-900/60');
+        }
+        modal.classList.add('bg-slate-900/90'); // Lebih pekat untuk nutup list
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeDoaDetail();
         });
     }
+
+    if (content) {
+        content.classList.remove('transition-all');
+        content.classList.add('transition-transform', 'duration-300', 'ease-out');
+        // Paksa konten modal ke GPU juga
+        content.style.transform = "translate3d(0,100%,0)"; 
+    }
+    // --- [END PATCH] ---
     
-    // Fetch data saat view doa pertama kali dibuka
     window.addEventListener('viewChanged', (e) => {
         if(e.detail.viewId === 'doaView' && allDoa.length === 0) {
             fetchDoaList(); 
         } else {
-            // Tutup dropdown jika pindah halaman/view
             closeAllDropdowns();
         }
     });
 
-    // Listener global untuk menutup dropdown saat klik di luar area
     document.addEventListener('click', (e) => {
         if (activeDropdown) {
             const wrapper = document.getElementById(activeDropdown === 'grup' ? 'filterGrupWrapper' : 'filterTagWrapper');
-            // Jika klik terjadi DI LUAR wrapper dropdown yang aktif, maka tutup
             if (wrapper && !wrapper.contains(e.target)) {
                 closeAllDropdowns();
             }
@@ -54,15 +83,8 @@ async function fetchDoaList(grup = '', tag = '') {
 
         const response = await fetch(url);
         let result = await response.json();
-        let data = [];
-
-        if (Array.isArray(result)) {
-            data = result;
-        } else if (result.data) {
-            data = result.data;
-        }
+        let data = (Array.isArray(result)) ? result : (result.data || []);
         
-        // Simpan data utama jika ini fetch awal (tanpa filter)
         if (!grup && !tag && !isFiltersLoaded) {
             allDoa = data;
             extractAndRenderFilters(data);
@@ -81,7 +103,6 @@ async function fetchDoaList(grup = '', tag = '') {
     }
 }
 
-// [BARU] Render ke Custom Dropdown
 function extractAndRenderFilters(data) {
     const uniqueGrups = new Set();
     const uniqueTags = new Set();
@@ -94,32 +115,23 @@ function extractAndRenderFilters(data) {
         }
     });
 
-    // 1. Render List Grup
     const listGrup = document.getElementById('listGrup');
     if(listGrup) {
         const sortedGrups = Array.from(uniqueGrups).sort();
-        // Item 'Semua'
         let html = generateDropdownItem('grup', '', 'Semua Kategori', true);
-        // Item Lainnya
-        sortedGrups.forEach(g => {
-            html += generateDropdownItem('grup', g, g, false);
-        });
+        sortedGrups.forEach(g => html += generateDropdownItem('grup', g, g, false));
         listGrup.innerHTML = html;
     }
 
-    // 2. Render List Tag
     const listTag = document.getElementById('listTag');
     if(listTag) {
         const sortedTags = Array.from(uniqueTags).sort();
         let html = generateDropdownItem('tag', '', 'Semua Tag', true);
-        sortedTags.forEach(t => {
-            html += generateDropdownItem('tag', t, t, false);
-        });
+        sortedTags.forEach(t => html += generateDropdownItem('tag', t, t, false));
         listTag.innerHTML = html;
     }
 }
 
-// Helper bikin item HTML
 function generateDropdownItem(type, value, label, isDefault) {
     const safeVal = value.replace(/'/g, "\\'");
     return `
@@ -129,7 +141,6 @@ function generateDropdownItem(type, value, label, isDefault) {
     </div>`;
 }
 
-// [BARU] Logic Buka/Tutup Dropdown
 function toggleFilter(type) {
     const listId = type === 'grup' ? 'listGrup' : 'listTag';
     const iconId = type === 'grup' ? 'iconGrup' : 'iconTag';
@@ -137,7 +148,7 @@ function toggleFilter(type) {
     const iconEl = document.getElementById(iconId);
 
     const isOpening = listEl.classList.contains('hidden');
-    closeAllDropdowns(); // Tutup yang lain
+    closeAllDropdowns();
 
     if (isOpening) {
         listEl.classList.remove('hidden');
@@ -157,7 +168,6 @@ function closeAllDropdowns() {
     activeDropdown = null;
 }
 
-// [BARU] Logic Memilih Item
 function selectFilter(type, value, label) {
     const labelId = type === 'grup' ? 'labelGrup' : 'labelTag';
     const labelEl = document.getElementById(labelId);
@@ -196,8 +206,7 @@ function renderDoaList(data) {
     let html = '';
     data.forEach(doa => {
         const safeNama = doa.nama.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const kategoriBadge = doa.grup ? 
-            `<span class="text-[9px] font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400 mb-1 block">${doa.grup}</span>` : '';
+        const kategoriBadge = doa.grup ? `<span class="text-[9px] font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400 mb-1 block">${doa.grup}</span>` : '';
 
         html += `
         <div onclick="openDoaDetail('${doa.id}', '${safeNama}')" class="group bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 cursor-pointer active:scale-[0.98] flex items-center justify-between">
@@ -222,68 +231,72 @@ function searchDoa(query) {
     const lowerQ = query.toLowerCase();
     const items = document.querySelectorAll('#doaListContainer > div');
     items.forEach(item => {
-        const text = item.innerText.toLowerCase();
-        if(text.includes(lowerQ)) item.classList.remove('hidden');
-        else item.classList.add('hidden');
+        item.classList.toggle('hidden', !item.innerText.toLowerCase().includes(lowerQ));
     });
 }
 
+// [OPEN MODAL - GPU ACCELERATED]
 async function openDoaDetail(id, title) {
     const modal = document.getElementById('doaDetailModal');
     const content = document.getElementById('doaDetailContent');
     const modalTitle = document.getElementById('modalDoaTitle');
     
+    // Reset Konten
     document.getElementById('modalDoaArab').innerText = "Loading...";
     document.getElementById('modalDoaLatin').innerText = "...";
     document.getElementById('modalDoaIndo').innerText = "...";
     document.getElementById('modalDoaSource').classList.add('hidden');
-
     if(modalTitle) modalTitle.innerText = title;
 
     if(modal) {
-        modal.classList.remove('hidden-force');
+        modal.classList.remove('invisible', 'pointer-events-none');
         
-        // [MAGIC LINE] Paksa browser baca layout dulu!
-        void modal.offsetWidth; 
-        
-        // Baru jalankan animasi
-        modal.classList.remove('opacity-0');
-        if(content) content.classList.remove('translate-y-full', 'sm:translate-y-20');
+        requestAnimationFrame(() => {
+            modal.classList.remove('opacity-0');
+            if(content) {
+                // Gunakan translate3d untuk slide up
+                content.style.transform = "translate3d(0,0,0)";
+                content.classList.remove('translate-y-full', 'sm:translate-y-20');
+            }
+        });
     }
 
     try {
         const response = await fetch(`https://equran.id/api/doa/${id}`);
         const result = await response.json();
         const data = result.data || result;
-        
-        const arab = data.ar || data.arab || "Teks Arab tidak tersedia";
-        const latin = data.tr || data.latin || "-";
-        const arti = data.idn || data.arti || data.terjemahan || "-";
-        const riwayat = data.riwayat || data.tentang || "";
 
-        document.getElementById('modalDoaArab').innerText = arab;
-        document.getElementById('modalDoaLatin').innerText = latin;
-        document.getElementById('modalDoaIndo').innerText = arti;
+        document.getElementById('modalDoaArab').innerText = data.ar || data.arab || "Teks Arab tidak tersedia";
+        document.getElementById('modalDoaLatin').innerText = data.tr || data.latin || "-";
+        document.getElementById('modalDoaIndo').innerText = data.idn || data.arti || data.terjemahan || "-";
         
+        const riwayat = data.riwayat || data.tentang || "";
         if (riwayat) {
              const sourceEl = document.getElementById('modalDoaSource');
              sourceEl.classList.remove('hidden');
              sourceEl.querySelector('p').innerText = `Sumber: ${riwayat}`;
         }
-
     } catch (e) {
-        console.error("Gagal ambil detail doa", e);
+        console.error(e);
         document.getElementById('modalDoaIndo').innerText = "Gagal memuat detail doa.";
     }
 }
 
+// [CLOSE MODAL]
 function closeDoaDetail() {
     const modal = document.getElementById('doaDetailModal');
     const content = document.getElementById('doaDetailContent');
 
     if(modal) {
         modal.classList.add('opacity-0');
-        if(content) content.classList.add('translate-y-full', 'sm:translate-y-20');
-        setTimeout(() => modal.classList.add('hidden-force'), 300);
+        if(content) {
+            // Gunakan translate3d untuk slide down
+            content.style.transform = "translate3d(0,100%,0)";
+            content.classList.add('translate-y-full', 'sm:translate-y-20');
+        }
+        
+        setTimeout(() => {
+            modal.classList.add('invisible', 'pointer-events-none');
+        }, 300);
     }
 }

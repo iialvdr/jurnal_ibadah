@@ -1,14 +1,14 @@
 // Variabel untuk menyimpan data setelah di-fetch
 let asmaulHusnaData = [];
-let currentDetailIndex = 0; // [BARU] Menyimpan index yang sedang dibuka
+let currentDetailIndex = 0; 
 
 export function initAsmaulHusna() {
     window.searchAsma = searchAsma;
     window.openAsmaDetail = openAsmaDetail;
     window.closeAsmaDetail = closeAsmaDetail;
-    window.changeAsma = changeAsma; // [BARU] Expose fungsi navigasi
+    window.changeAsma = changeAsma; 
 
-    // Tutup modal saat klik backdrop
+    // Setup Listener Tutup Modal (Backdrop Click)
     const detailModal = document.getElementById('asmaDetailModal');
     if (detailModal) {
         detailModal.addEventListener('click', (e) => {
@@ -16,8 +16,14 @@ export function initAsmaulHusna() {
                 closeAsmaDetail();
             }
         });
+        
+        // [PENTING] Init State Modal: Invisible (bukan hidden-force)
+        // Ini mencegah layout thrashing saat dibuka pertama kali
+        detailModal.classList.remove('hidden-force');
+        detailModal.classList.add('invisible', 'opacity-0', 'pointer-events-none');
     }
 
+    // Fetch data saat view dibuka
     window.addEventListener('viewChanged', (e) => {
         if(e.detail.viewId === 'asmaulHusnaView') {
             if (asmaulHusnaData.length === 0) {
@@ -31,14 +37,13 @@ export function initAsmaulHusna() {
 
 async function fetchAsmaulHusna() {
     const container = document.getElementById('asmaList');
-    // Jika masih ada spinner manual, biarkan. Jika sudah pakai skeleton di HTML, ini bisa dikosongkan.
-    // Tapi untuk aman, kita cek dulu kalau container kosong baru kasih loader
     if(container && container.children.length === 0) {
          container.innerHTML = `
             <div class="flex flex-col items-center justify-center pt-20">
                 <i data-lucide="loader-2" class="w-8 h-8 animate-spin text-emerald-500 mb-2"></i>
                 <p class="text-xs font-bold text-slate-400">Mengambil Data API...</p>
             </div>`;
+        if(window.lucide) lucide.createIcons();
     }
 
     try {
@@ -112,21 +117,20 @@ function searchAsma(query) {
     renderList(filtered);
 }
 
+// [OPEN MODAL - OPTIMIZED]
 function openAsmaDetail(index) {
     const data = asmaulHusnaData.find(d => d.index === index);
     if(!data) return;
 
-    currentDetailIndex = index; // [BARU] Simpan index saat ini
+    currentDetailIndex = index;
 
     document.getElementById('detailNumber').innerText = data.index;
     document.getElementById('detailArabic').innerText = data.arabic;
     document.getElementById('detailLatin').innerText = data.latin;
     document.getElementById('detailMeaning').innerText = data.meaning;
 
-    // [BARU] Update status tombol (Disable jika di ujung awal/akhir)
     const btnPrev = document.getElementById('btnPrevAsma');
     const btnNext = document.getElementById('btnNextAsma');
-    
     if(btnPrev) btnPrev.disabled = (index <= 1);
     if(btnNext) btnNext.disabled = (index >= 99);
 
@@ -134,17 +138,19 @@ function openAsmaDetail(index) {
     const content = document.getElementById('asmaDetailContent');
     
     if(modal) {
-        modal.classList.remove('hidden-force');
+        // 1. Munculkan elemen (masih transparan)
+        modal.classList.remove('invisible', 'pointer-events-none');
         
-        // [MAGIC LINE]
-        void modal.offsetWidth;
-
-        modal.classList.remove('opacity-0');
-        if(content) content.classList.remove('scale-90');
+        // 2. Jalankan animasi di frame berikutnya agar browser siap
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                if(content) content.classList.remove('scale-90');
+            });
+        });
     }
 }
 
-// [BARU] Fungsi Navigasi
 function changeAsma(direction) {
     const newIndex = currentDetailIndex + direction;
     if (newIndex >= 1 && newIndex <= 99) {
@@ -152,13 +158,19 @@ function changeAsma(direction) {
     }
 }
 
+// [CLOSE MODAL - OPTIMIZED]
 function closeAsmaDetail() {
     const modal = document.getElementById('asmaDetailModal');
     const content = document.getElementById('asmaDetailContent');
 
     if(modal) {
+        // 1. Animasi keluar
         modal.classList.add('opacity-0');
-        content.classList.add('scale-90');
-        setTimeout(() => modal.classList.add('hidden-force'), 300);
+        if(content) content.classList.add('scale-90');
+        
+        // 2. Sembunyikan setelah animasi selesai (300ms)
+        setTimeout(() => {
+            modal.classList.add('invisible', 'pointer-events-none');
+        }, 300);
     }
 }

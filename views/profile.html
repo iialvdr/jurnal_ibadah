@@ -106,8 +106,8 @@
         </div>
     </div>
 
-    <div id="editProfileModal" class="absolute inset-0 z-[60] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-        <div class="bg-white dark:bg-slate-900 w-full sm:w-[85%] sm:max-w-xs p-6 rounded-t-[2.5rem] sm:rounded-[2rem] shadow-2xl border-t sm:border border-white/20 dark:border-slate-800 transform translate-y-20 sm:translate-y-0 sm:scale-95 transition-all duration-300" id="editProfileContent">
+    <div id="editProfileModal" class="absolute inset-0 z-[60] flex items-end sm:items-center justify-center bg-slate-900/90 invisible opacity-0 pointer-events-none transition-opacity duration-300 ease-out">
+        <div class="bg-white dark:bg-slate-900 w-full sm:w-[85%] sm:max-w-xs p-6 rounded-t-[2.5rem] sm:rounded-[2rem] shadow-2xl border-t sm:border border-white/20 dark:border-slate-800 transform translate-y-20 sm:translate-y-0 sm:scale-95 transition-transform duration-300 ease-out will-change-transform" id="editProfileContent">
             
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-lg font-black text-slate-800 dark:text-white">Pengaturan</h3>
@@ -152,8 +152,8 @@
         </div>
     </div>
 
-    <div id="logoutModal" class="absolute inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden-force opacity-0 transition-all duration-300">
-        <div class="bg-white dark:bg-slate-900 w-[85%] max-w-xs p-6 rounded-[2rem] shadow-2xl border border-white/20 dark:border-slate-800 transform scale-90 transition-all duration-300" id="logoutModalContent">
+    <div id="logoutModal" class="absolute inset-0 z-[60] flex items-center justify-center bg-slate-900/90 invisible opacity-0 pointer-events-none transition-opacity duration-300 ease-out">
+        <div class="bg-white dark:bg-slate-900 w-[85%] max-w-xs p-6 rounded-[2rem] shadow-2xl border border-white/20 dark:border-slate-800 transform scale-90 transition-transform duration-300 ease-out will-change-transform" id="logoutModalContent">
             <div class="flex flex-col items-center text-center">
                 <div class="w-16 h-16 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mb-4 shadow-inner">
                     <i data-lucide="log-out" class="w-8 h-8"></i>

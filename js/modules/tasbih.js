@@ -21,15 +21,41 @@ export function initTasbih() {
     window.closeDhikrMenu = closeDhikrMenu;
     window.chooseDhikr = chooseDhikr;
     
-    // Tutup modal saat klik backdrop (area gelap)
+    // --- [AUTO-PATCH] ---
     const menuModal = document.getElementById('dhikrMenuModal');
+    const menuContent = document.getElementById('dhikrModalContent');
+    const listContainer = document.getElementById('dhikrListContainer');
+
+    if (listContainer) {
+        listContainer.style.transform = "translate3d(0,0,0)";
+        listContainer.style.willChange = "transform";
+    }
+
     if (menuModal) {
+        // Hapus class berat
+        menuModal.classList.remove('hidden-force'); 
+        menuModal.classList.remove('backdrop-blur-sm', 'transition-all');
+        
+        // Init State
+        menuModal.classList.add('invisible', 'opacity-0', 'pointer-events-none');
+        menuModal.classList.add('transition-opacity', 'duration-300', 'ease-out');
+        
+        // Fix Background
+        if(menuModal.classList.contains('bg-slate-900/60')) menuModal.classList.remove('bg-slate-900/60');
+        menuModal.classList.add('bg-slate-900/90');
+
         menuModal.addEventListener('click', (e) => {
-            if (e.target === menuModal) {
-                closeDhikrMenu();
-            }
+            if (e.target === menuModal) closeDhikrMenu();
         });
     }
+
+    if (menuContent) {
+        // [PERBAIKAN DI SINI]
+        menuContent.classList.remove('transition-all', 'transform'); 
+        // Hapus 'cubic-bezier(...)' yang bikin error, ganti 'ease-out'
+        menuContent.classList.add('transition-transform', 'duration-300', 'ease-out');
+    }
+    // --- [END PATCH] ---
     
     updateTargetUI(33);
 }
@@ -47,9 +73,9 @@ function countTasbih() {
 
     if(isVibroOn && navigator.vibrate) {
         if(tasbihTarget > 0 && tasbihCount % tasbihTarget === 0) {
-            navigator.vibrate([50, 100, 50]); // Getar panjang saat target tercapai
+            navigator.vibrate([50, 100, 50]); 
         } else {
-            navigator.vibrate(15); // Getar pendek tiap klik
+            navigator.vibrate(15);
         }
     }
 }
@@ -60,7 +86,6 @@ function resetTasbih() {
     if(el) el.innerText = '0';
     if(navigator.vibrate) navigator.vibrate(30);
 
-    // Animasi Putar Icon Reset
     const btn = document.getElementById('resetTasbihBtn');
     if(btn) {
         const icon = btn.querySelector('i');
@@ -105,18 +130,14 @@ function toggleVibro() {
     
     if(isVibroOn) {
         if(txt) txt.innerText = "GETAR ON";
-        if(btn) {
-            btn.className = "flex items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-bold text-xs shadow-sm transition active:scale-95";
-        }
+        if(btn) btn.className = "flex items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-bold text-xs shadow-sm transition active:scale-95";
     } else {
         if(txt) txt.innerText = "GETAR OFF";
-        if(btn) {
-            btn.className = "flex items-center justify-center gap-2 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 font-bold text-xs shadow-sm transition active:scale-95";
-        }
+        if(btn) btn.className = "flex items-center justify-center gap-2 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 font-bold text-xs shadow-sm transition active:scale-95";
     }
 }
 
-// [UPDATED] Logika Open yang lebih bersih
+// [OPEN MODAL]
 function openDhikrMenu() {
     const list = document.getElementById('dhikrListContainer');
     const modal = document.getElementById('dhikrMenuModal');
@@ -140,29 +161,28 @@ function openDhikrMenu() {
     });
     list.innerHTML = html;
 
-    // Animasi Masuk (Hapus pointer-events-none dan opacity/translate)
-    modal.classList.remove('pointer-events-none');
-    // Jika ada hidden-force: modal.classList.remove('hidden-force');
-
-    // [MAGIC LINE]
-    void modal.offsetWidth;
-
-    modal.classList.remove('opacity-0');
-    if(content) content.classList.remove('translate-y-full');
+    modal.classList.remove('invisible', 'pointer-events-none');
+    
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modal.classList.remove('opacity-0');
+            if(content) content.classList.remove('translate-y-full');
+        });
+    });
 }
 
-// [UPDATED] Logika Close yang lebih bersih
+// [CLOSE MODAL]
 function closeDhikrMenu() {
     const modal = document.getElementById('dhikrMenuModal');
     const content = document.getElementById('dhikrModalContent');
 
     if(modal) {
-        // Mulai animasi keluar
         modal.classList.add('opacity-0');
         if(content) content.classList.add('translate-y-full');
         
-        // Tunggu transisi selesai (300ms) baru hilangkan pointer events
-        setTimeout(() => modal.classList.add('pointer-events-none'), 300);
+        setTimeout(() => {
+            modal.classList.add('invisible', 'pointer-events-none');
+        }, 300);
     }
 }
 

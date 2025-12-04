@@ -18,7 +18,7 @@
         </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-6 pt-2 space-y-3 scroll-smooth pb-32 no-scrollbar" id="asmaListContainer">
+    <div class="flex-1 overflow-y-auto p-6 pt-2 space-y-3 scroll-smooth pb-32 no-scrollbar" id="asmaListContainer" style="transform: translate3d(0,0,0); backface-visibility: hidden; will-change: transform;">
         <div id="asmaList" class="space-y-3">
             <div class="animate-pulse space-y-3">
                 <div class="h-20 bg-white dark:bg-slate-900 rounded-[1.5rem] w-full"></div>
@@ -28,8 +28,9 @@
         </div>
     </div>
 
-    <div id="asmaDetailModal" class="absolute inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden-force opacity-0 transition-all duration-300">
-        <div class="bg-white dark:bg-slate-900 w-[85%] max-w-sm p-8 rounded-[2.5rem] shadow-2xl border border-white/20 dark:border-slate-800 transform scale-90 transition-all duration-300 relative overflow-hidden" id="asmaDetailContent">
+    <div id="asmaDetailModal" class="absolute inset-0 z-[60] flex items-center justify-center bg-slate-900/90 invisible opacity-0 pointer-events-none transition-opacity duration-300 ease-out">
+        
+        <div class="bg-white dark:bg-slate-900 w-[85%] max-w-sm p-8 rounded-[2.5rem] shadow-2xl border border-white/20 dark:border-slate-800 transform scale-90 transition-transform duration-300 ease-out will-change-transform relative overflow-hidden" id="asmaDetailContent">
             
             <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
             

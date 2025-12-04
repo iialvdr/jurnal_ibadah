@@ -13,7 +13,7 @@ const urlsToCache = [
   './js/config.js',
   './js/router.js',
   './js/state.js',
-  './js/version.js', // [PENTING] Tambahkan ini
+  './js/version.js',
   
   './js/modules/auth.js',
   './js/modules/home.js',
@@ -35,11 +35,15 @@ const urlsToCache = [
   './views/doa.html',
   './views/asmaul_husna.html',
   
-  './assets/icons/icon-192.png',
-  './assets/icons/icon-512.png',
-
+  // [PERBAIKAN DI SINI]
+  // Hapus baris './assets/icons/...' karena file tidak ada
+  // Pastikan path ini sesuai dengan file yang kamu upload
   './assets/logo.png',
-  './assets/favicon/android-chrome-192x192.png'
+  './assets/favicon/android-chrome-192x192.png',
+  './assets/favicon/android-chrome-512x512.png',
+  './assets/favicon/favicon-32x32.png',
+  './assets/favicon/favicon-16x16.png',
+  './assets/favicon/favicon.ico'
 ];
 
 self.addEventListener('install', event => {
