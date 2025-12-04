@@ -136,13 +136,11 @@ function openAsmaDetail(index) {
     if(modal) {
         modal.classList.remove('hidden-force');
         
-        // [PERBAIKAN]
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                modal.classList.remove('opacity-0');
-                content.classList.remove('scale-90');
-            });
-        });
+        // [MAGIC LINE]
+        void modal.offsetWidth;
+
+        modal.classList.remove('opacity-0');
+        if(content) content.classList.remove('scale-90');
     }
 }
 

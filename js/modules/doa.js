@@ -243,13 +243,12 @@ async function openDoaDetail(id, title) {
     if(modal) {
         modal.classList.remove('hidden-force');
         
-        // [PERBAIKAN] Gunakan nested requestAnimationFrame
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                modal.classList.remove('opacity-0');
-                if(content) content.classList.remove('translate-y-full', 'sm:translate-y-20');
-            });
-        });
+        // [MAGIC LINE] Paksa browser baca layout dulu!
+        void modal.offsetWidth; 
+        
+        // Baru jalankan animasi
+        modal.classList.remove('opacity-0');
+        if(content) content.classList.remove('translate-y-full', 'sm:translate-y-20');
     }
 
     try {

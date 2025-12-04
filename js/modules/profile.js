@@ -221,18 +221,14 @@ function openEditProfile() {
     }
 
     if(modal) {
-        modal.classList.remove('hidden-force'); // Jika ada class hidden-force
         modal.classList.remove('pointer-events-none');
+        // Jika kamu pakai hidden-force di HTML edit profile, tambahkan remove di sini
         
-        // [PERBAIKAN]
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                modal.classList.remove('opacity-0');
-                if(content) {
-                    content.classList.remove('translate-y-20', 'scale-95');
-                }
-            });
-        });
+        // [MAGIC LINE]
+        void modal.offsetWidth; 
+
+        modal.classList.remove('opacity-0');
+        if(content) content.classList.remove('translate-y-20', 'scale-95');
     }
 }
 
@@ -336,16 +332,14 @@ function toggleLogoutModal(show) {
     if(show) {
         modal.classList.remove('hidden-force');
         
-        // [PERBAIKAN]
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                modal.classList.remove('opacity-0');
-                if(content) { 
-                    content.classList.remove('scale-90'); 
-                    content.classList.add('scale-100'); 
-                }
-            });
-        });
+        // [MAGIC LINE]
+        void modal.offsetWidth;
+
+        modal.classList.remove('opacity-0');
+        if(content) { 
+            content.classList.remove('scale-90'); 
+            content.classList.add('scale-100'); 
+        }
     } else {
         modal.classList.add('opacity-0');
         if(content) { content.classList.remove('scale-100'); content.classList.add('scale-90'); }
