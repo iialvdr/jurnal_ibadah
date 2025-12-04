@@ -221,7 +221,8 @@ function openEditProfile() {
     }
 
     if(modal) {
-        modal.classList.remove('hidden-force');
+        // [UPDATED] Hapus pointer-events-none di awal
+        modal.classList.remove('pointer-events-none');
         requestAnimationFrame(() => {
             modal.classList.remove('opacity-0');
             if(content) {
@@ -240,7 +241,8 @@ function closeEditProfile() {
         if(content) {
             content.classList.add('translate-y-20', 'scale-95');
         }
-        setTimeout(() => modal.classList.add('hidden-force'), 300);
+        // [UPDATED] Tambahkan pointer-events-none setelah transisi selesai
+        setTimeout(() => modal.classList.add('pointer-events-none'), 300);
     }
 }
 

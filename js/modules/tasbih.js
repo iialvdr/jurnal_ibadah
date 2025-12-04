@@ -60,7 +60,7 @@ function resetTasbih() {
     if(el) el.innerText = '0';
     if(navigator.vibrate) navigator.vibrate(30);
 
-    // [BARU] Animasi Putar Icon Reset
+    // Animasi Putar Icon Reset
     const btn = document.getElementById('resetTasbihBtn');
     if(btn) {
         const icon = btn.querySelector('i');
@@ -116,7 +116,7 @@ function toggleVibro() {
     }
 }
 
-// [MODIFIED] Animasi Open (Slide Up)
+// [UPDATED] Logika Open yang lebih bersih
 function openDhikrMenu() {
     const list = document.getElementById('dhikrListContainer');
     const modal = document.getElementById('dhikrMenuModal');
@@ -140,25 +140,26 @@ function openDhikrMenu() {
     });
     list.innerHTML = html;
 
-    // Animasi Masuk
-    modal.classList.remove('hidden-force');
+    // Animasi Masuk (Hapus pointer-events-none dan opacity/translate)
+    modal.classList.remove('pointer-events-none');
     requestAnimationFrame(() => {
         modal.classList.remove('opacity-0');
         if(content) content.classList.remove('translate-y-full');
     });
 }
 
-// [MODIFIED] Animasi Close (Slide Down)
+// [UPDATED] Logika Close yang lebih bersih
 function closeDhikrMenu() {
     const modal = document.getElementById('dhikrMenuModal');
     const content = document.getElementById('dhikrModalContent');
 
     if(modal) {
+        // Mulai animasi keluar
         modal.classList.add('opacity-0');
         if(content) content.classList.add('translate-y-full');
         
-        // Tunggu animasi CSS selesai (300ms) baru hide element
-        setTimeout(() => modal.classList.add('hidden-force'), 300);
+        // Tunggu transisi selesai (300ms) baru hilangkan pointer events
+        setTimeout(() => modal.classList.add('pointer-events-none'), 300);
     }
 }
 

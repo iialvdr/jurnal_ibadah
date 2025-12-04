@@ -6,7 +6,7 @@
         </button>
         <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Profil Saya</h2>
         
-        <button onclick="openEditProfile()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-md border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-emerald-600">
+        <button onclick="vibrateSoft(); openEditProfile()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-md border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-emerald-600">
             <i data-lucide="settings" class="w-5 h-5"></i>
         </button>
     </div>
@@ -106,7 +106,7 @@
         </div>
     </div>
 
-    <div id="editProfileModal" class="absolute inset-0 z-[60] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden-force opacity-0 transition-all duration-300">
+    <div id="editProfileModal" class="absolute inset-0 z-[60] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
         <div class="bg-white dark:bg-slate-900 w-full sm:w-[85%] sm:max-w-xs p-6 rounded-t-[2.5rem] sm:rounded-[2rem] shadow-2xl border-t sm:border border-white/20 dark:border-slate-800 transform translate-y-20 sm:translate-y-0 sm:scale-95 transition-all duration-300" id="editProfileContent">
             
             <div class="flex justify-between items-center mb-6">
