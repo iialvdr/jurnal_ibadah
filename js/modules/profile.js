@@ -221,13 +221,17 @@ function openEditProfile() {
     }
 
     if(modal) {
-        // [UPDATED] Hapus pointer-events-none di awal
+        modal.classList.remove('hidden-force'); // Jika ada class hidden-force
         modal.classList.remove('pointer-events-none');
+        
+        // [PERBAIKAN]
         requestAnimationFrame(() => {
-            modal.classList.remove('opacity-0');
-            if(content) {
-                content.classList.remove('translate-y-20', 'scale-95');
-            }
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                if(content) {
+                    content.classList.remove('translate-y-20', 'scale-95');
+                }
+            });
         });
     }
 }
@@ -331,9 +335,16 @@ function toggleLogoutModal(show) {
     
     if(show) {
         modal.classList.remove('hidden-force');
+        
+        // [PERBAIKAN]
         requestAnimationFrame(() => {
-            modal.classList.remove('opacity-0');
-            if(content) { content.classList.remove('scale-90'); content.classList.add('scale-100'); }
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                if(content) { 
+                    content.classList.remove('scale-90'); 
+                    content.classList.add('scale-100'); 
+                }
+            });
         });
     } else {
         modal.classList.add('opacity-0');

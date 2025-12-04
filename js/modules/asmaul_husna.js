@@ -135,9 +135,13 @@ function openAsmaDetail(index) {
     
     if(modal) {
         modal.classList.remove('hidden-force');
+        
+        // [PERBAIKAN]
         requestAnimationFrame(() => {
-            modal.classList.remove('opacity-0');
-            content.classList.remove('scale-90');
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-90');
+            });
         });
     }
 }

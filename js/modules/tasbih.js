@@ -142,9 +142,13 @@ function openDhikrMenu() {
 
     // Animasi Masuk (Hapus pointer-events-none dan opacity/translate)
     modal.classList.remove('pointer-events-none');
+    modal.classList.remove('hidden-force'); // Pastikan ini dihapus jika ada class hidden
+
     requestAnimationFrame(() => {
-        modal.classList.remove('opacity-0');
-        if(content) content.classList.remove('translate-y-full');
+        requestAnimationFrame(() => {
+            modal.classList.remove('opacity-0');
+            if(content) content.classList.remove('translate-y-full');
+        });
     });
 }
 
