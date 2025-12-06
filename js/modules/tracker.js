@@ -12,17 +12,19 @@ const PRAYER_CONFIG = [
     { id: 'Tahajud', type: 'sunnah', icon: 'star', color: 'from-violet-500 to-fuchsia-600', shadow: 'shadow-fuchsia-500/30' }
 ];
 
+// [BARU] Variabel lokal untuk menyimpan jadwal khusus Tracker
+let trackerSchedule = {};
+
 export function initTracker() {
     window.changeDate = changeDate;
     window.resetToToday = resetToToday;
     window.togglePrayer = togglePrayer;
     
-    // Inisialisasi tanggal tracker ke hari ini saat awal load
     state.trackerDate = new Date();
     
     window.addEventListener('viewChanged', (e) => {
         if(e.detail.viewId === 'trackerView') {
-            updateTrackerUI(); // Update UI Tanggal & Hijriah
+            updateTrackerUI(); 
             loadRecordsFromCloud();
         }
     });
@@ -34,7 +36,48 @@ function formatDateKey(date) {
     return localDate.toISOString().split('T')[0]; 
 }
 
-// Fungsi update UI khusus Tracker
+// [BARU] Fungsi Hitung Jadwal Khusus Tracker
+function calculateTrackerSchedule() {
+    // Cek apakah library adhan dan lokasi tersedia
+    if (typeof adhan === 'undefined' || !window.lastLat || !window.lastLng) {
+        // Fallback ke jadwal global (hari ini) jika data belum siap
+        trackerSchedule = { ...state.prayerTimes }; 
+        return;
+    }
+
+    const coordinates = new adhan.Coordinates(window.lastLat, window.lastLng);
+    const date = state.trackerDate;
+    
+    // Config sama persis dengan Home
+    const params = adhan.CalculationMethod.Singapore();
+    params.madhab = adhan.Madhab.Shafi;
+    params.fajrAngle = 20;
+    params.ishaAngle = 18;
+
+    const prayerTimes = new adhan.PrayerTimes(coordinates, date, params);
+    
+    const timeFormat = (t) => {
+        return t.toLocaleTimeString('id-ID', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: false 
+        }).replace('.', ':');
+    };
+
+    const dhuhaTime = new Date(prayerTimes.sunrise.getTime() + (20 * 60000));
+
+    // Simpan ke variabel lokal trackerSchedule
+    trackerSchedule = {
+        Subuh: timeFormat(prayerTimes.fajr),
+        Dhuha: timeFormat(dhuhaTime),
+        Dzuhur: timeFormat(prayerTimes.dhuhr),
+        Ashar: timeFormat(prayerTimes.asr),
+        Maghrib: timeFormat(prayerTimes.maghrib),
+        Isya: timeFormat(prayerTimes.isha),
+        Tahajud: '03:00'
+    };
+}
+
 async function updateTrackerUI() {
     const elDate = document.getElementById('dateDisplay');
     if(elDate) {
@@ -46,30 +89,25 @@ async function updateTrackerUI() {
     const resetBtn = document.getElementById('resetDateBtn');
     if(resetBtn) isToday ? resetBtn.classList.add('hidden') : resetBtn.classList.remove('hidden');
 
-    if(window.lastLat && window.lastLng) {
-        const d = state.trackerDate;
-        const cacheKey = `sch_${d.getFullYear()}_${d.getMonth()+1}_${window.lastLat.toFixed(1)}_${window.lastLng.toFixed(1)}`;
-        let monthData = state.scheduleCache[cacheKey];
+    // [BARU] Hitung ulang jadwal setiap update UI (ganti tanggal/buka view)
+    calculateTrackerSchedule();
 
-        if (!monthData) {
-            try {
-                const res = await fetch(`https://api.aladhan.com/v1/calendar?latitude=${window.lastLat}&longitude=${window.lastLng}&method=20&month=${d.getMonth()+1}&year=${d.getFullYear()}`);
-                const result = await res.json();
-                if (result.data) {
-                    monthData = result.data;
-                    state.scheduleCache[cacheKey] = monthData;
-                }
-            } catch (e) { console.error(e); }
-        }
+    try {
+        // [FIX] Koreksi Hijriah -1 Hari (Sesuai request sebelumnya)
+        const adjustment = -1; 
+        const dateForHijri = new Date(state.trackerDate);
+        dateForHijri.setDate(state.trackerDate.getDate() + adjustment);
 
-        if (monthData) {
-            const dayData = monthData[d.getDate() - 1];
-            if (dayData && dayData.date.hijri) {
-                const hStr = `${dayData.date.hijri.day} ${dayData.date.hijri.month.en} ${dayData.date.hijri.year} H`;
-                const tEl = document.getElementById('trackerHijriDisplay');
-                if(tEl) tEl.innerText = hStr;
-            }
-        }
+        const hijriDate = new Intl.DateTimeFormat('id-ID-u-ca-islamic', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        }).format(dateForHijri);
+        
+        const tEl = document.getElementById('trackerHijriDisplay');
+        if(tEl) tEl.innerText = hijriDate.replace(' AH', ' H');
+    } catch (e) {
+        console.error("Gagal format Hijriah tracker:", e);
     }
 }
 
@@ -101,7 +139,6 @@ function resetToToday() {
     loadRecordsFromCloud();
 }
 
-// [MODIFIED] Logika baru: hanya update elemen yang berubah
 function togglePrayer(id, locked) {
     if (locked) return;
     if (navigator.vibrate) navigator.vibrate(50);
@@ -114,18 +151,12 @@ function togglePrayer(id, locked) {
         setDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey), { [id]: newState, last_updated: new Date() }, { merge: true });
     }
 
-    // [UBAH DISINI] Ganti renderPrayers() dengan update parsial
     const pConfig = PRAYER_CONFIG.find(p => p.id === id);
     if(pConfig) {
-        // 1. Ambil elemen lama berdasarkan ID
         const oldEl = document.getElementById(`prayer-card-${id}`);
         if(oldEl) {
-            // 2. Generate HTML baru untuk kartu ini saja
             const newHTML = createPrayerCardHTML(pConfig);
-            // 3. Swap elemen (Ganti outerHTML)
             oldEl.outerHTML = newHTML;
-            
-            // 4. Re-init icon Lucide HANYA untuk elemen baru ini (supaya ringan)
             const newEl = document.getElementById(`prayer-card-${id}`);
             if(window.lucide && newEl) lucide.createIcons({ root: newEl });
         }
@@ -134,7 +165,6 @@ function togglePrayer(id, locked) {
     updateProgressBar();
 }
 
-// [MODIFIED] Menggunakan helper function
 export function renderPrayers() {
     const container = document.getElementById('prayerList');
     if(!container) return;
@@ -149,10 +179,12 @@ export function renderPrayers() {
     updateProgressBar();
 }
 
-// [BARU] Helper function untuk generate HTML satu kartu
 function createPrayerCardHTML(p) {
     const isDone = state.currentRecords[p.id] || false;
-    const time = state.prayerTimes[p.id]; 
+    
+    // [PENTING] Gunakan trackerSchedule (lokal), bukan state.prayerTimes (global hari ini)
+    const time = trackerSchedule[p.id] || '--:--'; 
+    
     const status = checkTimeAvailability(time);
     
     let wrapperClass, iconWrapperClass, textClass, timeClass, checkIcon;
@@ -177,7 +209,6 @@ function createPrayerCardHTML(p) {
         checkIcon = `<div class="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-slate-700 group-hover:border-emerald-300 transition-colors"></div>`;
     }
 
-    // [PENTING] Menambahkan ID unik (prayer-card-{id}) untuk targeting DOM
     return `
     <div id="prayer-card-${p.id}" onclick="togglePrayer('${p.id}', ${status.locked})" class="group relative flex items-center justify-between p-4 rounded-[1.5rem] border transition-all duration-300 ${wrapperClass}">
         <div class="flex items-center gap-4">
@@ -234,6 +265,11 @@ function checkTimeAvailability(prayerTimeStr) {
     
     const currentZero = new Date(state.trackerDate.getTime());
     currentZero.setHours(0,0,0,0);
+    
+    // Logic: 
+    // - Jika hari esok/masa depan: Locked (gak boleh isi duluan)
+    // - Jika hari kemarin: Unlocked (boleh qadha/isi yang lupa)
+    // - Jika hari ini: Cek jamnya, kalau belum masuk waktu = locked
     
     if (currentZero.getTime() > todayZero.getTime()) return { locked: true }; 
     if (currentZero.getTime() < todayZero.getTime()) return { locked: false };

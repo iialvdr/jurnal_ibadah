@@ -12,10 +12,7 @@ export function initHome() {
     window.continueReading = continueReading;
 
     initTheme();
-    
-    // [BARU] Load Cache Lokasi Terakhir (Agar tidak blank saat loading)
     loadCachedLocation();
-
     getLocation();
 
     window.addEventListener('viewChanged', (e) => {
@@ -29,20 +26,16 @@ export function initHome() {
     });
 }
 
-// [BARU] Fungsi Load Cache
 function loadCachedLocation() {
     const cachedCity = localStorage.getItem('last_city_name');
     const cachedLat = localStorage.getItem('last_lat');
     const cachedLng = localStorage.getItem('last_lng');
 
-    if (cachedCity) {
-        setLastCity(cachedCity);
-    }
+    if (cachedCity) setLastCity(cachedCity);
 
     if (cachedLat && cachedLng) {
         window.lastLat = parseFloat(cachedLat);
         window.lastLng = parseFloat(cachedLng);
-        // Langsung coba fetch jadwal pakai lokasi lama sambil nunggu GPS baru
         fetchJadwal(window.lastLat, window.lastLng);
     }
 }
@@ -78,7 +71,6 @@ export function updateHomeUI() {
     }
 
     const locText = document.getElementById('homeLocationText');
-    // Jika state.lastCity masih default, tampilkan "Mencari...", tapi kalau sudah ada cache, dia akan tampil
     if(locText) locText.innerText = state.lastCity || "Mencari...";
     
     if(state.currentUser) {
@@ -226,8 +218,6 @@ function getLocation(isManualRefresh = false) {
             (pos) => {
                 window.lastLat = pos.coords.latitude;
                 window.lastLng = pos.coords.longitude;
-                
-                // [BARU] Simpan koordinat ke cache agar besok cepat
                 localStorage.setItem('last_lat', window.lastLat);
                 localStorage.setItem('last_lng', window.lastLng);
 
@@ -259,7 +249,6 @@ function resetLocationButton() {
 }
 
 function useDefaultLocation() {
-    // Kalau gagal GPS, cek dulu ada cache gak, kalau gak ada baru "GPS Tidak Terdeteksi"
     if(!state.lastCity || state.lastCity === "Menunggu GPS...") {
         setLastCity("GPS Tidak Terdeteksi");
         updateHomeUI();
@@ -273,15 +262,11 @@ async function fetchCityName(lat, lng) {
         const cityName = data.locality || data.city || data.principalSubdivision || "Lokasi Anda";
         
         setLastCity(cityName);
-        
-        // [BARU] Simpan nama kota ke cache
         localStorage.setItem('last_city_name', cityName);
-        
         updateHomeUI();
         const t1 = document.getElementById('locationText');
         if(t1) t1.innerText = state.lastCity;
     } catch (e) { 
-        // Jangan timpa kalau sudah ada cache yang benar
         if(!state.lastCity || state.lastCity === "Menunggu GPS...") {
             setLastCity("Lokasi Terdeteksi");
             updateHomeUI();
@@ -289,41 +274,58 @@ async function fetchCityName(lat, lng) {
     }
 }
 
+// [FUNGSI UTAMA] Menghitung Waktu Sholat Secara Offline
 async function fetchJadwal(lat, lng) {
-    const m = state.currentDate.getMonth() + 1;
-    const y = state.currentDate.getFullYear();
-    const cacheKey = `sch_${y}_${m}_${lat.toFixed(1)}_${lng.toFixed(1)}`;
-    let monthData = state.scheduleCache[cacheKey];
-    
-    if (!monthData) {
-        try {
-            const res = await fetch(`https://api.aladhan.com/v1/calendar?latitude=${lat}&longitude=${lng}&method=20&month=${m}&year=${y}`);
-            const result = await res.json();
-            if (result.data) { monthData = result.data; state.scheduleCache[cacheKey] = monthData; }
-        } catch (e) { console.error(e); }
+    if (typeof adhan === 'undefined') {
+        console.error("Library Adhan.js belum siap, mencoba lagi...");
+        setTimeout(() => fetchJadwal(lat, lng), 500); // Coba lagi jika script belum load
+        return;
     }
+
+    const coordinates = new adhan.Coordinates(lat, lng);
+    const date = state.currentDate;
     
-    if (monthData) {
-        const dayData = monthData[state.currentDate.getDate() - 1]; 
-        if (dayData) {
-            const t = dayData.timings;
-            const clean = (s) => s ? s.split(' ')[0] : '--:--';
-            const newTimes = { Subuh: clean(t.Fajr), Dzuhur: clean(t.Dhuhr), Ashar: clean(t.Asr), Maghrib: clean(t.Maghrib), Isya: clean(t.Isha), Tahajud: '03:00', Dhuha: '--:--' };
-            
-            if (t.Sunrise) {
-                const [sh, sm] = clean(t.Sunrise).split(':').map(Number);
-                const dhuha = new Date(); dhuha.setHours(sh, sm + 20);
-                newTimes.Dhuha = dhuha.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', hour12:false}).replace('.',':');
-            }
-            
-            setPrayerTimes(newTimes);
-            
-            if (dayData.date.hijri) {
-                const hStr = `${dayData.date.hijri.day} ${dayData.date.hijri.month.en} ${dayData.date.hijri.year} H`;
-                const hEl = document.getElementById('hijriDisplay');
-                if(hEl) hEl.innerText = hStr;
-            }
-        }
+    // Konfigurasi mirip Kemenag RI / Singapura (Standard Asia Tenggara)
+    const params = adhan.CalculationMethod.Singapore();
+    params.madhab = adhan.Madhab.Shafi;
+    params.fajrAngle = 20;
+    params.ishaAngle = 18;
+    
+    const prayerTimes = new adhan.PrayerTimes(coordinates, date, params);
+    
+    const timeFormat = (t) => {
+        return t.toLocaleTimeString('id-ID', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: false 
+        }).replace('.', ':');
+    };
+
+    const dhuhaTime = new Date(prayerTimes.sunrise.getTime() + (20 * 60000));
+
+    const newTimes = {
+        Subuh: timeFormat(prayerTimes.fajr),
+        Dhuha: timeFormat(dhuhaTime),
+        Dzuhur: timeFormat(prayerTimes.dhuhr),
+        Ashar: timeFormat(prayerTimes.asr),
+        Maghrib: timeFormat(prayerTimes.maghrib),
+        Isya: timeFormat(prayerTimes.isha),
+        Tahajud: '03:00' 
+    };
+
+    setPrayerTimes(newTimes);
+    
+    try {
+        const hijriDate = new Intl.DateTimeFormat('id-ID-u-ca-islamic', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        }).format(date);
+        
+        const hEl = document.getElementById('hijriDisplay');
+        if(hEl) hEl.innerText = hijriDate.replace(' AH', ' H');
+    } catch (e) {
+        console.error("Gagal format Hijriah:", e);
     }
     
     updateNextPrayer();

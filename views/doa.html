@@ -20,7 +20,7 @@
 
             <div class="grid grid-cols-2 gap-3 relative z-30">
                 <div class="relative" id="filterGrupWrapper">
-                    <button onclick="toggleFilter('grup')" id="btnGrupFilter" class="w-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold py-2.5 px-4 rounded-xl flex justify-between items-center outline-none active:scale-95 transition border border-transparent focus:border-emerald-500">
+                    <button onclick="toggleFilter(event, 'grup')" id="btnGrupFilter" class="w-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold py-2.5 px-4 rounded-xl flex justify-between items-center outline-none active:scale-95 transition border border-transparent focus:border-emerald-500">
                         <span id="labelGrup" class="truncate mr-2">Semua Kategori</span>
                         <i data-lucide="chevron-down" class="w-3 h-3 text-slate-500 shrink-0 transition-transform duration-200" id="iconGrup"></i>
                     </button>
@@ -28,7 +28,7 @@
                 </div>
 
                 <div class="relative" id="filterTagWrapper">
-                    <button onclick="toggleFilter('tag')" id="btnTagFilter" class="w-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold py-2.5 px-4 rounded-xl flex justify-between items-center outline-none active:scale-95 transition border border-transparent focus:border-emerald-500">
+                    <button onclick="toggleFilter(event, 'tag')" id="btnTagFilter" class="w-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold py-2.5 px-4 rounded-xl flex justify-between items-center outline-none active:scale-95 transition border border-transparent focus:border-emerald-500">
                         <span id="labelTag" class="truncate mr-2">Semua Tag</span>
                         <i data-lucide="chevron-down" class="w-3 h-3 text-slate-500 shrink-0 transition-transform duration-200" id="iconTag"></i>
                     </button>

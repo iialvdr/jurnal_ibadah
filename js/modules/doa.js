@@ -16,8 +16,6 @@ export function initDoa() {
     const content = document.getElementById('doaDetailContent');
     const listContainer = document.getElementById('doaListContainer');
 
-    // 1. STABILISASI BACKGROUND (FIX FLICKER LIST)
-    // Kita paksa list container masuk ke layer GPU sendiri biar gak repaint saat ketumpuk modal
     if (listContainer) {
         listContainer.style.transform = "translate3d(0,0,0)";
         listContainer.style.backfaceVisibility = "hidden";
@@ -25,21 +23,15 @@ export function initDoa() {
         listContainer.style.willChange = "transform, scroll-position";
     }
 
-    // 2. STABILISASI MODAL
     if (modal) {
         modal.classList.remove('hidden-force');
-        // Hapus efek berat
         modal.classList.remove('backdrop-blur-sm', 'transition-all');
-        // Setup Invisible state
         modal.classList.add('invisible', 'opacity-0', 'pointer-events-none');
-        // Transisi ringan (Opacity only)
         modal.classList.add('transition-opacity', 'duration-300', 'ease-out');
-        
-        // Fix Background: Solid tapi transparan (tanpa blur)
         if(modal.classList.contains('bg-slate-900/60')) {
             modal.classList.remove('bg-slate-900/60');
         }
-        modal.classList.add('bg-slate-900/90'); // Lebih pekat untuk nutup list
+        modal.classList.add('bg-slate-900/90'); 
         
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeDoaDetail();
@@ -49,7 +41,6 @@ export function initDoa() {
     if (content) {
         content.classList.remove('transition-all');
         content.classList.add('transition-transform', 'duration-300', 'ease-out');
-        // Paksa konten modal ke GPU juga
         content.style.transform = "translate3d(0,100%,0)"; 
     }
     // --- [END PATCH] ---
@@ -62,9 +53,11 @@ export function initDoa() {
         }
     });
 
+    // Listener global untuk menutup dropdown saat klik di luar
     document.addEventListener('click', (e) => {
         if (activeDropdown) {
             const wrapper = document.getElementById(activeDropdown === 'grup' ? 'filterGrupWrapper' : 'filterTagWrapper');
+            // Cek apakah klik terjadi di luar wrapper
             if (wrapper && !wrapper.contains(e.target)) {
                 closeAllDropdowns();
             }
@@ -134,22 +127,32 @@ function extractAndRenderFilters(data) {
 
 function generateDropdownItem(type, value, label, isDefault) {
     const safeVal = value.replace(/'/g, "\\'");
+    // [FIX] Tambahkan event.stopPropagation di item juga agar aman
     return `
-    <div onclick="selectFilter('${type}', '${safeVal}', '${label}')" class="px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg cursor-pointer transition-colors flex items-center justify-between group">
+    <div onclick="event.stopPropagation(); selectFilter('${type}', '${safeVal}', '${label}')" class="px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg cursor-pointer transition-colors flex items-center justify-between group">
         <span>${label}</span>
         ${isDefault ? '' : '<i data-lucide="check" class="w-3 h-3 opacity-0 group-hover:opacity-100 text-emerald-500"></i>'}
     </div>`;
 }
 
-function toggleFilter(type) {
+// [FIX UTAMA] Tambahkan parameter 'event' dan stopPropagation
+function toggleFilter(event, type) {
+    if(event) {
+        event.stopPropagation(); // Mencegah klik tembus ke document
+        event.preventDefault();  // Mencegah perilaku default (jika ada)
+    }
+
     const listId = type === 'grup' ? 'listGrup' : 'listTag';
     const iconId = type === 'grup' ? 'iconGrup' : 'iconTag';
     const listEl = document.getElementById(listId);
     const iconEl = document.getElementById(iconId);
 
     const isOpening = listEl.classList.contains('hidden');
+    
+    // Tutup semua dulu biar bersih
     closeAllDropdowns();
 
+    // Jika tadi tertutup, sekarang buka
     if (isOpening) {
         listEl.classList.remove('hidden');
         if(iconEl) iconEl.classList.add('rotate-180');
@@ -235,13 +238,11 @@ function searchDoa(query) {
     });
 }
 
-// [OPEN MODAL - GPU ACCELERATED]
 async function openDoaDetail(id, title) {
     const modal = document.getElementById('doaDetailModal');
     const content = document.getElementById('doaDetailContent');
     const modalTitle = document.getElementById('modalDoaTitle');
     
-    // Reset Konten
     document.getElementById('modalDoaArab').innerText = "Loading...";
     document.getElementById('modalDoaLatin').innerText = "...";
     document.getElementById('modalDoaIndo').innerText = "...";
@@ -254,7 +255,6 @@ async function openDoaDetail(id, title) {
         requestAnimationFrame(() => {
             modal.classList.remove('opacity-0');
             if(content) {
-                // Gunakan translate3d untuk slide up
                 content.style.transform = "translate3d(0,0,0)";
                 content.classList.remove('translate-y-full', 'sm:translate-y-20');
             }
@@ -282,7 +282,6 @@ async function openDoaDetail(id, title) {
     }
 }
 
-// [CLOSE MODAL]
 function closeDoaDetail() {
     const modal = document.getElementById('doaDetailModal');
     const content = document.getElementById('doaDetailContent');
@@ -290,7 +289,6 @@ function closeDoaDetail() {
     if(modal) {
         modal.classList.add('opacity-0');
         if(content) {
-            // Gunakan translate3d untuk slide down
             content.style.transform = "translate3d(0,100%,0)";
             content.classList.add('translate-y-full', 'sm:translate-y-20');
         }
