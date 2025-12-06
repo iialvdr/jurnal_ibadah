@@ -8,7 +8,6 @@ export function initAsmaulHusna() {
     window.closeAsmaDetail = closeAsmaDetail;
     window.changeAsma = changeAsma; 
 
-    // Setup Listener Tutup Modal (Backdrop Click)
     const detailModal = document.getElementById('asmaDetailModal');
     if (detailModal) {
         detailModal.addEventListener('click', (e) => {
@@ -16,14 +15,10 @@ export function initAsmaulHusna() {
                 closeAsmaDetail();
             }
         });
-        
-        // [PENTING] Init State Modal: Invisible (bukan hidden-force)
-        // Ini mencegah layout thrashing saat dibuka pertama kali
         detailModal.classList.remove('hidden-force');
         detailModal.classList.add('invisible', 'opacity-0', 'pointer-events-none');
     }
 
-    // Fetch data saat view dibuka
     window.addEventListener('viewChanged', (e) => {
         if(e.detail.viewId === 'asmaulHusnaView') {
             if (asmaulHusnaData.length === 0) {
@@ -36,16 +31,9 @@ export function initAsmaulHusna() {
 }
 
 async function fetchAsmaulHusna() {
-    const container = document.getElementById('asmaList');
-    if(container && container.children.length === 0) {
-         container.innerHTML = `
-            <div class="flex flex-col items-center justify-center pt-20">
-                <i data-lucide="loader-2" class="w-8 h-8 animate-spin text-emerald-500 mb-2"></i>
-                <p class="text-xs font-bold text-slate-400">Mengambil Data API...</p>
-            </div>`;
-        if(window.lucide) lucide.createIcons();
-    }
-
+    // Loader sekarang otomatis muncul karena di HTML sudah di-set (jika ada class 'hidden' di-remove dulu)
+    // Tapi karena kita pakai skeleton di HTML statis, kita tidak perlu loader JS tambahan.
+    // List container skeleton akan ketimpa saat renderList jalan.
     try {
         const response = await fetch('https://raw.githubusercontent.com/mikqi/dzikir-counter/master/www/asmaul-husna.json');
         const result = await response.json();
@@ -61,13 +49,6 @@ async function fetchAsmaulHusna() {
 
     } catch (error) {
         console.error("Gagal fetch Asmaul Husna:", error);
-        if(container) {
-            container.innerHTML = `
-                <div class="text-center pt-10 px-6">
-                    <p class="text-sm font-bold text-red-500 mb-2">Gagal terhubung ke API</p>
-                    <button onclick="initAsmaulHusna()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 rounded-lg text-xs font-bold">Coba Lagi</button>
-                </div>`;
-        }
     }
 }
 
@@ -82,25 +63,24 @@ function renderList(data) {
 
     let html = '';
     data.forEach(item => {
+        // [UNIFORM DESIGN] Style Kartu Seragam
         html += `
-        <div onclick="openAsmaDetail(${item.index})" class="group bg-white dark:bg-slate-900 rounded-[1.5rem] p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 cursor-pointer active:scale-[0.98] flex items-center justify-between relative overflow-hidden">
+        <div onclick="openAsmaDetail(${item.index})" class="group bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 cursor-pointer active:scale-[0.98] flex items-center justify-between relative overflow-hidden">
             
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-bold flex items-center justify-center text-slate-500 group-hover:bg-emerald-500 group-hover:text-white transition-colors shrink-0">
+            <div class="flex items-center gap-4 relative z-10 w-full">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800/50 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300 shadow-sm">
                     ${item.index}
                 </div>
                 
-                <div class="text-left">
-                    <h4 class="font-bold text-slate-800 dark:text-white text-base group-hover:text-emerald-600 transition-colors">${item.latin}</h4>
-                    <p class="text-[10px] font-medium text-slate-500 dark:text-slate-400 leading-tight">${item.meaning}</p>
+                <div class="flex-1 min-w-0">
+                    <h4 class="font-bold text-slate-700 dark:text-white text-base group-hover:text-emerald-600 transition-colors truncate">${item.latin}</h4>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5 leading-tight">${item.meaning}</p>
+                </div>
+
+                <div class="text-right pl-2 shrink-0">
+                    <span class="font-quran text-2xl text-slate-800 dark:text-white group-hover:text-emerald-600 transition-colors duration-300 block">${item.arabic}</span>
                 </div>
             </div>
-
-            <div class="relative z-10 pl-2">
-                <span class="font-quran text-2xl text-slate-800 dark:text-white group-hover:scale-110 transition-transform duration-300 block text-right">${item.arabic}</span>
-            </div>
-            
-            <div class="absolute z-0 -right-6 -bottom-6 w-20 h-20 bg-emerald-50 dark:bg-emerald-900/10 rounded-full blur-xl group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 transition duration-500"></div>
         </div>`;
     });
 
@@ -117,31 +97,23 @@ function searchAsma(query) {
     renderList(filtered);
 }
 
-// [OPEN MODAL - OPTIMIZED]
+// ... (OPEN/CLOSE MODAL FUNCTIONS TETAP SAMA SEPERTI YANG SUDAH DIOPTIMASI SEBELUMNYA) ...
 function openAsmaDetail(index) {
     const data = asmaulHusnaData.find(d => d.index === index);
     if(!data) return;
-
     currentDetailIndex = index;
-
     document.getElementById('detailNumber').innerText = data.index;
     document.getElementById('detailArabic').innerText = data.arabic;
     document.getElementById('detailLatin').innerText = data.latin;
     document.getElementById('detailMeaning').innerText = data.meaning;
-
     const btnPrev = document.getElementById('btnPrevAsma');
     const btnNext = document.getElementById('btnNextAsma');
     if(btnPrev) btnPrev.disabled = (index <= 1);
     if(btnNext) btnNext.disabled = (index >= 99);
-
     const modal = document.getElementById('asmaDetailModal');
     const content = document.getElementById('asmaDetailContent');
-    
     if(modal) {
-        // 1. Munculkan elemen (masih transparan)
         modal.classList.remove('invisible', 'pointer-events-none');
-        
-        // 2. Jalankan animasi di frame berikutnya agar browser siap
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 modal.classList.remove('opacity-0');
@@ -151,26 +123,14 @@ function openAsmaDetail(index) {
     }
 }
 
-function changeAsma(direction) {
-    const newIndex = currentDetailIndex + direction;
-    if (newIndex >= 1 && newIndex <= 99) {
-        openAsmaDetail(newIndex);
-    }
-}
+function changeAsma(direction) { const newIndex = currentDetailIndex + direction; if (newIndex >= 1 && newIndex <= 99) { openAsmaDetail(newIndex); } }
 
-// [CLOSE MODAL - OPTIMIZED]
 function closeAsmaDetail() {
     const modal = document.getElementById('asmaDetailModal');
     const content = document.getElementById('asmaDetailContent');
-
     if(modal) {
-        // 1. Animasi keluar
         modal.classList.add('opacity-0');
         if(content) content.classList.add('scale-90');
-        
-        // 2. Sembunyikan setelah animasi selesai (300ms)
-        setTimeout(() => {
-            modal.classList.add('invisible', 'pointer-events-none');
-        }, 300);
+        setTimeout(() => { modal.classList.add('invisible', 'pointer-events-none'); }, 300);
     }
 }

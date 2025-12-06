@@ -15,14 +15,8 @@ import { initProfile } from './modules/profile.js';
 import { initDoa } from './modules/doa.js';
 import { initAsmaulHusna } from './modules/asmaul_husna.js';
 
-// [BARU] Helper Global untuk Haptic Feedback
-window.vibrateSoft = () => {
-    if (navigator.vibrate) navigator.vibrate(10); // Getar sangat halus (klik)
-};
-
-window.vibrateSuccess = () => {
-    if (navigator.vibrate) navigator.vibrate([10, 30, 10]); // Getar sukses
-};
+window.vibrateSoft = () => { if (navigator.vibrate) navigator.vibrate(10); };
+window.vibrateSuccess = () => { if (navigator.vibrate) navigator.vibrate([10, 30, 10]); };
 
 const VIEWS = [
     'views/login.html', 'views/home.html', 'views/profile.html',
@@ -30,20 +24,32 @@ const VIEWS = [
     'views/doa.html', 'views/asmaul_husna.html'
 ];
 
+// [OPTIMASI LOADING: PARALLEL FETCH]
 async function loadAllViews() {
     const appContainer = document.getElementById('appContainer');
     if (!appContainer) return;
 
     appContainer.innerHTML = '';
     
-    for (const viewPath of VIEWS) {
+    // 1. Jalankan semua request fetch secara BERSAMAAN (Parallel)
+    const fetchPromises = VIEWS.map(async (viewPath) => {
         try {
             const response = await fetch(viewPath);
             if (!response.ok) throw new Error(`Gagal memuat ${viewPath}`);
-            const html = await response.text();
-            appContainer.insertAdjacentHTML('beforeend', html);
-        } catch (error) { console.error(error); }
-    }
+            return await response.text();
+        } catch (error) {
+            console.error(error);
+            return ''; // Return string kosong jika gagal biar gak error blocking
+        }
+    });
+
+    // 2. Tunggu sampai SEMUANYA selesai
+    const viewsContent = await Promise.all(fetchPromises);
+
+    // 3. Masukkan ke HTML sekaligus sesuai urutan
+    viewsContent.forEach(html => {
+        if(html) appContainer.insertAdjacentHTML('beforeend', html);
+    });
     
     updateVersionLabels();
     initializeApp();
@@ -100,10 +106,11 @@ function initializeApp() {
         }
 
         if(splash) {
+            // Percepat hilangnya splash screen
             setTimeout(() => {
                 splash.classList.add('opacity-0');
-                setTimeout(() => splash.classList.add('hidden-force'), 500);
-            }, 800);
+                setTimeout(() => splash.classList.add('hidden-force'), 300);
+            }, 500); 
         }
     });
 }

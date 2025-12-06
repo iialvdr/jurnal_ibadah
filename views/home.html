@@ -18,20 +18,18 @@
             </button>
             
             <div onclick="vibrateSoft(); openProfile()" class="relative group cursor-pointer ml-1">
-                <div class="absolute inset-0 bg-emerald-500/30 rounded-2xl blur-md opacity-0 group-hover:opacity-100 transition duration-500"></div>
-                <img id="homeUserPhoto" src="" referrerpolicy="no-referrer" class="relative w-11 h-11 rounded-2xl border-2 border-white dark:border-slate-800 object-cover shadow-lg hover:scale-105 transition transform">
+                <img id="homeUserPhoto" src="" referrerpolicy="no-referrer" class="relative w-11 h-11 rounded-2xl border-2 border-white dark:border-slate-800 object-cover shadow-lg group-hover:scale-105 group-hover:border-emerald-500 transition transform duration-300">
             </div>
         </div>
     </div>
 
     <div class="px-6 mb-8">
-        <div class="relative w-full group cursor-pointer" onclick="vibrateSoft(); refreshLocation()">
+        <div class="relative w-full group cursor-pointer transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98] will-change-transform" onclick="vibrateSoft(); refreshLocation()">
             
-            <div class="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-[2rem] blur opacity-30 group-hover:opacity-50 transition duration-500"></div>
-            
-            <div class="relative bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[1.8rem] p-7 text-white shadow-2xl shadow-emerald-500/30 ring-1 ring-white/20 glass-shine overflow-hidden">
+            <div class="relative bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[1.8rem] p-7 text-white shadow-2xl shadow-emerald-500/30 ring-1 ring-white/20 overflow-hidden">
                 <div class="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
                 <div class="absolute bottom-0 left-0 w-40 h-40 bg-emerald-400/20 rounded-full -ml-16 -mb-16 blur-2xl"></div>
+                
                 <div class="relative z-10">
                     <div class="flex justify-between items-start">
                         <div>
@@ -42,7 +40,7 @@
                             <h2 id="nextPrayerName" class="text-4xl font-black tracking-tighter mb-0 drop-shadow-sm">...</h2>
                             <p id="nextPrayerTime" class="text-xl font-medium font-mono opacity-90 tracking-wide mt-1">--:--</p>
                         </div>
-                        <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center shadow-lg group-hover:scale-110 transition">
+                        <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center shadow-lg group-hover:rotate-12 transition duration-300">
                              <i id="locIcon" data-lucide="map-pin" class="w-6 h-6 text-white drop-shadow-md"></i>
                         </div>
                     </div>
