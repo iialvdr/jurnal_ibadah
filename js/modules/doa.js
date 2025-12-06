@@ -11,7 +11,7 @@ export function initDoa() {
     window.toggleFilter = toggleFilter;
     window.selectFilter = selectFilter;
     
-    // --- AUTO-PATCH MODAL (Tetap Diperlukan) ---
+    // --- AUTO-PATCH MODAL ---
     const modal = document.getElementById('doaDetailModal');
     const content = document.getElementById('doaDetailContent');
 
@@ -33,22 +33,16 @@ export function initDoa() {
     }
     // --- END PATCH ---
     
-    // [UPDATE PENTING] Logika Lazy GPU untuk Search Bar
+    // Lazy GPU Logic
     window.addEventListener('viewChanged', (e) => {
         const searchWrapper = document.getElementById('doaSearchWrapper');
         
         if(e.detail.viewId === 'doaView') {
-            // 1. Data Loading
             if(allDoa.length === 0) fetchDoaList(); 
 
-            // 2. LAZY GPU: Tunggu animasi halaman (350ms) selesai, baru pasang translate3d
-            // Ini bikin transisi halaman mulus, tapi search bar tetap stabil setelahnya.
             if(searchWrapper) {
-                // Pastikan bersih dulu
                 searchWrapper.style.transform = ""; 
-                
                 setTimeout(() => {
-                    // Cek lagi apakah user masih di halaman doa (bisa saja dia pindah cepat)
                     if (document.getElementById('doaView').classList.contains('active')) {
                         searchWrapper.style.transform = "translate3d(0,0,0)";
                     }
@@ -56,8 +50,6 @@ export function initDoa() {
             }
         } else {
             closeAllDropdowns();
-            
-            // Saat keluar halaman, cabut lagi style-nya biar animasi keluar juga mulus
             if(searchWrapper) {
                 searchWrapper.style.transform = "";
             }
@@ -130,9 +122,14 @@ function selectFilter(type, value, label) {
     fetchDoaList(currentGrup, currentTag);
 }
 
+// [UPDATE PENTING] Sembunyikan list saat loading karena loader sekarang transparan
 async function fetchDoaList(grup = '', tag = '') {
     const loader = document.getElementById('doaLoading');
+    const container = document.getElementById('doaListContainer');
+    
     if(loader) loader.classList.remove('hidden');
+    if(container) container.classList.add('hidden'); // Sembunyikan list
+
     try {
         const url = new URL('https://equran.id/api/doa');
         if (grup) url.searchParams.append('grup', grup);
@@ -147,11 +144,11 @@ async function fetchDoaList(grup = '', tag = '') {
         }
         renderDoaList(data);
     } catch (error) {
-        const container = document.getElementById('doaListContainer');
         if(container) container.innerHTML = `<div class="flex flex-col items-center justify-center pt-10 text-slate-400"><i data-lucide="wifi-off" class="w-8 h-8 mb-2"></i><p class="text-sm">Gagal memuat data</p></div>`;
         if(window.lucide) lucide.createIcons();
     } finally {
         if(loader) loader.classList.add('hidden');
+        if(container) container.classList.remove('hidden'); // Munculkan list lagi
     }
 }
 

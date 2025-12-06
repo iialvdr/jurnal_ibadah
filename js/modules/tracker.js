@@ -87,12 +87,10 @@ async function updateTrackerUI() {
 
     const tEl = document.getElementById('trackerHijriDisplay');
     if(tEl) {
-        // -1 untuk koreksi Kemenag
         tEl.innerText = getHijriDate(state.trackerDate, -1);
     }
 }
 
-// [BARU] Fungsi Manual Rumus Hijriah (Copy dari home.js agar konsisten)
 function getHijriDate(date, adjustment = 0) {
     let d = new Date(date);
     d.setDate(d.getDate() + adjustment);
@@ -159,11 +157,15 @@ function getHijriDate(date, adjustment = 0) {
     return `${id} ${iMonthNames[im-1]} ${iy} H`;
 }
 
+// [UPDATE PENTING] Toggle visibility list saat loading
 export async function loadRecordsFromCloud() {
     if (!state.currentUser) return;
     const dateKey = formatDateKey(state.trackerDate); 
     const loading = document.getElementById('dataLoading');
+    const list = document.getElementById('prayerList'); 
+
     if(loading) loading.classList.remove('hidden');
+    if(list) list.classList.add('hidden'); // Sembunyikan list lama
 
     try {
         const docSnap = await getDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey));
@@ -171,6 +173,7 @@ export async function loadRecordsFromCloud() {
     } catch (e) { console.error(e); } 
     finally { 
         if(loading) loading.classList.add('hidden');
+        if(list) list.classList.remove('hidden'); // Munculkan list baru
         renderPrayers(); 
     }
 }
