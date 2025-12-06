@@ -12,7 +12,6 @@ const PRAYER_CONFIG = [
     { id: 'Tahajud', type: 'sunnah', icon: 'star', color: 'from-violet-500 to-fuchsia-600', shadow: 'shadow-fuchsia-500/30' }
 ];
 
-// [BARU] Variabel lokal untuk menyimpan jadwal khusus Tracker
 let trackerSchedule = {};
 
 export function initTracker() {
@@ -36,11 +35,8 @@ function formatDateKey(date) {
     return localDate.toISOString().split('T')[0]; 
 }
 
-// [BARU] Fungsi Hitung Jadwal Khusus Tracker
 function calculateTrackerSchedule() {
-    // Cek apakah library adhan dan lokasi tersedia
     if (typeof adhan === 'undefined' || !window.lastLat || !window.lastLng) {
-        // Fallback ke jadwal global (hari ini) jika data belum siap
         trackerSchedule = { ...state.prayerTimes }; 
         return;
     }
@@ -48,7 +44,6 @@ function calculateTrackerSchedule() {
     const coordinates = new adhan.Coordinates(window.lastLat, window.lastLng);
     const date = state.trackerDate;
     
-    // Config sama persis dengan Home
     const params = adhan.CalculationMethod.Singapore();
     params.madhab = adhan.Madhab.Shafi;
     params.fajrAngle = 20;
@@ -66,7 +61,6 @@ function calculateTrackerSchedule() {
 
     const dhuhaTime = new Date(prayerTimes.sunrise.getTime() + (20 * 60000));
 
-    // Simpan ke variabel lokal trackerSchedule
     trackerSchedule = {
         Subuh: timeFormat(prayerTimes.fajr),
         Dhuha: timeFormat(dhuhaTime),
@@ -89,26 +83,80 @@ async function updateTrackerUI() {
     const resetBtn = document.getElementById('resetDateBtn');
     if(resetBtn) isToday ? resetBtn.classList.add('hidden') : resetBtn.classList.remove('hidden');
 
-    // [BARU] Hitung ulang jadwal setiap update UI (ganti tanggal/buka view)
     calculateTrackerSchedule();
 
-    try {
-        // [FIX] Koreksi Hijriah -1 Hari (Sesuai request sebelumnya)
-        const adjustment = -1; 
-        const dateForHijri = new Date(state.trackerDate);
-        dateForHijri.setDate(state.trackerDate.getDate() + adjustment);
-
-        const hijriDate = new Intl.DateTimeFormat('id-ID-u-ca-islamic', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        }).format(dateForHijri);
-        
-        const tEl = document.getElementById('trackerHijriDisplay');
-        if(tEl) tEl.innerText = hijriDate.replace(' AH', ' H');
-    } catch (e) {
-        console.error("Gagal format Hijriah tracker:", e);
+    const tEl = document.getElementById('trackerHijriDisplay');
+    if(tEl) {
+        // -1 untuk koreksi Kemenag
+        tEl.innerText = getHijriDate(state.trackerDate, -1);
     }
+}
+
+// [BARU] Fungsi Manual Rumus Hijriah (Copy dari home.js agar konsisten)
+function getHijriDate(date, adjustment = 0) {
+    let d = new Date(date);
+    d.setDate(d.getDate() + adjustment);
+
+    let day = d.getDate();
+    let month = d.getMonth();
+    let year = d.getFullYear();
+
+    let m = month + 1;
+    let y = year;
+    if (m < 3) {
+        y -= 1;
+        m += 12;
+    }
+
+    let a = Math.floor(y / 100);
+    let b = 2 - a + Math.floor(a / 4);
+    if (y < 1583) b = 0;
+    if (y == 1582) {
+        if (m > 10)  b = -10;
+        if (m == 10) {
+            b = 0;
+            if (day > 4) b = -10;
+        }
+    }
+
+    let jd = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + day + b - 1524;
+
+    let b0 = 0;
+    if (jd > 2299160) {
+        let a = Math.floor((jd - 1867216.25) / 36524.25);
+        b0 = 1 + a - Math.floor(a / 4);
+    }
+    let bb = jd + b0 + 1524;
+    let cc = Math.floor((bb - 122.1) / 365.25);
+    let dd = Math.floor(365.25 * cc);
+    let ee = Math.floor((bb - dd) / 30.6001);
+    day = (bb - dd) - Math.floor(30.6001 * ee);
+    month = ee - 1;
+    if (ee > 13) {
+        cc += 1;
+        month = ee - 13;
+    }
+    year = cc - 4716;
+
+    let iyear = 10631.0 / 30.0;
+    let epochastro = 1948084;
+    let shift1 = 8.01 / 60.0;
+
+    let z = jd - epochastro;
+    let cyc = Math.floor(z / 10631.0);
+    z = z - 10631.0 * cyc;
+    let j = Math.floor((z - shift1) / iyear);
+    let iy = 30 * cyc + j;
+    z = z - Math.floor(j * iyear + shift1);
+    let im = Math.floor((z + 28.5001) / 29.5);
+    if (im == 13) im = 12;
+    let id = z - Math.floor(29.5001 * im - 29);
+
+    const iMonthNames = ["Muharram","Safar","Rabi'ul Awal","Rabi'ul Akhir",
+    "Jumadil Awal","Jumadil Akhir","Rajab","Sya'ban",
+    "Ramadhan","Syawal","Dzulkaidah","Dzulhijjah"];
+
+    return `${id} ${iMonthNames[im-1]} ${iy} H`;
 }
 
 export async function loadRecordsFromCloud() {
@@ -181,10 +229,7 @@ export function renderPrayers() {
 
 function createPrayerCardHTML(p) {
     const isDone = state.currentRecords[p.id] || false;
-    
-    // [PENTING] Gunakan trackerSchedule (lokal), bukan state.prayerTimes (global hari ini)
     const time = trackerSchedule[p.id] || '--:--'; 
-    
     const status = checkTimeAvailability(time);
     
     let wrapperClass, iconWrapperClass, textClass, timeClass, checkIcon;
@@ -265,11 +310,6 @@ function checkTimeAvailability(prayerTimeStr) {
     
     const currentZero = new Date(state.trackerDate.getTime());
     currentZero.setHours(0,0,0,0);
-    
-    // Logic: 
-    // - Jika hari esok/masa depan: Locked (gak boleh isi duluan)
-    // - Jika hari kemarin: Unlocked (boleh qadha/isi yang lupa)
-    // - Jika hari ini: Cek jamnya, kalau belum masuk waktu = locked
     
     if (currentZero.getTime() > todayZero.getTime()) return { locked: true }; 
     if (currentZero.getTime() < todayZero.getTime()) return { locked: false };

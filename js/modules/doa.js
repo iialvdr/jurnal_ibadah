@@ -11,23 +11,13 @@ export function initDoa() {
     window.toggleFilter = toggleFilter;
     window.selectFilter = selectFilter;
     
-    // --- AUTO-PATCH HTML (Tetap sama) ---
+    // --- AUTO-PATCH MODAL (Tetap Diperlukan) ---
     const modal = document.getElementById('doaDetailModal');
     const content = document.getElementById('doaDetailContent');
-    const listContainer = document.getElementById('doaListContainer');
-
-    if (listContainer) {
-        listContainer.style.transform = "translate3d(0,0,0)";
-        listContainer.style.backfaceVisibility = "hidden";
-        listContainer.style.perspective = "1000px";
-        listContainer.style.willChange = "transform, scroll-position";
-    }
 
     if (modal) {
-        modal.classList.remove('hidden-force');
-        modal.classList.remove('backdrop-blur-sm', 'transition-all');
-        modal.classList.add('invisible', 'opacity-0', 'pointer-events-none');
-        modal.classList.add('transition-opacity', 'duration-300', 'ease-out');
+        modal.classList.remove('hidden-force', 'backdrop-blur-sm', 'transition-all');
+        modal.classList.add('invisible', 'opacity-0', 'pointer-events-none', 'transition-opacity', 'duration-300', 'ease-out');
         if(modal.classList.contains('bg-slate-900/60')) modal.classList.remove('bg-slate-900/60');
         modal.classList.add('bg-slate-900/90'); 
         
@@ -43,43 +33,55 @@ export function initDoa() {
     }
     // --- END PATCH ---
     
+    // [UPDATE PENTING] Logika Lazy GPU untuk Search Bar
     window.addEventListener('viewChanged', (e) => {
-        if(e.detail.viewId === 'doaView' && allDoa.length === 0) {
-            fetchDoaList(); 
+        const searchWrapper = document.getElementById('doaSearchWrapper');
+        
+        if(e.detail.viewId === 'doaView') {
+            // 1. Data Loading
+            if(allDoa.length === 0) fetchDoaList(); 
+
+            // 2. LAZY GPU: Tunggu animasi halaman (350ms) selesai, baru pasang translate3d
+            // Ini bikin transisi halaman mulus, tapi search bar tetap stabil setelahnya.
+            if(searchWrapper) {
+                // Pastikan bersih dulu
+                searchWrapper.style.transform = ""; 
+                
+                setTimeout(() => {
+                    // Cek lagi apakah user masih di halaman doa (bisa saja dia pindah cepat)
+                    if (document.getElementById('doaView').classList.contains('active')) {
+                        searchWrapper.style.transform = "translate3d(0,0,0)";
+                    }
+                }, 350); 
+            }
         } else {
             closeAllDropdowns();
+            
+            // Saat keluar halaman, cabut lagi style-nya biar animasi keluar juga mulus
+            if(searchWrapper) {
+                searchWrapper.style.transform = "";
+            }
         }
     });
 
-    // [FIX 1] Listener Global yang Lebih Aman
-    // Hanya menutup jika dropdown BENAR-BENAR sudah aktif (tidak null)
     document.addEventListener('click', (e) => {
-        if (!activeDropdown) return; // Jika belum ada yang aktif, abaikan klik ini
-
-        const wrapperId = activeDropdown === 'grup' ? 'filterGrupWrapper' : 'filterTagWrapper';
-        const wrapper = document.getElementById(wrapperId);
-        
-        // Cek apakah klik terjadi DI LUAR wrapper
+        if (!activeDropdown) return; 
+        const wrapper = document.getElementById(activeDropdown === 'grup' ? 'filterGrupWrapper' : 'filterTagWrapper');
         if (wrapper && !wrapper.contains(e.target)) {
             closeAllDropdowns();
         }
     });
 }
 
-// [FIX 2] Logic Toggle dengan Timeout (Anti-Flicker)
 function toggleFilter(event, type) {
     if(event) {
         event.stopPropagation();
         event.preventDefault();
     }
 
-    // Cek apakah kita sedang mau MENUTUP dropdown yang sama
     const isClosingSameDropdown = (activeDropdown === type);
-
-    // 1. Tutup semua dulu (Reset state)
     closeAllDropdowns();
 
-    // 2. Jika tadi tujuannya bukan menutup diri sendiri, berarti kita mau BUKA
     if (!isClosingSameDropdown) {
         const listId = type === 'grup' ? 'listGrup' : 'listTag';
         const iconId = type === 'grup' ? 'iconGrup' : 'iconTag';
@@ -89,9 +91,6 @@ function toggleFilter(event, type) {
         if(listEl) listEl.classList.remove('hidden');
         if(iconEl) iconEl.classList.add('rotate-180');
         
-        // [KUNCI RAHASIA] Gunakan setTimeout agar status 'active' baru diset
-        // SETELAH event klik selesai merambat. Ini mencegah listener global 
-        // langsung menutupnya lagi di detik yang sama.
         setTimeout(() => {
             activeDropdown = type;
         }, 0);
@@ -107,7 +106,7 @@ function closeAllDropdowns() {
         if(list) list.classList.add('hidden');
         if(icon) icon.classList.remove('rotate-180');
     });
-    activeDropdown = null; // Reset state segera
+    activeDropdown = null;
 }
 
 function selectFilter(type, value, label) {
@@ -130,10 +129,6 @@ function selectFilter(type, value, label) {
     closeAllDropdowns();
     fetchDoaList(currentGrup, currentTag);
 }
-
-// ... Bagian fetchDoaList, extractAndRenderFilters, renderDoaList, dll TETAP SAMA ...
-// Timpa saja fungsi initDoa, toggleFilter, dan closeAllDropdowns dengan kode di atas.
-// Agar tidak bingung, berikut saya sertakan sisa helper functions agar filenya utuh:
 
 async function fetchDoaList(grup = '', tag = '') {
     const loader = document.getElementById('doaLoading');
