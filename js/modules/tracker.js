@@ -157,7 +157,6 @@ function getHijriDate(date, adjustment = 0) {
     return `${id} ${iMonthNames[im-1]} ${iy} H`;
 }
 
-// [UPDATE PENTING] Toggle visibility list saat loading
 export async function loadRecordsFromCloud() {
     if (!state.currentUser) return;
     const dateKey = formatDateKey(state.trackerDate); 
@@ -165,7 +164,7 @@ export async function loadRecordsFromCloud() {
     const list = document.getElementById('prayerList'); 
 
     if(loading) loading.classList.remove('hidden');
-    if(list) list.classList.add('hidden'); // Sembunyikan list lama
+    if(list) list.classList.add('hidden'); 
 
     try {
         const docSnap = await getDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey));
@@ -173,7 +172,7 @@ export async function loadRecordsFromCloud() {
     } catch (e) { console.error(e); } 
     finally { 
         if(loading) loading.classList.add('hidden');
-        if(list) list.classList.remove('hidden'); // Munculkan list baru
+        if(list) list.classList.remove('hidden'); 
         renderPrayers(); 
     }
 }
@@ -190,6 +189,7 @@ function resetToToday() {
     loadRecordsFromCloud();
 }
 
+// [FIX] Update elemen secara langsung tanpa replace outerHTML untuk mencegah kedip
 function togglePrayer(id, locked) {
     if (locked) return;
     if (navigator.vibrate) navigator.vibrate(50);
@@ -202,14 +202,44 @@ function togglePrayer(id, locked) {
         setDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey), { [id]: newState, last_updated: new Date() }, { merge: true });
     }
 
-    const pConfig = PRAYER_CONFIG.find(p => p.id === id);
-    if(pConfig) {
-        const oldEl = document.getElementById(`prayer-card-${id}`);
-        if(oldEl) {
-            const newHTML = createPrayerCardHTML(pConfig);
-            oldEl.outerHTML = newHTML;
-            const newEl = document.getElementById(`prayer-card-${id}`);
-            if(window.lucide && newEl) lucide.createIcons({ root: newEl });
+    // Ambil elemen yang sudah ada
+    const card = document.getElementById(`prayer-card-${id}`);
+    const p = PRAYER_CONFIG.find(x => x.id === id);
+    
+    if(card && p) {
+        // Tentukan style baru berdasarkan state 'newState' (isDone)
+        let wrapperClass, iconWrapperClass, textClass, timeClass, checkIcon;
+        
+        if (newState) { // Jika Checked (Selesai)
+            wrapperClass = "bg-emerald-50/50 dark:bg-slate-900 border-emerald-200 dark:border-emerald-900/50 shadow-sm";
+            iconWrapperClass = `bg-gradient-to-br ${p.color} text-white shadow-lg ${p.shadow}`;
+            textClass = "text-emerald-700 dark:text-emerald-400 font-bold decoration-emerald-500/30"; 
+            timeClass = "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300";
+            checkIcon = `<div class="w-8 h-8 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/40 flex items-center justify-center text-white animate-[zoomIn_0.2s_ease-out]"><i data-lucide="check" class="w-5 h-5 font-bold"></i></div>`;
+        } else { // Jika Unchecked
+            wrapperClass = "bg-white dark:bg-slate-900 border-white dark:border-slate-800 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-98";
+            iconWrapperClass = `bg-gradient-to-br ${p.color} text-white shadow-md ${p.shadow}`;
+            textClass = "text-slate-700 dark:text-slate-200 font-bold";
+            timeClass = "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400";
+            checkIcon = `<div class="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-slate-700 group-hover:border-emerald-300 transition-colors"></div>`;
+        }
+
+        // Apply class secara selektif ke elemen yang sesuai
+        card.className = `group relative flex items-center justify-between p-4 rounded-[1.5rem] border transition-all duration-300 ${wrapperClass}`;
+        
+        const iconWrap = card.querySelector('.w-12'); 
+        if(iconWrap) iconWrap.className = `w-12 h-12 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${iconWrapperClass}`;
+        
+        const titleNode = card.querySelector('h3');
+        if(titleNode) titleNode.className = `text-lg ${textClass}`;
+        
+        const timeNode = card.querySelector('.font-mono');
+        if(timeNode) timeNode.className = `text-[10px] font-mono px-2 py-0.5 rounded-md font-bold ${timeClass}`;
+        
+        const checkContainer = card.querySelector('.relative.z-10'); 
+        if(checkContainer) {
+            checkContainer.innerHTML = checkIcon;
+            if(window.lucide && newState) lucide.createIcons({ root: checkContainer });
         }
     }
 
