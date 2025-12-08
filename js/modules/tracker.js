@@ -189,7 +189,7 @@ function resetToToday() {
     loadRecordsFromCloud();
 }
 
-// [FIX] Update elemen secara langsung tanpa replace outerHTML untuk mencegah kedip
+// [FIXED] Logika Unified Structure: Tidak ada innerHTML replacement, hanya toggle class
 function togglePrayer(id, locked) {
     if (locked) return;
     if (navigator.vibrate) navigator.vibrate(50);
@@ -202,48 +202,60 @@ function togglePrayer(id, locked) {
         setDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey), { [id]: newState, last_updated: new Date() }, { merge: true });
     }
 
-    // Ambil elemen yang sudah ada
     const card = document.getElementById(`prayer-card-${id}`);
     const p = PRAYER_CONFIG.find(x => x.id === id);
     
     if(card && p) {
-        // Tentukan style baru berdasarkan state 'newState' (isDone)
-        let wrapperClass, iconWrapperClass, textClass, timeClass, checkIcon;
-        
-        if (newState) { // Jika Checked (Selesai)
-            wrapperClass = "bg-emerald-50/50 dark:bg-slate-900 border-emerald-200 dark:border-emerald-900/50 shadow-sm";
-            iconWrapperClass = `bg-gradient-to-br ${p.color} text-white shadow-lg ${p.shadow}`;
-            textClass = "text-emerald-700 dark:text-emerald-400 font-bold decoration-emerald-500/30"; 
-            timeClass = "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300";
-            checkIcon = `<div class="w-8 h-8 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/40 flex items-center justify-center text-white animate-[zoomIn_0.2s_ease-out]"><i data-lucide="check" class="w-5 h-5 font-bold"></i></div>`;
-        } else { // Jika Unchecked
-            wrapperClass = "bg-white dark:bg-slate-900 border-white dark:border-slate-800 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-98";
-            iconWrapperClass = `bg-gradient-to-br ${p.color} text-white shadow-md ${p.shadow}`;
-            textClass = "text-slate-700 dark:text-slate-200 font-bold";
-            timeClass = "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400";
-            checkIcon = `<div class="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-slate-700 group-hover:border-emerald-300 transition-colors"></div>`;
-        }
-
-        // Apply class secara selektif ke elemen yang sesuai
-        card.className = `group relative flex items-center justify-between p-4 rounded-[1.5rem] border transition-all duration-300 ${wrapperClass}`;
-        
-        const iconWrap = card.querySelector('.w-12'); 
-        if(iconWrap) iconWrap.className = `w-12 h-12 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${iconWrapperClass}`;
-        
-        const titleNode = card.querySelector('h3');
-        if(titleNode) titleNode.className = `text-lg ${textClass}`;
-        
-        const timeNode = card.querySelector('.font-mono');
-        if(timeNode) timeNode.className = `text-[10px] font-mono px-2 py-0.5 rounded-md font-bold ${timeClass}`;
-        
-        const checkContainer = card.querySelector('.relative.z-10'); 
-        if(checkContainer) {
-            checkContainer.innerHTML = checkIcon;
-            if(window.lucide && newState) lucide.createIcons({ root: checkContainer });
-        }
+        updateCardVisuals(card, p, newState);
     }
 
     updateProgressBar();
+}
+
+// Helper function untuk update visual tanpa menghancurkan elemen
+function updateCardVisuals(card, p, isDone) {
+    // 1. Update Card Wrapper
+    if (isDone) {
+        card.classList.remove('bg-white', 'dark:bg-slate-900', 'border-white', 'dark:border-slate-800');
+        card.classList.add('bg-emerald-50/50', 'dark:bg-slate-900', 'border-emerald-200', 'dark:border-emerald-900/50', 'shadow-sm');
+    } else {
+        card.classList.add('bg-white', 'dark:bg-slate-900', 'border-white', 'dark:border-slate-800');
+        card.classList.remove('bg-emerald-50/50', 'dark:bg-slate-900', 'border-emerald-200', 'dark:border-emerald-900/50', 'shadow-sm'); // Clean up duplicates if needed but simple remove is safer
+        // Fix for specific class removal/addition logic (Reset to default)
+        card.className = `group relative flex items-center justify-between p-4 rounded-[1.5rem] border transition-all duration-300 ${
+            isDone 
+            ? "bg-emerald-50/50 dark:bg-slate-900 border-emerald-200 dark:border-emerald-900/50 shadow-sm"
+            : "bg-white dark:bg-slate-900 border-white dark:border-slate-800 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-98"
+        }`;
+    }
+
+    // 2. Update Icon Wrapper (Gradient)
+    const iconWrap = card.querySelector('.icon-wrapper');
+    if (isDone) {
+        iconWrap.className = `icon-wrapper w-12 h-12 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 bg-gradient-to-br ${p.color} text-white shadow-lg ${p.shadow}`;
+    } else {
+        iconWrap.className = `icon-wrapper w-12 h-12 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 bg-gradient-to-br ${p.color} text-white shadow-md ${p.shadow}`;
+    }
+
+    // 3. Update Title Text
+    const title = card.querySelector('.prayer-title');
+    if (isDone) {
+        title.className = "prayer-title text-lg text-emerald-700 dark:text-emerald-400 font-bold decoration-emerald-500/30";
+    } else {
+        title.className = "prayer-title text-lg text-slate-700 dark:text-slate-200 font-bold";
+    }
+
+    // 4. Update Checkbox Container & Icon
+    const checkContainer = card.querySelector('.check-container');
+    const checkIcon = card.querySelector('.check-icon');
+
+    if (isDone) {
+        checkContainer.className = "check-container relative z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 bg-emerald-500 shadow-lg shadow-emerald-500/40 border-transparent";
+        checkIcon.className = "check-icon w-5 h-5 text-white font-bold transition-all duration-300 scale-100 opacity-100";
+    } else {
+        checkContainer.className = "check-container relative z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 bg-transparent border-2 border-slate-200 dark:border-slate-700 group-hover:border-emerald-300";
+        checkIcon.className = "check-icon w-5 h-5 text-white font-bold transition-all duration-300 scale-0 opacity-0";
+    }
 }
 
 export function renderPrayers() {
@@ -265,43 +277,73 @@ function createPrayerCardHTML(p) {
     const time = trackerSchedule[p.id] || '--:--'; 
     const status = checkTimeAvailability(time);
     
-    let wrapperClass, iconWrapperClass, textClass, timeClass, checkIcon;
-
+    // LOCKED STATE (Tampilan Abu-abu)
     if (status.locked) {
-        wrapperClass = "bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 opacity-60 grayscale cursor-not-allowed";
-        iconWrapperClass = "bg-slate-200 dark:bg-slate-800 text-slate-400";
-        textClass = "text-slate-400 dark:text-slate-600";
-        timeClass = "bg-slate-200 dark:bg-slate-800 text-slate-400";
-        checkIcon = `<div class="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center"><i data-lucide="lock" class="w-3 h-3 text-slate-400"></i></div>`;
-    } else if (isDone) {
-        wrapperClass = "bg-emerald-50/50 dark:bg-slate-900 border-emerald-200 dark:border-emerald-900/50 shadow-sm";
-        iconWrapperClass = `bg-gradient-to-br ${p.color} text-white shadow-lg ${p.shadow}`;
-        textClass = "text-emerald-700 dark:text-emerald-400 font-bold decoration-emerald-500/30"; 
-        timeClass = "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300";
-        checkIcon = `<div class="w-8 h-8 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/40 flex items-center justify-center text-white animate-[zoomIn_0.2s_ease-out]"><i data-lucide="check" class="w-5 h-5 font-bold"></i></div>`;
-    } else {
-        wrapperClass = "bg-white dark:bg-slate-900 border-white dark:border-slate-800 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-98";
-        iconWrapperClass = `bg-gradient-to-br ${p.color} text-white shadow-md ${p.shadow}`;
-        textClass = "text-slate-700 dark:text-slate-200 font-bold";
-        timeClass = "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400";
-        checkIcon = `<div class="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-slate-700 group-hover:border-emerald-300 transition-colors"></div>`;
+        return `
+        <div id="prayer-card-${p.id}" class="group relative flex items-center justify-between p-4 rounded-[1.5rem] border transition-all duration-300 bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 opacity-60 grayscale cursor-not-allowed" onclick="togglePrayer('${p.id}', true)">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center bg-slate-200 dark:bg-slate-800 text-slate-400">
+                    <i data-lucide="${p.icon}" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg text-slate-400 dark:text-slate-600 font-bold">${p.id}</h3>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded-md font-bold bg-slate-200 dark:bg-slate-800 text-slate-400">${time}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="relative z-10 w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center">
+                <i data-lucide="lock" class="w-3 h-3 text-slate-400"></i>
+            </div>
+        </div>`;
     }
 
+    // ACTIVE STATE (Bisa diklik) - Menggunakan Unified Structure
+    // Kita render struktur yang SAMA untuk kondisi Checked/Unchecked, hanya class yang beda.
+    // Ikon check (<i data-lucide="check">) SELALU ADA, tapi disembunyikan pakai scale-0 opacity-0 kalau belum done.
+    
+    const wrapperClass = isDone 
+        ? "bg-emerald-50/50 dark:bg-slate-900 border-emerald-200 dark:border-emerald-900/50 shadow-sm"
+        : "bg-white dark:bg-slate-900 border-white dark:border-slate-800 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-98";
+        
+    const iconWrapClass = isDone 
+        ? `bg-gradient-to-br ${p.color} text-white shadow-lg ${p.shadow}`
+        : `bg-gradient-to-br ${p.color} text-white shadow-md ${p.shadow}`;
+        
+    const textClass = isDone
+        ? "text-emerald-700 dark:text-emerald-400 font-bold decoration-emerald-500/30"
+        : "text-slate-700 dark:text-slate-200 font-bold";
+        
+    const timeClass = isDone
+        ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300"
+        : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400";
+        
+    const checkContainerClass = isDone
+        ? "bg-emerald-500 shadow-lg shadow-emerald-500/40 border-transparent"
+        : "bg-transparent border-2 border-slate-200 dark:border-slate-700 group-hover:border-emerald-300";
+
+    const checkIconClass = isDone
+        ? "scale-100 opacity-100"
+        : "scale-0 opacity-0";
+
     return `
-    <div id="prayer-card-${p.id}" onclick="togglePrayer('${p.id}', ${status.locked})" class="group relative flex items-center justify-between p-4 rounded-[1.5rem] border transition-all duration-300 ${wrapperClass}">
+    <div id="prayer-card-${p.id}" onclick="togglePrayer('${p.id}', false)" class="group relative flex items-center justify-between p-4 rounded-[1.5rem] border transition-all duration-300 ${wrapperClass}">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${iconWrapperClass}">
+            <div class="icon-wrapper w-12 h-12 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${iconWrapClass}">
                 <i data-lucide="${p.icon}" class="w-6 h-6"></i>
             </div>
             <div>
-                <h3 class="text-lg ${textClass}">${p.id}</h3>
+                <h3 class="prayer-title text-lg transition-colors duration-300 ${textClass}">${p.id}</h3>
                 <div class="flex items-center gap-2 mt-1">
-                    <span class="text-[10px] font-mono px-2 py-0.5 rounded-md font-bold ${timeClass}">${time}</span>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded-md font-bold transition-colors duration-300 ${timeClass}">${time}</span>
                     ${p.type === 'sunnah' ? '<span class="text-[10px] text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-100 font-medium">Sunnah</span>' : ''}
                 </div>
             </div>
         </div>
-        <div class="relative z-10">${checkIcon}</div>
+        
+        <div class="check-container relative z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${checkContainerClass}">
+            <i data-lucide="check" class="check-icon w-5 h-5 text-white font-bold transition-all duration-300 ${checkIconClass}"></i>
+        </div>
     </div>`;
 }
 
