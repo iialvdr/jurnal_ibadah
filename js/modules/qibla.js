@@ -2,8 +2,9 @@ const KAABA_COORDS = { lat: 21.422487, lng: 39.826206 };
 
 let currentDiscRotation = 0;
 let previousHeading = 0; 
-let calculatedQiblaAngle = 0; // Simpan sudut kiblat
-let isAligned = false; // Status apakah sudah pas atau belum
+let calculatedQiblaAngle = 0; 
+let isAligned = false; 
+let isFirstReading = true; // [BARU] Flag untuk deteksi bacaan pertama
 
 export function initQibla() {
     window.requestCompassPermission = requestCompassPermission;
@@ -27,7 +28,7 @@ function calculateQibla(lat, lng) {
     const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lng2 - lng1);
     let qiblaAngle = (Math.atan2(y, x) * 180 / PI + 360) % 360; 
     
-    calculatedQiblaAngle = qiblaAngle; // Simpan ke variabel global modul
+    calculatedQiblaAngle = qiblaAngle; 
     
     document.getElementById('qiblaDegree').innerText = `${Math.round(qiblaAngle)}°`;
     const pointer = document.getElementById('qiblaPointer');
@@ -62,6 +63,7 @@ async function requestCompassPermission() {
 function startCompass() {
     previousHeading = 0; 
     isAligned = false;
+    isFirstReading = true; // [BARU] Reset flag saat mulai
     if ('ondeviceorientationabsolute' in window) window.addEventListener('deviceorientationabsolute', handleOrientation, true);
     else if (window.DeviceOrientationEvent) window.addEventListener('deviceorientation', handleOrientation, true);
 }
@@ -77,29 +79,35 @@ function handleOrientation(event) {
     if (heading != null) {
         document.getElementById('compassHeading').innerText = `${Math.round(heading)}°`;
         
-        // Logika Rotasi Piringan (Smooth)
-        let delta = heading - previousHeading;
-        if (delta > 180) delta -= 360;
-        if (delta < -180) delta += 360;
-        currentDiscRotation -= delta;
-        previousHeading = heading;
+        // [BARU] Logika sinkronisasi awal
+        if (isFirstReading) {
+            // Langsung set rotasi ke arah heading saat ini agar tidak loncat
+            currentDiscRotation = -heading;
+            previousHeading = heading;
+            isFirstReading = false;
+        } else {
+            // Logika smooth rotation (Delta)
+            let delta = heading - previousHeading;
+            if (delta > 180) delta -= 360;
+            if (delta < -180) delta += 360;
+            currentDiscRotation -= delta;
+            previousHeading = heading;
+        }
         
         const disc = document.getElementById('compassDisc');
         if(disc) {
             disc.style.transform = `rotate(${currentDiscRotation}deg)`;
         }
 
-        // --- FITUR BARU: Cek Kesejajaran Kiblat ---
         checkQiblaAlignment(heading);
     }
 }
 
 function checkQiblaAlignment(currentHeading) {
-    // Hitung selisih terkecil antara arah HP dan Kiblat
     let diff = Math.abs(currentHeading - calculatedQiblaAngle);
-    if (diff > 180) diff = 360 - diff; // Handle wrap-around (misal 359 vs 1)
+    if (diff > 180) diff = 360 - diff; 
 
-    const TOLERANCE = 3; // Toleransi 3 derajat agar tidak terlalu susah
+    const TOLERANCE = 3; 
 
     const disc = document.getElementById('compassDisc');
     const indicator = document.getElementById('qiblaSuccessIndicator');
@@ -109,13 +117,9 @@ function checkQiblaAlignment(currentHeading) {
 
     if (diff <= TOLERANCE) {
         if (!isAligned) {
-            // [ENTER STATE] Baru saja pas
             isAligned = true;
-            
-            // 1. Haptic Feedback (Getar mantap: pendek, jeda, pendek)
             if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
 
-            // 2. Visual Effects ON
             if(disc) disc.classList.add('qibla-found-ring');
             if(indicator) {
                 indicator.classList.remove('opacity-0', 'translate-y-4');
@@ -123,14 +127,12 @@ function checkQiblaAlignment(currentHeading) {
             }
             if(glow) glow.classList.remove('opacity-0');
             if(iconContainer) iconContainer.classList.add('qibla-found-icon');
-            if(pointerLine) pointerLine.classList.add('from-emerald-400', 'to-emerald-600'); // Warna lebih terang
+            if(pointerLine) pointerLine.classList.add('from-emerald-400', 'to-emerald-600'); 
         }
     } else {
         if (isAligned) {
-            // [EXIT STATE] Sudah tidak pas lagi
             isAligned = false;
             
-            // Visual Effects OFF
             if(disc) disc.classList.remove('qibla-found-ring');
             if(indicator) {
                 indicator.classList.add('opacity-0', 'translate-y-4');
