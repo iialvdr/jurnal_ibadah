@@ -21,7 +21,8 @@ export function setupRouter() {
             'quran': 'quranView',
             'profile': 'profileView',
             'doa': 'doaView',
-            'asmaul-husna': 'asmaulHusnaView'
+            'asmaul-husna': 'asmaulHusnaView',
+            'fasting': 'fastingView'
         };
 
         const targetViewId = routes[hash] || 'homeView';
@@ -34,10 +35,9 @@ export function setupRouter() {
     const navigateTo = (hash) => {
         isExplicitNavigation = true;
         window.location.hash = hash;
-        setTimeout(() => { isExplicitNavigation = false; }, 300);
+        setTimeout(() => { isExplicitNavigation = false; }, 100);
     };
 
-    // UPDATE FUNGSI GLOBAL
     window.goHome = () => navigateTo('home');
     window.openTracker = () => navigateTo('tracker');
     window.openTasbih = () => navigateTo('tasbih');
@@ -46,6 +46,7 @@ export function setupRouter() {
     window.openProfile = () => navigateTo('profile');
     window.openDoa = () => navigateTo('doa');
     window.openAsma = () => navigateTo('asmaul-husna'); 
+    window.openFasting = () => navigateTo('fasting');
 
     window.goBack = () => {
         if (window.history.length > 1) {
@@ -62,30 +63,23 @@ export function setupRouter() {
 }
 
 export function switchView(targetId) {
-    const allViews = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView'];
+    const allViews = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView', 'fastingView'];
     const targetEl = document.getElementById(targetId);
     
     if (!targetEl) return;
 
-    // Logika pushState 'home_trap' SUDAH DIHAPUS agar tidak menahan tombol back
-
+    // [LOGIKA INSTAN] Langsung swap class tanpa delay animasi
     allViews.forEach(id => {
         const el = document.getElementById(id);
-        if (el && el !== targetEl) { 
-            el.classList.remove('active');
-            setTimeout(() => {
-                if (!el.classList.contains('active')) {
-                    el.classList.add('hidden-force');
-                }
-            }, 300); 
-        }
-    });
+        if (!el) return;
 
-    targetEl.classList.remove('hidden-force');
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            targetEl.classList.add('active');
-        });
+        if (id === targetId) {
+            el.classList.remove('hidden-force');
+            el.classList.add('active');
+        } else {
+            el.classList.remove('active');
+            el.classList.add('hidden-force');
+        }
     });
 
     if (window.lucide && targetEl.querySelectorAll('i[data-lucide]').length > 0) {
@@ -105,7 +99,8 @@ function updateSidebarUI(activeViewId) {
         'quranView': 'nav-quran',
         'profileView': 'nav-profile',
         'doaView': 'nav-doa',
-        'asmaulHusnaView': 'nav-asma'
+        'asmaulHusnaView': 'nav-asma',
+        'fastingView': 'nav-fasting'
     };
 
     const activeBtnId = map[activeViewId];

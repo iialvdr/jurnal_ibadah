@@ -67,10 +67,9 @@ body, div, button, span, h1, h2, h3, p, i, svg {
     font-weight: 600;
 }
 
-/* --- SYSTEM TAMPILAN ANIMASI (POP STYLE) --- */
+/* --- SYSTEM TAMPILAN (NO ANIMATION / INSTANT) --- */
 
-/* State Awal: Sedikit lebih kecil (Zoom Out) dan Transparan */
-#homeView, #trackerView, #tasbihView, #qiblaView, #quranView, #profileView, #doaView, #asmaulHusnaView {
+#homeView, #trackerView, #tasbihView, #qiblaView, #quranView, #profileView, #doaView, #asmaulHusnaView, #fastingView {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -78,26 +77,15 @@ body, div, button, span, h1, h2, h3, p, i, svg {
     overflow-x: hidden;
     overflow-y: auto;
     
-    opacity: 0;
-    transform: scale(0.92); /* Efek Pop Out: Mulai dari ukuran 92% */
+    /* Layout Dasar */
+    background-color: transparent; 
     z-index: 0;
     
-    /* Animasi: Menggunakan cubic-bezier agar ada efek "membal" sedikit (bouncy) */
-    transition: 
-        opacity 0.3s ease-in-out,
-        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    
-    will-change: opacity, transform;
-    pointer-events: none;
-    
-    /* [PENTING] Pastikan background tidak transparan agar tidak bertumpuk jelek saat transisi */
-    background-color: transparent; 
+    /* [HAPUS] Semua properti transform/transition/opacity dihapus */
 }
 
-/* State Aktif: Ukuran Normal (Scale 1) dan Jelas */
+/* State Aktif */
 .active {
-    opacity: 1 !important;
-    transform: scale(1) !important;
     z-index: 10 !important;
     pointer-events: auto !important;
 }
@@ -125,22 +113,13 @@ body, div, button, span, h1, h2, h3, p, i, svg {
 }
 
 @keyframes blob {
-    0% {
-        transform: translate(0px, 0px) scale(1);
-    }
-    33% {
-        transform: translate(30px, -50px) scale(1.1);
-    }
-    66% {
-        transform: translate(-20px, 20px) scale(0.9);
-    }
-    100% {
-        transform: translate(0px, 0px) scale(1);
-    }
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
 }
 
-/* Tambahan: Glass Gloss Reflection (Kilau Kaca) */
-/* Gunakan class 'glass-shine' di div kartu jika ingin efek lebih kuat */
+/* Glass Shine Effect */
 .glass-shine {
     position: relative;
     overflow: hidden;
@@ -177,18 +156,16 @@ body, div, button, span, h1, h2, h3, p, i, svg {
     100% { transform: translateX(100%) rotate(45deg); }
 }
 
-/* --- UTILITY: HIDE SCROLLBAR (New) --- */
-/* Untuk Chrome, Safari, Opera */
+/* --- UTILITY: HIDE SCROLLBAR --- */
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
-/* Untuk IE, Edge, Firefox */
 .no-scrollbar {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
 }
 
-/* Skeleton Animation Helper (untuk memastikan animasi pulse halus) */
+/* Skeleton Animation Helper */
 .skeleton {
     background: #e2e8f0;
     border-radius: 0.5rem;

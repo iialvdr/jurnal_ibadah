@@ -5,6 +5,7 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/f
 import { switchView } from '../router.js'; 
 
 let isDarkMode = false;
+let countdownInterval = null;
 
 export function initHome() {
     window.refreshLocation = refreshLocation;
@@ -313,10 +314,8 @@ async function fetchJadwal(lat, lng) {
 
     setPrayerTimes(newTimes);
     
-    // [UPDATE PENTING] Pakai fungsi manual agar tidak muncul "Sebelum Masehi"
     const hEl = document.getElementById('hijriDisplay');
     if(hEl) {
-        // -1 untuk koreksi Kemenag
         hEl.innerText = getHijriDate(date, -1);
     }
     
@@ -325,8 +324,8 @@ async function fetchJadwal(lat, lng) {
     window.dispatchEvent(new Event('prayerTimesUpdated'));
 }
 
-// [BARU] Fungsi Manual Rumus Hijriah (Algoritma Kuwaiti)
-function getHijriDate(date, adjustment = 0) {
+// [FIXED] Fungsi Inti Hitung Hijriah (Algoritma Kuwaiti)
+export function calculateHijri(date, adjustment = 0) {
     let d = new Date(date);
     d.setDate(d.getDate() + adjustment);
 
@@ -385,11 +384,17 @@ function getHijriDate(date, adjustment = 0) {
     if (im == 13) im = 12;
     let id = z - Math.floor(29.5001 * im - 29);
 
+    return { day: id, month: im - 1, year: iy };
+}
+
+function getHijriDate(date, adjustment = 0) {
+    const h = calculateHijri(date, adjustment);
+    
     const iMonthNames = ["Muharram","Safar","Rabi'ul Awal","Rabi'ul Akhir",
     "Jumadil Awal","Jumadil Akhir","Rajab","Sya'ban",
     "Ramadhan","Syawal","Dzulkaidah","Dzulhijjah"];
 
-    return `${id} ${iMonthNames[im-1]} ${iy} H`;
+    return `${h.day} ${iMonthNames[h.month]} ${h.year} H`;
 }
 
 function updateNextPrayer() {
@@ -402,18 +407,68 @@ function updateNextPrayer() {
     let nextP = null;
     let minDiff = 9999;
     
-    const timesToCheck = [ { name: 'Subuh', time: state.prayerTimes.Subuh }, { name: 'Dzuhur', time: state.prayerTimes.Dzuhur }, { name: 'Ashar', time: state.prayerTimes.Ashar }, { name: 'Maghrib', time: state.prayerTimes.Maghrib }, { name: 'Isya', time: state.prayerTimes.Isya } ];
+    const timesToCheck = [ 
+        { name: 'Subuh', time: state.prayerTimes.Subuh }, 
+        { name: 'Dzuhur', time: state.prayerTimes.Dzuhur }, 
+        { name: 'Ashar', time: state.prayerTimes.Ashar }, 
+        { name: 'Maghrib', time: state.prayerTimes.Maghrib }, 
+        { name: 'Isya', time: state.prayerTimes.Isya } 
+    ];
     
     for(let p of timesToCheck) {
         if(!p.time || p.time === '--:--') continue;
-        const parts = p.time.split(':');
-        const [h, m] = parts.map(Number);
+        const [h, m] = p.time.split(':').map(Number);
         const pTime = h * 60 + m;
         if (pTime > curTime && (pTime - curTime) < minDiff) { minDiff = pTime - curTime; nextP = p; }
     }
     
-    if(nextP) { nameEl.innerText = nextP.name; timeEl.innerText = nextP.time; } 
-    else { nameEl.innerText = "Subuh"; timeEl.innerText = state.prayerTimes.Subuh || "Besok"; }
+    if(!nextP) {
+        nextP = { name: 'Subuh', time: state.prayerTimes.Subuh || "Besok" };
+    }
+    
+    nameEl.innerText = nextP.name; 
+    timeEl.innerText = nextP.time;
+
+    // Start Countdown
+    startCountdown(nextP.time);
+}
+
+function startCountdown(targetTimeStr) {
+    if (countdownInterval) clearInterval(countdownInterval);
+    
+    const countEl = document.getElementById('countdownTimer');
+    if (!countEl || !targetTimeStr || targetTimeStr === '--:--') return;
+
+    const [h, m] = targetTimeStr.split(':').map(Number);
+    
+    function tick() {
+        const now = new Date();
+        let target = new Date();
+        target.setHours(h, m, 0, 0);
+
+        if (target < now) {
+            target.setDate(target.getDate() + 1);
+        }
+
+        const diff = target - now;
+
+        if (diff <= 0) {
+            countEl.innerText = "Waktunya Sholat!";
+            setTimeout(() => {
+                fetchJadwal(window.lastLat, window.lastLng);
+            }, 2000); 
+            return;
+        }
+
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        countEl.innerText = `- ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    tick();
+    countdownInterval = setInterval(tick, 1000);
 }
 
 function initTheme() {

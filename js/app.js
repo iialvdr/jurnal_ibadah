@@ -14,6 +14,7 @@ import { initQuran } from './modules/quran.js';
 import { initProfile } from './modules/profile.js';
 import { initDoa } from './modules/doa.js';
 import { initAsmaulHusna } from './modules/asmaul_husna.js';
+import { initFasting } from './modules/fasting.js';
 
 window.vibrateSoft = () => { if (navigator.vibrate) navigator.vibrate(10); };
 window.vibrateSuccess = () => { if (navigator.vibrate) navigator.vibrate([10, 30, 10]); };
@@ -21,7 +22,8 @@ window.vibrateSuccess = () => { if (navigator.vibrate) navigator.vibrate([10, 30
 const VIEWS = [
     'views/login.html', 'views/home.html', 'views/profile.html',
     'views/tasbih.html', 'views/qibla.html', 'views/tracker.html', 'views/quran.html',
-    'views/doa.html', 'views/asmaul_husna.html'
+    'views/doa.html', 'views/asmaul_husna.html',
+    'views/fasting.html'
 ];
 
 // [OPTIMASI LOADING: PARALLEL FETCH]
@@ -69,6 +71,7 @@ function initializeApp() {
     initAuth();
     initHome();
     initTracker();
+    initFasting();
     initTasbih();
     initQibla();
     initQuran();
