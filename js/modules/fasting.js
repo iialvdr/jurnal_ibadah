@@ -1,8 +1,8 @@
 import { state } from '../state.js';
 import { calculateHijri } from './home.js';
-import { switchView } from '../router.js'; 
+import { switchView } from '../router.js';
 
-const HIJRI_MONTHS = ["Muharram","Safar","Rabi'ul Awal","Rabi'ul Akhir", "Jumadil Awal","Jumadil Akhir","Rajab","Sya'ban", "Ramadhan","Syawal","Dzulkaidah","Dzulhijjah"];
+const HIJRI_MONTHS = ["Muharram", "Safar", "Rabi'ul Awal", "Rabi'ul Akhir", "Jumadil Awal", "Jumadil Akhir", "Rajab", "Sya'ban", "Ramadhan", "Syawal", "Dzulkaidah", "Dzulhijjah"];
 
 const NIAT_DATA = {
     ramadhan: { title: "Niat Puasa Ramadhan", arab: "نَوَيْتُ صَوْمَ غَدٍ عَنْ أَدَاءِ فَرْضِ شَهْرِ رَمَضَانَ هَذِهِ السَّنَةِ لِلّٰهِ تَعَالَى", latin: "Nawaitu shauma ghadin 'an adā'i fardhi syahri Ramadhāna hādzihis sanati lillāhi ta'ālā.", arti: "Aku berniat puasa esok hari untuk menunaikan fardhu di bulan Ramadhan tahun ini, karena Allah Ta'ala." },
@@ -20,24 +20,37 @@ const NIAT_DATA = {
 export function initFasting() {
     window.openNiatModal = openNiatModal;
     window.closeNiatModal = closeNiatModal;
-    
-    // Event Listener: Klik area kosong = Tutup Modal
+
+    // --- [AUTO-PATCH MODAL] ---
     const modal = document.getElementById('niatModal');
+    const content = document.getElementById('niatModalContent');
+
     if (modal) {
+        modal.classList.remove('hidden-force', 'backdrop-blur-sm', 'transition-all');
+        modal.classList.add('invisible', 'opacity-0', 'pointer-events-none', 'transition-opacity', 'duration-300', 'ease-out');
+        if (modal.classList.contains('bg-slate-900/60')) modal.classList.remove('bg-slate-900/60');
+        modal.classList.add('bg-slate-900/90');
+
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeNiatModal();
         });
     }
 
+    if (content) {
+        content.classList.remove('transition-all', 'transform');
+        content.classList.add('transition-transform', 'duration-300', 'ease-out');
+        content.style.willChange = "transform";
+    }
+    // --- [END PATCH] ---
+
     window.addEventListener('viewChanged', (e) => {
-        if(e.detail.viewId === 'homeView') {
+        if (e.detail.viewId === 'homeView') {
             const { date, isTomorrow } = getRelevantDateInfo();
             const status = getFastingStatus(date);
             const container = document.getElementById('homeFastingContainer');
-            // Render kartu dengan label dinamis (BESOK/HARI INI)
             renderCard(container, status, true, isTomorrow ? "INFO BESOK" : null);
         }
-        else if(e.detail.viewId === 'fastingView') {
+        else if (e.detail.viewId === 'fastingView') {
             renderFastingPage();
         }
     });
@@ -53,7 +66,7 @@ function getRelevantDateInfo() {
         const [h, m] = maghribStr.split(':').map(Number);
         const maghribDate = new Date(now);
         maghribDate.setHours(h, m, 0, 0);
-        
+
         if (now > maghribDate) {
             targetDate.setDate(now.getDate() + 1);
             isTomorrow = true;
@@ -65,8 +78,8 @@ function getRelevantDateInfo() {
 function getFastingStatus(dateInput) {
     const today = new Date(dateInput);
     const hijri = calculateHijri(today, -1);
-    const dayOfWeek = today.getDay(); 
-    
+    const dayOfWeek = today.getDay();
+
     let status = { type: 'none', text: '', icon: '', color: '', niat: [], hijriStr: `${hijri.day} ${HIJRI_MONTHS[hijri.month]}` };
 
     if (hijri.month === 9 && hijri.day === 1) { status.type = 'haram'; status.text = "Idul Fitri - Diharamkan"; status.icon = "party-popper"; status.color = "rose"; }
@@ -95,39 +108,44 @@ function renderFastingPage() {
     const todayContainer = document.getElementById('fastingPageTodayContainer');
     const { date, isTomorrow } = getRelevantDateInfo();
     const status = getFastingStatus(date);
-    
-    if(todayContainer && todayContainer.previousElementSibling) {
+
+    if (todayContainer && todayContainer.previousElementSibling) {
         todayContainer.previousElementSibling.innerText = isTomorrow ? "Besok (Setelah Maghrib)" : "Hari Ini";
     }
 
     renderCard(todayContainer, status, false, null);
 
     const listContainer = document.getElementById('upcomingFastingList');
-    if(!listContainer) return;
-    
-    let html = '';
-    let foundUpcoming = false;
-    const startOffset = isTomorrow ? 2 : 1; 
-    const baseDate = new Date(); 
+    if (!listContainer) return;
 
-    for(let i=startOffset; i<=startOffset+29; i++) {
+    // [OPTIMASI] Gunakan DocumentFragment agar 1x Render
+    const fragment = document.createDocumentFragment();
+    let foundUpcoming = false;
+    const startOffset = isTomorrow ? 2 : 1;
+    const baseDate = new Date();
+
+    for (let i = startOffset; i <= startOffset + 29; i++) {
         const nextDate = new Date();
         nextDate.setDate(baseDate.getDate() + i);
         const st = getFastingStatus(nextDate);
 
-        if(st.type !== 'none') {
+        if (st.type !== 'none') {
             foundUpcoming = true;
             const dateStr = nextDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
             let badgeColor = st.type === 'haram' ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' : st.type === 'wajib' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400';
 
-            const onClick = (st.niat.length > 0) ? `onclick="openNiatModal('${st.niat.join(',')}')"` : '';
-            const pointer = (st.niat.length > 0) ? 'cursor-pointer hover:border-emerald-400 dark:hover:border-emerald-600' : '';
+            const div = document.createElement('div');
+            if (st.niat.length > 0) {
+                div.setAttribute('onclick', `openNiatModal('${st.niat.join(',')}')`);
+                div.className = `flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm transition active:scale-[0.98] cursor-pointer hover:border-emerald-400 dark:hover:border-emerald-600 group`;
+            } else {
+                div.className = `flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm transition active:scale-[0.98] group`;
+            }
 
-            html += `
-            <div ${onClick} class="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm transition active:scale-[0.98] ${pointer} group">
+            div.innerHTML = `
                 <div class="flex items-center gap-4">
                     <div class="flex flex-col items-center justify-center w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shrink-0 group-hover:bg-white dark:group-hover:bg-slate-700 transition">
-                        <span class="text-[10px] uppercase text-slate-400 font-bold">${nextDate.toLocaleDateString('id-ID', {month:'short'})}</span>
+                        <span class="text-[10px] uppercase text-slate-400 font-bold">${nextDate.toLocaleDateString('id-ID', { month: 'short' })}</span>
                         <span class="text-xl font-black text-slate-800 dark:text-white">${nextDate.getDate()}</span>
                     </div>
                     <div>
@@ -140,30 +158,27 @@ function renderFastingPage() {
                     </div>
                 </div>
                 ${st.niat.length > 0 ? '<div class="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-emerald-600 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition"><i data-lucide="book-open" class="w-4 h-4"></i></div>' : ''}
-            </div>`;
+            `;
+            fragment.appendChild(div);
         }
     }
 
-    if(!foundUpcoming) html = `<div class="text-center py-10 text-slate-400 text-sm italic">Tidak ada jadwal puasa khusus dalam 30 hari ke depan.</div>`;
-    listContainer.innerHTML = html;
-    if(window.lucide) lucide.createIcons();
+    listContainer.innerHTML = '';
+    if (!foundUpcoming) {
+        listContainer.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm italic">Tidak ada jadwal puasa khusus dalam 30 hari ke depan.</div>`;
+    } else {
+        listContainer.appendChild(fragment);
+    }
+    if (window.lucide) lucide.createIcons();
 }
 
 function renderCard(container, status, isHome = false, labelOverride = null) {
     if (!container) return;
-    
-    // [PERBAIKAN] Selalu tampilkan container, jangan di-hide
     container.classList.remove('hidden');
-    
     let bgClass, borderClass, textClass, iconBgClass;
-    
     if (status.type === 'none') {
-        bgClass = "bg-white dark:bg-slate-900"; 
-        borderClass = "border-slate-200 dark:border-slate-800"; 
-        textClass = "text-slate-500 dark:text-slate-400"; 
-        iconBgClass = "bg-slate-100 dark:bg-slate-800";
-        status.icon = "coffee"; 
-        status.text = "Tidak ada jadwal puasa khusus.";
+        bgClass = "bg-white dark:bg-slate-900"; borderClass = "border-slate-200 dark:border-slate-800"; textClass = "text-slate-500 dark:text-slate-400"; iconBgClass = "bg-slate-100 dark:bg-slate-800";
+        status.icon = "coffee"; status.text = "Tidak ada jadwal puasa khusus.";
     } else if (status.type === 'haram') {
         bgClass = "bg-rose-50 dark:bg-rose-900/10"; borderClass = "border-rose-100 dark:border-rose-900/30"; textClass = "text-rose-600 dark:text-rose-400"; iconBgClass = "bg-rose-100 dark:bg-rose-900/20";
     } else if (status.type === 'wajib') {
@@ -171,18 +186,15 @@ function renderCard(container, status, isHome = false, labelOverride = null) {
     } else {
         bgClass = "bg-emerald-50 dark:bg-emerald-900/10"; borderClass = "border-emerald-100 dark:border-emerald-900/30"; textClass = "text-emerald-600 dark:text-emerald-400"; iconBgClass = "bg-emerald-100 dark:bg-emerald-900/20";
     }
-
     const actionClick = isHome ? "openFasting()" : `openNiatModal('${status.niat.join(',')}')`;
     const btnText = isHome ? "Selengkapnya" : "Lihat Niat";
-    const btnAction = (status.niat && status.niat.length > 0) 
+    const btnAction = (status.niat && status.niat.length > 0)
         ? `<button onclick="event.stopPropagation(); ${actionClick}" class="shrink-0 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-xs font-bold ${textClass} hover:opacity-80 transition active:scale-95">${btnText}</button>`
         : '';
-
     let headerLabel = labelOverride;
     if (!headerLabel) {
         headerLabel = status.type === 'haram' ? 'PERINGATAN' : (status.type === 'none' ? 'INFO PUASA' : 'INFO HARI INI');
     }
-
     container.innerHTML = `
         <div onclick="${actionClick}" class="relative w-full ${bgClass} rounded-[1.8rem] p-5 border ${borderClass} shadow-sm flex items-center gap-4 transition-all duration-300 cursor-pointer active:scale-[0.98]">
             <div class="w-12 h-12 rounded-2xl ${iconBgClass} ${textClass} flex items-center justify-center shrink-0"><i data-lucide="${status.icon}" class="w-6 h-6"></i></div>
@@ -193,20 +205,17 @@ function renderCard(container, status, isHome = false, labelOverride = null) {
             </div>
             ${btnAction}
         </div>`;
-    
     if (window.lucide) lucide.createIcons({ root: container });
 }
 
 function openNiatModal(keysStr) {
-    if(event) event.stopPropagation();
-    
+    if (event) event.stopPropagation();
     const fastingView = document.getElementById('fastingView');
     if (!fastingView || fastingView.classList.contains('hidden-force')) {
-        if(window.openFasting) window.openFasting();
+        if (window.openFasting) window.openFasting();
         setTimeout(() => showNiatModalInternal(keysStr), 300);
         return;
     }
-
     showNiatModalInternal(keysStr);
 }
 
@@ -230,19 +239,22 @@ function showNiatModalInternal(keysStr) {
         }
     });
     container.innerHTML = html;
-    modal.classList.remove('invisible', 'pointer-events-none');
-    requestAnimationFrame(() => {
-        modal.classList.remove('opacity-0');
-        if(content) { content.style.transform = "translate3d(0,0,0)"; content.classList.remove('translate-y-full', 'sm:translate-y-20'); }
-    });
+
+    if (modal) {
+        modal.classList.remove('invisible', 'pointer-events-none');
+        requestAnimationFrame(() => {
+            modal.classList.remove('opacity-0');
+            if (content) content.classList.remove('translate-y-full');
+        });
+    }
 }
 
 function closeNiatModal() {
     const modal = document.getElementById('niatModal');
     const content = document.getElementById('niatModalContent');
-    if(modal) {
+    if (modal) {
         modal.classList.add('opacity-0');
-        if(content) { content.style.transform = "translate3d(0,100%,0)"; content.classList.add('translate-y-full', 'sm:translate-y-20'); }
+        if (content) content.classList.add('translate-y-full');
         setTimeout(() => { modal.classList.add('invisible', 'pointer-events-none'); }, 300);
     }
 }

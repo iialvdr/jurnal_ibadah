@@ -20,28 +20,16 @@ export function initTasbih() {
     window.openDhikrMenu = openDhikrMenu;
     window.closeDhikrMenu = closeDhikrMenu;
     window.chooseDhikr = chooseDhikr;
-    
-    // --- [AUTO-PATCH] ---
+
+    // --- [AUTO-PATCH MODAL] ---
     const menuModal = document.getElementById('dhikrMenuModal');
     const menuContent = document.getElementById('dhikrModalContent');
-    const listContainer = document.getElementById('dhikrListContainer');
-
-    if (listContainer) {
-        listContainer.style.transform = "translate3d(0,0,0)";
-        listContainer.style.willChange = "transform";
-    }
 
     if (menuModal) {
-        // Hapus class berat
-        menuModal.classList.remove('hidden-force'); 
-        menuModal.classList.remove('backdrop-blur-sm', 'transition-all');
-        
-        // Init State
-        menuModal.classList.add('invisible', 'opacity-0', 'pointer-events-none');
-        menuModal.classList.add('transition-opacity', 'duration-300', 'ease-out');
-        
-        // Fix Background
-        if(menuModal.classList.contains('bg-slate-900/60')) menuModal.classList.remove('bg-slate-900/60');
+        menuModal.classList.remove('hidden-force', 'backdrop-blur-sm', 'transition-all');
+        menuModal.classList.add('invisible', 'opacity-0', 'pointer-events-none', 'transition-opacity', 'duration-300', 'ease-out');
+
+        if (menuModal.classList.contains('bg-slate-900/60')) menuModal.classList.remove('bg-slate-900/60');
         menuModal.classList.add('bg-slate-900/90');
 
         menuModal.addEventListener('click', (e) => {
@@ -50,32 +38,38 @@ export function initTasbih() {
     }
 
     if (menuContent) {
-        // [PERBAIKAN DI SINI]
-        menuContent.classList.remove('transition-all', 'transform'); 
-        // Hapus 'cubic-bezier(...)' yang bikin error, ganti 'ease-out'
+        menuContent.classList.remove('transition-all', 'transform');
         menuContent.classList.add('transition-transform', 'duration-300', 'ease-out');
+        menuContent.style.willChange = "transform";
     }
     // --- [END PATCH] ---
-    
+
     updateTargetUI(33);
 }
 
 function countTasbih() {
     tasbihCount++;
     const countEl = document.getElementById('tasbihCount');
-    if(countEl) {
+
+    if (countEl) {
         countEl.innerText = tasbihCount;
+
+        // [OPTIMASI] Reset animasi tanpa memaksa reflow berat
         countEl.classList.remove('scale-110');
-        void countEl.offsetWidth; 
-        countEl.classList.add('scale-110', 'transition-transform', 'duration-100');
-        setTimeout(() => countEl.classList.remove('scale-110'), 100);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                countEl.classList.add('scale-110', 'transition-transform', 'duration-100');
+                setTimeout(() => countEl.classList.remove('scale-110'), 100);
+            });
+        });
     }
 
-    if(isVibroOn && navigator.vibrate) {
-        if(tasbihTarget > 0 && tasbihCount % tasbihTarget === 0) {
-            navigator.vibrate([50, 100, 50]); 
+    if (isVibroOn && navigator.vibrate) {
+        if (tasbihTarget > 0 && tasbihCount % tasbihTarget === 0) {
+            navigator.vibrate([50, 100, 50]);
         } else {
-            navigator.vibrate(15);
+            // Getar sangat pendek agar responsif
+            navigator.vibrate(10);
         }
     }
 }
@@ -83,13 +77,13 @@ function countTasbih() {
 function resetTasbih() {
     tasbihCount = 0;
     const el = document.getElementById('tasbihCount');
-    if(el) el.innerText = '0';
-    if(navigator.vibrate) navigator.vibrate(30);
+    if (el) el.innerText = '0';
+    if (navigator.vibrate) navigator.vibrate(30);
 
     const btn = document.getElementById('resetTasbihBtn');
-    if(btn) {
+    if (btn) {
         const icon = btn.querySelector('i');
-        if(icon) {
+        if (icon) {
             icon.classList.add('-rotate-180');
             setTimeout(() => icon.classList.remove('-rotate-180'), 500);
         }
@@ -111,9 +105,9 @@ function updateTargetUI(activeTarget) {
     ];
 
     btns.forEach(b => {
-        if(!b.el) return;
+        if (!b.el) return;
         const baseClass = "h-14 w-full rounded-[1.7rem] font-bold transition-all duration-300 flex items-center justify-center";
-        const fontSize = b.val === 0 ? "text-2xl pb-1" : "text-sm"; 
+        const fontSize = b.val === 0 ? "text-2xl pb-1" : "text-sm";
 
         if (b.val === activeTarget) {
             b.el.className = `${baseClass} ${fontSize} bg-white dark:bg-slate-800 text-emerald-600 shadow-sm shadow-slate-300/50 dark:shadow-none ring-1 ring-black/5 dark:ring-white/5`;
@@ -127,24 +121,23 @@ function toggleVibro() {
     isVibroOn = !isVibroOn;
     const txt = document.getElementById('vibroText');
     const btn = document.getElementById('vibroBtn');
-    
-    if(isVibroOn) {
-        if(txt) txt.innerText = "GETAR ON";
-        if(btn) btn.className = "flex items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-bold text-xs shadow-sm transition active:scale-95";
+
+    if (isVibroOn) {
+        if (txt) txt.innerText = "GETAR ON";
+        if (btn) btn.className = "flex items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-bold text-xs shadow-sm transition active:scale-95";
     } else {
-        if(txt) txt.innerText = "GETAR OFF";
-        if(btn) btn.className = "flex items-center justify-center gap-2 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 font-bold text-xs shadow-sm transition active:scale-95";
+        if (txt) txt.innerText = "GETAR OFF";
+        if (btn) btn.className = "flex items-center justify-center gap-2 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 font-bold text-xs shadow-sm transition active:scale-95";
     }
 }
 
-// [OPEN MODAL]
 function openDhikrMenu() {
     const list = document.getElementById('dhikrListContainer');
     const modal = document.getElementById('dhikrMenuModal');
     const content = document.getElementById('dhikrModalContent');
-    
-    if(!list || !modal) return;
-    
+
+    if (!list || !modal) return;
+
     // Render List
     let html = '';
     DHIKR_DATA.forEach((item, index) => {
@@ -161,34 +154,29 @@ function openDhikrMenu() {
     });
     list.innerHTML = html;
 
-    modal.classList.remove('invisible', 'pointer-events-none');
-    
-    requestAnimationFrame(() => {
+    if (modal) {
+        modal.classList.remove('invisible', 'pointer-events-none');
         requestAnimationFrame(() => {
             modal.classList.remove('opacity-0');
-            if(content) content.classList.remove('translate-y-full');
+            if (content) content.classList.remove('translate-y-full');
         });
-    });
+    }
 }
 
-// [CLOSE MODAL]
 function closeDhikrMenu() {
     const modal = document.getElementById('dhikrMenuModal');
     const content = document.getElementById('dhikrModalContent');
 
-    if(modal) {
+    if (modal) {
         modal.classList.add('opacity-0');
-        if(content) content.classList.add('translate-y-full');
-        
-        setTimeout(() => {
-            modal.classList.add('invisible', 'pointer-events-none');
-        }, 300);
+        if (content) content.classList.add('translate-y-full');
+        setTimeout(() => { modal.classList.add('invisible', 'pointer-events-none'); }, 300);
     }
 }
 
 function chooseDhikr(index) {
     currentDhikrIndex = index;
-    if(index >= 0) {
+    if (index >= 0) {
         const data = DHIKR_DATA[index];
         setTasbihTarget(data.target);
         document.getElementById('dhikrArabicDisplay').innerText = data.arabic;

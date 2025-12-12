@@ -10,7 +10,7 @@ export function initDoa() {
     window.closeDoaDetail = closeDoaDetail;
     window.toggleFilter = toggleFilter;
     window.selectFilter = selectFilter;
-    
+
     // --- AUTO-PATCH MODAL ---
     const modal = document.getElementById('doaDetailModal');
     const content = document.getElementById('doaDetailContent');
@@ -18,9 +18,9 @@ export function initDoa() {
     if (modal) {
         modal.classList.remove('hidden-force', 'backdrop-blur-sm', 'transition-all');
         modal.classList.add('invisible', 'opacity-0', 'pointer-events-none', 'transition-opacity', 'duration-300', 'ease-out');
-        if(modal.classList.contains('bg-slate-900/60')) modal.classList.remove('bg-slate-900/60');
-        modal.classList.add('bg-slate-900/90'); 
-        
+        if (modal.classList.contains('bg-slate-900/60')) modal.classList.remove('bg-slate-900/60');
+        modal.classList.add('bg-slate-900/90');
+
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeDoaDetail();
         });
@@ -29,65 +29,77 @@ export function initDoa() {
     if (content) {
         content.classList.remove('transition-all');
         content.classList.add('transition-transform', 'duration-300', 'ease-out');
-        content.style.transform = "translate3d(0,100%,0)"; 
+        content.style.transform = "translate3d(0,100%,0)";
     }
     // --- END PATCH ---
-    
+
     // Lazy GPU Logic
     window.addEventListener('viewChanged', (e) => {
         const searchWrapper = document.getElementById('doaSearchWrapper');
-        
-        if(e.detail.viewId === 'doaView') {
-            if(allDoa.length === 0) fetchDoaList(); 
 
-            if(searchWrapper) {
-                searchWrapper.style.transform = ""; 
+        if (e.detail.viewId === 'doaView') {
+            if (allDoa.length === 0) fetchDoaList();
+
+            // Animasi masuk halus untuk searchbar
+            if (searchWrapper) {
+                searchWrapper.style.transform = "";
                 setTimeout(() => {
                     if (document.getElementById('doaView').classList.contains('active')) {
                         searchWrapper.style.transform = "translate3d(0,0,0)";
                     }
-                }, 350); 
+                }, 350);
             }
         } else {
             closeAllDropdowns();
-            if(searchWrapper) {
+            if (searchWrapper) {
                 searchWrapper.style.transform = "";
             }
         }
     });
 
     document.addEventListener('click', (e) => {
-        if (!activeDropdown) return; 
-        const wrapper = document.getElementById(activeDropdown === 'grup' ? 'filterGrupWrapper' : 'filterTagWrapper');
-        if (wrapper && !wrapper.contains(e.target)) {
+        if (!activeDropdown) return;
+        // Tutup dropdown jika klik di luar wrapper
+        const grpWrapper = document.getElementById('filterGrupWrapper');
+        const tagWrapper = document.getElementById('filterTagWrapper');
+
+        if (grpWrapper && !grpWrapper.contains(e.target) && tagWrapper && !tagWrapper.contains(e.target)) {
             closeAllDropdowns();
         }
     });
 }
 
 function toggleFilter(event, type) {
-    if(event) {
+    if (event) {
         event.stopPropagation();
         event.preventDefault();
     }
 
     const isClosingSameDropdown = (activeDropdown === type);
+
+    // Tutup semua dulu
     closeAllDropdowns();
 
+    // Jika yang diklik bukan yang sedang aktif (artinya mau membuka)
     if (!isClosingSameDropdown) {
         const listId = type === 'grup' ? 'listGrup' : 'listTag';
         const iconId = type === 'grup' ? 'iconGrup' : 'iconTag';
         const listEl = document.getElementById(listId);
         const iconEl = document.getElementById(iconId);
 
-        if(listEl) listEl.classList.remove('hidden');
-        if(iconEl) iconEl.classList.add('rotate-180');
-        
-        setTimeout(() => {
-            activeDropdown = type;
-        }, 0);
+        if (listEl) {
+            listEl.classList.remove('hidden');
+            // [OPTIMASI] Gunakan requestAnimationFrame untuk memastikan browser siap merender animasi
+            requestAnimationFrame(() => {
+                listEl.classList.add('opacity-100', 'scale-100');
+                listEl.classList.remove('opacity-0', 'scale-95');
+            });
+        }
+        if (iconEl) iconEl.classList.add('rotate-180');
 
-        if(window.lucide) lucide.createIcons({ root: listEl });
+        activeDropdown = type;
+
+        // [PENTING] Hapus lucide.createIcons dari sini agar tidak berat!
     }
 }
 
@@ -95,8 +107,14 @@ function closeAllDropdowns() {
     ['grup', 'tag'].forEach(type => {
         const list = document.getElementById(type === 'grup' ? 'listGrup' : 'listTag');
         const icon = document.getElementById(type === 'grup' ? 'iconGrup' : 'iconTag');
-        if(list) list.classList.add('hidden');
-        if(icon) icon.classList.remove('rotate-180');
+
+        if (list && !list.classList.contains('hidden')) {
+            list.classList.add('hidden');
+            // Reset state animasi
+            list.classList.remove('opacity-100', 'scale-100');
+            list.classList.add('opacity-0', 'scale-95');
+        }
+        if (icon) icon.classList.remove('rotate-180');
     });
     activeDropdown = null;
 }
@@ -104,8 +122,8 @@ function closeAllDropdowns() {
 function selectFilter(type, value, label) {
     const labelId = type === 'grup' ? 'labelGrup' : 'labelTag';
     const labelEl = document.getElementById(labelId);
-    
-    if(labelEl) {
+
+    if (labelEl) {
         if (value === '') {
             labelEl.innerText = type === 'grup' ? 'Semua Kategori' : 'Semua Tag';
             labelEl.classList.remove('text-emerald-600', 'dark:text-emerald-400');
@@ -122,59 +140,70 @@ function selectFilter(type, value, label) {
     fetchDoaList(currentGrup, currentTag);
 }
 
-// [UPDATE PENTING] Sembunyikan list saat loading karena loader sekarang transparan
 async function fetchDoaList(grup = '', tag = '') {
     const loader = document.getElementById('doaLoading');
     const container = document.getElementById('doaListContainer');
-    
-    if(loader) loader.classList.remove('hidden');
-    if(container) container.classList.add('hidden'); // Sembunyikan list
+
+    if (loader) loader.classList.remove('hidden');
+    if (container) container.classList.add('hidden');
 
     try {
+        // [OPTIMASI] Cek cache atau data lokal jika memungkinkan di masa depan
         const url = new URL('https://equran.id/api/doa');
         if (grup) url.searchParams.append('grup', grup);
         if (tag) url.searchParams.append('tag', tag);
+
         const response = await fetch(url);
         let result = await response.json();
         let data = (Array.isArray(result)) ? result : (result.data || []);
+
         if (!grup && !tag && !isFiltersLoaded) {
-            allDoa = data;
+            allDoa = data; // Simpan master data
             extractAndRenderFilters(data);
             isFiltersLoaded = true;
         }
         renderDoaList(data);
     } catch (error) {
-        if(container) container.innerHTML = `<div class="flex flex-col items-center justify-center pt-10 text-slate-400"><i data-lucide="wifi-off" class="w-8 h-8 mb-2"></i><p class="text-sm">Gagal memuat data</p></div>`;
-        if(window.lucide) lucide.createIcons();
+        if (container) container.innerHTML = `<div class="flex flex-col items-center justify-center pt-10 text-slate-400"><i data-lucide="wifi-off" class="w-8 h-8 mb-2"></i><p class="text-sm">Gagal memuat data</p></div>`;
+        if (window.lucide) lucide.createIcons();
     } finally {
-        if(loader) loader.classList.add('hidden');
-        if(container) container.classList.remove('hidden'); // Munculkan list lagi
+        if (loader) loader.classList.add('hidden');
+        if (container) container.classList.remove('hidden');
     }
 }
 
 function extractAndRenderFilters(data) {
     const uniqueGrups = new Set();
     const uniqueTags = new Set();
+
     data.forEach(item => {
-        if(item.grup) uniqueGrups.add(item.grup);
-        if(item.tag) {
-            if(Array.isArray(item.tag)) item.tag.forEach(t => uniqueTags.add(t));
+        if (item.grup) uniqueGrups.add(item.grup);
+        if (item.tag) {
+            if (Array.isArray(item.tag)) item.tag.forEach(t => uniqueTags.add(t));
             else if (typeof item.tag === 'string') item.tag.split(',').forEach(t => uniqueTags.add(t.trim()));
         }
     });
+
+    // Render Grup
     const listGrup = document.getElementById('listGrup');
-    if(listGrup) {
+    if (listGrup) {
         const sortedGrups = Array.from(uniqueGrups).sort();
         let html = generateDropdownItem('grup', '', 'Semua Kategori', true);
         sortedGrups.forEach(g => html += generateDropdownItem('grup', g, g, false));
         listGrup.innerHTML = html;
+        // [OPTIMASI] Render icon SEKALI SAJA di sini
+        if (window.lucide) lucide.createIcons({ root: listGrup });
     }
+
+    // Render Tag
     const listTag = document.getElementById('listTag');
-    if(listTag) {
+    if (listTag) {
         const sortedTags = Array.from(uniqueTags).sort();
         let html = generateDropdownItem('tag', '', 'Semua Tag', true);
         sortedTags.forEach(t => html += generateDropdownItem('tag', t, t, false));
         listTag.innerHTML = html;
+        // [OPTIMASI] Render icon SEKALI SAJA di sini
+        if (window.lucide) lucide.createIcons({ root: listTag });
     }
 }
 
@@ -186,65 +215,108 @@ function generateDropdownItem(type, value, label, isDefault) {
 function renderDoaList(data) {
     const container = document.getElementById('doaListContainer');
     if (!container) return;
-    if(data.length === 0) {
+
+    if (data.length === 0) {
         container.innerHTML = `<div class="flex flex-col items-center justify-center pt-10 opacity-60"><i data-lucide="search-x" class="w-10 h-10 mb-2 text-slate-400"></i><p class="text-sm font-bold text-slate-500">Tidak ada doa ditemukan</p></div>`;
-        if(window.lucide) lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
         return;
     }
+
     let html = '';
     data.forEach(doa => {
         const safeNama = doa.nama.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         const kategoriBadge = doa.grup ? `<span class="text-[9px] font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400 mb-1 block">${doa.grup}</span>` : '';
-        html += `<div onclick="openDoaDetail('${doa.id}', '${safeNama}')" class="group bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 cursor-pointer active:scale-[0.98] flex items-center justify-between"><div class="flex items-center gap-4 overflow-hidden"><div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800/50 group-hover:bg-emerald-500 group-hover:text-white transition-colors"><i data-lucide="book-heart" class="w-5 h-5"></i></div><div class="flex-1 min-w-0">${kategoriBadge}<h4 class="font-bold text-slate-700 dark:text-white text-sm group-hover:text-emerald-600 transition-colors truncate">${doa.nama}</h4></div></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-emerald-500 transition-colors shrink-0 ml-2"></i></div>`;
+        html += `<div onclick="openDoaDetail('${doa.id}', '${safeNama}')" class="group bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 cursor-pointer active:scale-[0.98] flex items-center justify-between item-doa"><div class="flex items-center gap-4 overflow-hidden"><div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800/50 group-hover:bg-emerald-500 group-hover:text-white transition-colors"><i data-lucide="book-heart" class="w-5 h-5"></i></div><div class="flex-1 min-w-0">${kategoriBadge}<h4 class="font-bold text-slate-700 dark:text-white text-sm group-hover:text-emerald-600 transition-colors truncate text-doa">${doa.nama}</h4></div></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-emerald-500 transition-colors shrink-0 ml-2"></i></div>`;
     });
     container.innerHTML = html;
-    if(window.lucide) lucide.createIcons();
+
+    // Render icon untuk list utama
+    if (window.lucide) lucide.createIcons({ root: container });
 }
 
+// [OPTIMASI] Search dengan requestAnimationFrame agar tidak lag saat ngetik
+let searchTimeout;
 function searchDoa(query) {
-    const lowerQ = query.toLowerCase();
-    const items = document.querySelectorAll('#doaListContainer > div');
-    items.forEach(item => { item.classList.toggle('hidden', !item.innerText.toLowerCase().includes(lowerQ)); });
+    if (searchTimeout) cancelAnimationFrame(searchTimeout);
+
+    searchTimeout = requestAnimationFrame(() => {
+        const lowerQ = query.toLowerCase();
+        const items = document.querySelectorAll('#doaListContainer .item-doa');
+
+        items.forEach(item => {
+            // Ambil text dari elemen judul spesifik, bukan seluruh innerText (lebih ringan)
+            const titleEl = item.querySelector('.text-doa');
+            const text = titleEl ? titleEl.textContent.toLowerCase() : '';
+
+            if (text.includes(lowerQ)) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+    });
 }
 
 async function openDoaDetail(id, title) {
     const modal = document.getElementById('doaDetailModal');
     const content = document.getElementById('doaDetailContent');
     const modalTitle = document.getElementById('modalDoaTitle');
+
     document.getElementById('modalDoaArab').innerText = "Loading...";
     document.getElementById('modalDoaLatin').innerText = "...";
     document.getElementById('modalDoaIndo').innerText = "...";
     document.getElementById('modalDoaSource').classList.add('hidden');
-    if(modalTitle) modalTitle.innerText = title;
-    if(modal) {
+
+    if (modalTitle) modalTitle.innerText = title;
+
+    if (modal) {
         modal.classList.remove('invisible', 'pointer-events-none');
         requestAnimationFrame(() => {
             modal.classList.remove('opacity-0');
-            if(content) { content.style.transform = "translate3d(0,0,0)"; content.classList.remove('translate-y-full', 'sm:translate-y-20'); }
+            if (content) {
+                content.style.transform = "translate3d(0,0,0)";
+                content.classList.remove('translate-y-full', 'sm:translate-y-20');
+            }
         });
     }
+
     try {
-        const response = await fetch(`https://equran.id/api/doa/${id}`);
-        const result = await response.json();
-        const data = result.data || result;
-        document.getElementById('modalDoaArab').innerText = data.ar || data.arab || "Teks Arab tidak tersedia";
-        document.getElementById('modalDoaLatin').innerText = data.tr || data.latin || "-";
-        document.getElementById('modalDoaIndo').innerText = data.idn || data.arti || data.terjemahan || "-";
-        const riwayat = data.riwayat || data.tentang || "";
-        if (riwayat) {
-             const sourceEl = document.getElementById('modalDoaSource');
-             sourceEl.classList.remove('hidden');
-             sourceEl.querySelector('p').innerText = `Sumber: ${riwayat}`;
+        // Cek data di memory dulu (optional optimization)
+        const doaData = allDoa.find(d => d.id === id);
+        if (doaData && (doaData.arab || doaData.ar)) {
+            updateDetailContent(doaData);
+        } else {
+            const response = await fetch(`https://equran.id/api/doa/${id}`);
+            const result = await response.json();
+            updateDetailContent(result.data || result);
         }
-    } catch (e) { console.error(e); document.getElementById('modalDoaIndo').innerText = "Gagal memuat detail doa."; }
+    } catch (e) {
+        console.error(e);
+        document.getElementById('modalDoaIndo').innerText = "Gagal memuat detail doa.";
+    }
+}
+
+function updateDetailContent(data) {
+    document.getElementById('modalDoaArab').innerText = data.ar || data.arab || "Teks Arab tidak tersedia";
+    document.getElementById('modalDoaLatin').innerText = data.tr || data.latin || "-";
+    document.getElementById('modalDoaIndo').innerText = data.idn || data.arti || data.terjemahan || "-";
+    const riwayat = data.riwayat || data.tentang || "";
+    if (riwayat) {
+        const sourceEl = document.getElementById('modalDoaSource');
+        sourceEl.classList.remove('hidden');
+        sourceEl.querySelector('p').innerText = `Sumber: ${riwayat}`;
+    }
 }
 
 function closeDoaDetail() {
     const modal = document.getElementById('doaDetailModal');
     const content = document.getElementById('doaDetailContent');
-    if(modal) {
+    if (modal) {
         modal.classList.add('opacity-0');
-        if(content) { content.style.transform = "translate3d(0,100%,0)"; content.classList.add('translate-y-full', 'sm:translate-y-20'); }
+        if (content) {
+            content.style.transform = "translate3d(0,100%,0)";
+            content.classList.add('translate-y-full', 'sm:translate-y-20');
+        }
         setTimeout(() => { modal.classList.add('invisible', 'pointer-events-none'); }, 300);
     }
 }

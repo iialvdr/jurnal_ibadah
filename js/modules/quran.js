@@ -6,8 +6,9 @@ let allSurahs = [];
 let currentSurahNumber = 0;
 let activeAudio = null;
 let activeBtn = null;
-let lastReadData = null; 
-let nextAudioPreload = null; 
+let lastReadData = null;
+let nextAudioPreload = null;
+let searchTimeout = null; // [OPTIMASI] Variabel debounce
 
 export function initQuran() {
     window.handleQuranBack = handleQuranBack;
@@ -17,64 +18,71 @@ export function initQuran() {
     window.playAudio = playAudio;
     window.toggleBookmark = toggleBookmark;
 
-    fetchSurahList();
+    // Fetch data hanya jika belum ada
+    if (allSurahs.length === 0) fetchSurahList();
 }
 
 async function fetchSurahList() {
-    // Loader ini HANYA untuk daftar surat awal
     const loader = document.getElementById('quranLoading');
-    if(loader) loader.classList.remove('hidden');
+    if (loader && allSurahs.length === 0) loader.classList.remove('hidden');
 
     try {
-        const response = await fetch('https://equran.id/api/v2/surat');
-        const result = await response.json();
-        
-        if (result.code === 200) {
-            allSurahs = result.data;
-            renderSurahList(allSurahs);
+        // Cek apakah data user sudah ada untuk bookmark
+        if (state.currentUser && !lastReadData) {
+            await fetchLastRead();
         }
-        
-        if(state.currentUser) {
-            fetchLastRead();
+
+        // Jika data surat sudah ada di memori, langsung render (Cache Memory)
+        if (allSurahs.length > 0) {
+            renderSurahList(allSurahs);
+        } else {
+            const response = await fetch('https://equran.id/api/v2/surat');
+            const result = await response.json();
+
+            if (result.code === 200) {
+                allSurahs = result.data;
+                renderSurahList(allSurahs);
+            }
         }
 
     } catch (error) {
         console.error("Gagal memuat daftar surat:", error);
     } finally {
-        if(loader) loader.classList.add('hidden');
+        if (loader) loader.classList.add('hidden');
     }
 }
 
 async function fetchLastRead() {
-    if(!state.currentUser) return;
+    if (!state.currentUser) return;
     try {
         const docRef = doc(db, "users", state.currentUser.uid, "quran", "last_read");
         const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            lastReadData = docSnap.data();
-            renderSurahList(allSurahs); 
-        } else {
-            lastReadData = null; 
-        }
-    } catch(e) { console.error("Gagal ambil bookmark:", e); }
+        if (docSnap.exists()) lastReadData = docSnap.data();
+    } catch (e) { console.error("Gagal ambil bookmark:", e); }
 }
 
 function renderSurahList(data) {
     const container = document.getElementById('surahListContainer');
     if (!container) return;
 
-    let html = '';
+    // [OPTIMASI] Gunakan DocumentFragment untuk performa rendering massal (114 item)
+    const fragment = document.createDocumentFragment();
+
     data.forEach(surah => {
         const isLastRead = lastReadData && lastReadData.surah === surah.nomor;
-        const badge = isLastRead ? 
+        const badge = isLastRead ?
             `<div class="mb-1 animate-[fadeIn_0.5s_ease-out]"><span class="text-[9px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold border border-emerald-200 dark:border-emerald-800">Terakhir Baca: Ayat ${lastReadData.ayat}</span></div>` : '';
         const borderClass = isLastRead ? 'border-emerald-400 ring-1 ring-emerald-400/50' : 'border-slate-200 dark:border-slate-800';
-
-        // Kita tambahkan parameter nama surat ke openSurah agar judul bisa langsung update
         const safeNama = surah.namaLatin.replace(/'/g, "\\'");
-        
-        html += `
-        <div onclick="openSurah(${surah.nomor}, null, '${safeNama}')" class="group bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border ${borderClass} shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 cursor-pointer active:scale-[0.98] flex items-center justify-between relative overflow-hidden">
+
+        const div = document.createElement('div');
+        // Tambahkan class 'item-surah' dan 'data-search' untuk pencarian cepat
+        div.className = `item-surah group bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border ${borderClass} shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 cursor-pointer active:scale-[0.98] flex items-center justify-between relative overflow-hidden`;
+        div.setAttribute('onclick', `openSurah(${surah.nomor}, null, '${safeNama}')`);
+        // Search index: Nama Latin + Arti + Nomor
+        div.setAttribute('data-search', `${surah.namaLatin.toLowerCase()} ${surah.arti.toLowerCase()} ${surah.nomor}`);
+
+        div.innerHTML = `
             <div class="flex items-center gap-4 relative z-10 w-full">
                 <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800/50 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300 shadow-sm">${surah.nomor}</div>
                 <div class="flex-1 min-w-0">
@@ -85,27 +93,40 @@ function renderSurahList(data) {
                 <div class="text-right pl-2 shrink-0">
                     <span class="font-quran text-xl text-slate-300 dark:text-slate-600 group-hover:text-emerald-500/50 transition-colors duration-300">${surah.nama}</span>
                 </div>
-            </div>
-        </div>`;
+            </div>`;
+
+        fragment.appendChild(div);
     });
 
-    container.innerHTML = html;
+    container.innerHTML = '';
+    container.appendChild(fragment);
 }
 
+// [OPTIMASI] Pencarian tanpa re-render HTML (CSS Toggle)
 function searchSurah(query) {
-    const lowerQ = query.toLowerCase();
-    const filtered = allSurahs.filter(s => s.namaLatin.toLowerCase().includes(lowerQ) || s.arti.toLowerCase().includes(lowerQ));
-    renderSurahList(filtered);
+    if (searchTimeout) cancelAnimationFrame(searchTimeout);
+
+    searchTimeout = requestAnimationFrame(() => {
+        const lowerQ = query.toLowerCase();
+        const items = document.querySelectorAll('.item-surah');
+
+        items.forEach(item => {
+            const searchData = item.getAttribute('data-search') || '';
+            if (searchData.includes(lowerQ)) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+    });
 }
 
-// [OPTIMASI: AYAH SKELETON RENDERER]
+// ... (renderAyahSkeleton dan renderAyahs SAMA SEPERTI SEBELUMNYA, tidak perlu diubah) ...
 function renderAyahSkeleton() {
     const container = document.getElementById('ayahsContent');
     if (!container) return;
-    
-    // Buat 3 skeleton kartu ayat
     let skeletonHtml = '';
-    for(let i=0; i<3; i++) {
+    for (let i = 0; i < 3; i++) {
         skeletonHtml += `
         <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-sm border border-slate-200 dark:border-slate-800 animate-pulse">
             <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -115,84 +136,11 @@ function renderAyahSkeleton() {
                 </div>
                 <div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800"></div>
             </div>
-            <div class="space-y-4">
-                <div class="h-8 bg-slate-200 dark:bg-slate-800 rounded-lg w-3/4 ml-auto"></div>
-                <div class="h-8 bg-slate-200 dark:bg-slate-800 rounded-lg w-1/2 ml-auto"></div>
-            </div>
-            <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 space-y-3">
-                <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/4"></div>
-                <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-full"></div>
-                <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-full"></div>
-            </div>
+            <div class="space-y-4"><div class="h-8 bg-slate-200 dark:bg-slate-800 rounded-lg w-3/4 ml-auto"></div><div class="h-8 bg-slate-200 dark:bg-slate-800 rounded-lg w-1/2 ml-auto"></div></div>
+            <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 space-y-3"><div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/4"></div><div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-full"></div></div>
         </div>`;
     }
     container.innerHTML = skeletonHtml;
-}
-
-// [OPTIMASI: OPEN SURAH INSTANT]
-async function openSurah(nomor, targetAyah = null, surahName = null) {
-    currentSurahNumber = nomor;
-    
-    const ayahContainer = document.getElementById('ayahListContainer');
-    const searchContainer = document.getElementById('quranSearchContainer');
-    const navButtons = document.getElementById('surahNavButtons');
-    const title = document.getElementById('quranTitle');
-
-    // 1. UPDATE UI SEKETIKA (Jangan tunggu fetch)
-    if(title) title.innerText = surahName || "Memuat...";
-    if(navButtons) navButtons.classList.add('translate-y-40'); // Sembunyikan nav dulu
-    
-    // 2. Tampilkan Skeleton Ayat
-    renderAyahSkeleton();
-
-    // 3. Slide In Container
-    if(ayahContainer) {
-        ayahContainer.classList.remove('translate-x-full');
-        ayahContainer.scrollTop = 0;
-    }
-    if(searchContainer) searchContainer.classList.add('-translate-y-24', 'opacity-0', 'pointer-events-none');
-    
-    stopCurrentAudio();
-
-    // 4. Fetch Data di Background
-    try {
-        const response = await fetch(`https://equran.id/api/v2/surat/${nomor}`);
-        const result = await response.json();
-        
-        if (result.code === 200) {
-            const data = result.data;
-            
-            if(title) title.innerText = data.namaLatin; // Update judul asli
-            
-            // Render Konten Asli (Menggantikan Skeleton)
-            renderAyahs(data.ayat, data.namaLatin);
-            
-            // Munculkan Navigasi
-            if(navButtons) {
-                navButtons.classList.remove('translate-y-40');
-                const prevBtn = navButtons.children[0];
-                const nextBtn = navButtons.children[1];
-                prevBtn.disabled = false; nextBtn.disabled = false;
-                prevBtn.classList.remove('hidden'); nextBtn.classList.remove('hidden');
-                if (nomor === 1) prevBtn.classList.add('hidden'); 
-                else if (nomor === 114) nextBtn.classList.add('hidden');
-            }
-
-            if (targetAyah) {
-                setTimeout(() => {
-                    const el = document.getElementById(`ayah-${targetAyah}`);
-                    if (el) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        el.classList.add('ring-2', 'ring-emerald-400');
-                        setTimeout(() => el.classList.remove('ring-2', 'ring-emerald-400'), 2000);
-                    }
-                }, 600);
-            }
-        }
-    } catch (error) {
-        console.error("Gagal membuka surat:", error);
-        if(title) title.innerText = "Gagal Memuat";
-    }
 }
 
 function renderAyahs(ayatList, surahName) {
@@ -200,13 +148,13 @@ function renderAyahs(ayatList, surahName) {
     if (!container) return;
     const safeSurahName = surahName.replace(/'/g, "\\'");
 
-    let html = '';
-    ayatList.forEach(ayat => {
-        const audioUrl = ayat.audio['05'] || ayat.audio['01']; 
+    // Gunakan map dan join untuk string building yang lebih cepat
+    const html = ayatList.map(ayat => {
+        const audioUrl = ayat.audio['05'] || ayat.audio['01'];
         const isBookmarked = lastReadData && lastReadData.surah === currentSurahNumber && lastReadData.ayat === ayat.nomorAyat;
         const bookmarkIconClass = isBookmarked ? "fill-emerald-500 text-emerald-500" : "text-slate-300 hover:text-emerald-500";
 
-        html += `
+        return `
         <div id="ayah-${ayat.nomorAyat}" class="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group transition-all duration-300">
             <div class="flex justify-between items-center mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
                 <div class="flex items-center gap-3">
@@ -229,33 +177,113 @@ function renderAyahs(ayatList, surahName) {
                 <p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">${ayat.teksIndonesia}</p>
             </div>
         </div>`;
-    });
+    }).join('');
+
     container.innerHTML = html;
-    if(window.lucide) lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
 }
 
-// ... (FUNGSI AUDIO, BOOKMARK, DSB TETAP SAMA) ...
+async function openSurah(nomor, targetAyah = null, surahName = null) {
+    currentSurahNumber = nomor;
+    const ayahContainer = document.getElementById('ayahListContainer');
+    const searchContainer = document.getElementById('quranSearchContainer');
+    const navButtons = document.getElementById('surahNavButtons');
+    const title = document.getElementById('quranTitle');
+
+    if (title) title.innerText = surahName || "Memuat...";
+    if (navButtons) navButtons.classList.add('translate-y-40');
+
+    renderAyahSkeleton();
+
+    if (ayahContainer) {
+        ayahContainer.classList.remove('translate-x-full');
+        ayahContainer.scrollTop = 0;
+    }
+    if (searchContainer) searchContainer.classList.add('-translate-y-24', 'opacity-0', 'pointer-events-none');
+
+    stopCurrentAudio();
+
+    try {
+        const response = await fetch(`https://equran.id/api/v2/surat/${nomor}`);
+        const result = await response.json();
+
+        if (result.code === 200) {
+            const data = result.data;
+            if (title) title.innerText = data.namaLatin;
+            renderAyahs(data.ayat, data.namaLatin);
+
+            if (navButtons) {
+                navButtons.classList.remove('translate-y-40');
+                const prevBtn = navButtons.children[0];
+                const nextBtn = navButtons.children[1];
+                prevBtn.disabled = false; nextBtn.disabled = false;
+                prevBtn.classList.remove('hidden'); nextBtn.classList.remove('hidden');
+                if (nomor === 1) prevBtn.classList.add('hidden');
+                else if (nomor === 114) nextBtn.classList.add('hidden');
+            }
+            if (targetAyah) {
+                setTimeout(() => {
+                    const el = document.getElementById(`ayah-${targetAyah}`);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.classList.add('ring-2', 'ring-emerald-400');
+                        setTimeout(() => el.classList.remove('ring-2', 'ring-emerald-400'), 2000);
+                    }
+                }, 600);
+            }
+        }
+    } catch (error) {
+        console.error("Gagal membuka surat:", error);
+        if (title) title.innerText = "Gagal Memuat";
+    }
+}
+
+// [OPTIMASI] Navigasi Back Instant (Tanpa Fetch Ulang)
+function handleQuranBack() {
+    const ayahContainer = document.getElementById('ayahListContainer');
+    const searchContainer = document.getElementById('quranSearchContainer');
+    const navButtons = document.getElementById('surahNavButtons');
+    const title = document.getElementById('quranTitle');
+
+    // Cek apakah sedang di tampilan Ayat
+    if (ayahContainer && !ayahContainer.classList.contains('translate-x-full')) {
+        // Animasi keluar
+        ayahContainer.classList.add('translate-x-full');
+
+        if (searchContainer) searchContainer.classList.remove('-translate-y-24', 'opacity-0', 'pointer-events-none');
+        if (navButtons) navButtons.classList.add('translate-y-40');
+        if (title) title.innerText = "Al-Qur'an";
+
+        stopCurrentAudio();
+
+        // [PENTING] Jangan panggil fetchSurahList() lagi jika data sudah ada!
+        // Cukup biarkan list container terlihat (karena ada di layer belakang)
+    } else {
+        if (window.goBack) window.goBack();
+    }
+}
+
+// ... (SISA KODE SAMA: toggleBookmark, playAudio, stopCurrentAudio, updateButtonUI, changeSurah) ...
 async function toggleBookmark(surahNum, ayatNum, surahName) {
-    if(!state.currentUser) { alert("Silakan login untuk menyimpan penanda bacaan."); return; }
+    if (!state.currentUser) { alert("Silakan login untuk menyimpan penanda bacaan."); return; }
     const isDeleting = lastReadData && lastReadData.surah === surahNum && lastReadData.ayat === ayatNum;
     if (isDeleting) {
         lastReadData = null;
         const targetIcon = document.getElementById(`btn-bookmark-${ayatNum}`);
-        if(targetIcon) { targetIcon.classList.remove('fill-emerald-500', 'text-emerald-500'); targetIcon.classList.add('text-slate-300'); }
-        try { await deleteDoc(doc(db, "users", state.currentUser.uid, "quran", "last_read")); window.dispatchEvent(new Event('bookmarkUpdated')); } catch(e) { console.error("Gagal hapus:", e); }
+        if (targetIcon) { targetIcon.classList.remove('fill-emerald-500', 'text-emerald-500'); targetIcon.classList.add('text-slate-300'); }
+        try { await deleteDoc(doc(db, "users", state.currentUser.uid, "quran", "last_read")); window.dispatchEvent(new Event('bookmarkUpdated')); } catch (e) { console.error("Gagal hapus:", e); }
     } else {
         document.querySelectorAll('[id^="btn-bookmark-"]').forEach(el => { el.classList.remove('fill-emerald-500', 'text-emerald-500'); el.classList.add('text-slate-300'); });
         const targetIcon = document.getElementById(`btn-bookmark-${ayatNum}`);
-        if(targetIcon) { targetIcon.classList.remove('text-slate-300'); targetIcon.classList.add('fill-emerald-500', 'text-emerald-500'); targetIcon.parentElement.classList.add('scale-125'); setTimeout(() => targetIcon.parentElement.classList.remove('scale-125'), 200); }
+        if (targetIcon) { targetIcon.classList.remove('text-slate-300'); targetIcon.classList.add('fill-emerald-500', 'text-emerald-500'); targetIcon.parentElement.classList.add('scale-125'); setTimeout(() => targetIcon.parentElement.classList.remove('scale-125'), 200); }
         lastReadData = { surah: surahNum, ayat: ayatNum, name: surahName, timestamp: new Date() };
-        try { await setDoc(doc(db, "users", state.currentUser.uid, "quran", "last_read"), lastReadData); window.dispatchEvent(new Event('bookmarkUpdated')); } catch(e) { console.error("Gagal simpan:", e); alert("Gagal menyimpan. Periksa koneksi."); }
+        try { await setDoc(doc(db, "users", state.currentUser.uid, "quran", "last_read"), lastReadData); window.dispatchEvent(new Event('bookmarkUpdated')); } catch (e) { console.error("Gagal simpan:", e); alert("Gagal menyimpan. Periksa koneksi."); }
     }
 }
-
 function playAudio(url, btnElement) {
     if (activeAudio && activeBtn === btnElement) {
         if (activeAudio.paused) { activeAudio.play(); updateButtonUI(btnElement, 'pause'); } else { activeAudio.pause(); updateButtonUI(btnElement, 'play'); }
-        return; 
+        return;
     }
     stopCurrentAudio();
     let audio;
@@ -275,8 +303,6 @@ function playAudio(url, btnElement) {
     };
     audio.onerror = () => { alert("Terjadi kesalahan pada file audio."); updateButtonUI(btnElement, 'play'); activeAudio = null; activeBtn = null; };
 }
-
 function stopCurrentAudio() { if (activeAudio) { activeAudio.pause(); activeAudio.currentTime = 0; } if (activeBtn) { updateButtonUI(activeBtn, 'play'); } activeAudio = null; activeBtn = null; }
 function updateButtonUI(btn, state) { if (state === 'pause') { btn.innerHTML = `<i data-lucide="pause" class="w-4 h-4 fill-current"></i>`; btn.classList.remove('bg-slate-50', 'dark:bg-slate-800', 'text-slate-400'); btn.classList.add('bg-emerald-500', 'text-white', 'scale-110', 'shadow-lg', 'shadow-emerald-500/40', 'border-transparent'); } else { btn.innerHTML = `<i data-lucide="play" class="w-4 h-4 fill-current translate-x-0.5"></i>`; btn.classList.add('bg-slate-50', 'dark:bg-slate-800', 'text-slate-400'); btn.classList.remove('bg-emerald-500', 'text-white', 'scale-110', 'shadow-lg', 'shadow-emerald-500/40', 'border-transparent'); } if (window.lucide) lucide.createIcons({ root: btn }); }
 function changeSurah(direction) { const newNumber = currentSurahNumber + direction; if (newNumber >= 1 && newNumber <= 114) { stopCurrentAudio(); openSurah(newNumber); } }
-function handleQuranBack() { const ayahContainer = document.getElementById('ayahListContainer'); const searchContainer = document.getElementById('quranSearchContainer'); const navButtons = document.getElementById('surahNavButtons'); const title = document.getElementById('quranTitle'); if (ayahContainer && !ayahContainer.classList.contains('translate-x-full')) { ayahContainer.classList.add('translate-x-full'); if(searchContainer) searchContainer.classList.remove('-translate-y-24', 'opacity-0', 'pointer-events-none'); if(navButtons) navButtons.classList.add('translate-y-40'); if(title) title.innerText = "Al-Qur'an"; stopCurrentAudio(); fetchSurahList(); } else { if(window.goBack) window.goBack(); } }

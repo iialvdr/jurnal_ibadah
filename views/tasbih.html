@@ -23,10 +23,10 @@
             <p id="dhikrLatinDisplay" class="text-sm font-medium text-emerald-600 dark:text-emerald-400 italic tracking-wide"></p>
         </div>
 
-        <div class="flex-1 flex items-center justify-center w-full py-8">
-            <div onclick="countTasbih()" class="relative group cursor-pointer select-none tap-highlight-transparent">
+        <div class="flex-1 flex items-center justify-center w-full py-8" style="touch-action: manipulation;">
+            <div onclick="countTasbih()" class="relative group cursor-pointer select-none tap-highlight-transparent active:scale-95 transition-transform duration-100">
                 <div class="absolute inset-6 bg-emerald-500 rounded-full blur-3xl opacity-20 group-active:opacity-40 transition duration-150 animate-pulse"></div>
-                <div class="relative w-72 h-72 rounded-full bg-gradient-to-br from-white to-slate-100 dark:from-slate-800 dark:to-slate-900 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff] dark:shadow-[10px_10px_30px_#0f172a,-10px_-10px_30px_#1e293b] flex flex-col items-center justify-center border-[8px] border-slate-50 dark:border-slate-800 transition-transform active:scale-95 duration-100 ring-1 ring-slate-200/50 dark:ring-slate-700/50">
+                <div class="relative w-72 h-72 rounded-full bg-gradient-to-br from-white to-slate-100 dark:from-slate-800 dark:to-slate-900 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff] dark:shadow-[10px_10px_30px_#0f172a,-10px_-10px_30px_#1e293b] flex flex-col items-center justify-center border-[8px] border-slate-50 dark:border-slate-800 ring-1 ring-slate-200/50 dark:ring-slate-700/50">
                     <div class="absolute inset-3 rounded-full border border-slate-200 dark:border-slate-700 opacity-50"></div>
                     <span id="tasbihCount" class="text-8xl font-black text-slate-800 dark:text-white tabular-nums tracking-tighter drop-shadow-sm scale-100 transition-transform">0</span>
                     <span id="tasbihTargetDisplay" class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-3">TARGET: 33</span>
@@ -45,7 +45,8 @@
     </div>
     
     <div id="dhikrMenuModal" class="absolute inset-0 z-[60] bg-slate-900/90 invisible opacity-0 pointer-events-none flex flex-col justify-end transition-opacity duration-300 ease-out">
-            <div id="dhikrModalContent" class="bg-slate-50 dark:bg-slate-950 rounded-t-[2.5rem] p-6 h-[75%] flex flex-col shadow-2xl transform translate-y-full transition-transform duration-300 ease-out will-change-transform">            <div class="flex justify-between items-center mb-6 px-2 shrink-0">
+            <div id="dhikrModalContent" class="bg-slate-50 dark:bg-slate-950 rounded-t-[2.5rem] p-6 h-[75%] flex flex-col shadow-2xl transform translate-y-full transition-transform duration-300 ease-out will-change-transform">            
+            <div class="flex justify-between items-center mb-6 px-2 shrink-0">
                 <div>
                     <h3 class="font-black text-xl text-slate-800 dark:text-white">Pilih Bacaan</h3>
                     <p class="text-xs text-slate-500 mt-1">Pilih dzikir untuk memulai target</p>
