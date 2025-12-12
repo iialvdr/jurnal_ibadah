@@ -13,7 +13,6 @@ const PRAYER_CONFIG = [
 ];
 
 let trackerSchedule = {};
-// [OPTIMASI] Timer untuk menunda penyimpanan ke database
 let saveDebounceTimer = null;
 
 export function initTracker() {
@@ -45,6 +44,7 @@ function calculateTrackerSchedule() {
 
     const coordinates = new adhan.Coordinates(window.lastLat, window.lastLng);
     const date = state.trackerDate;
+
     const params = adhan.CalculationMethod.Singapore();
     params.madhab = adhan.Madhab.Shafi;
     params.fajrAngle = 20;
@@ -54,7 +54,9 @@ function calculateTrackerSchedule() {
 
     const timeFormat = (t) => {
         return t.toLocaleTimeString('id-ID', {
-            hour: '2-digit', minute: '2-digit', hour12: false
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
         }).replace('.', ':');
     };
 
@@ -86,19 +88,65 @@ async function updateTrackerUI() {
 
     const tEl = document.getElementById('trackerHijriDisplay');
     if (tEl) {
-        // Asumsi fungsi getHijriDate ada di scope global atau import (sesuaikan jika perlu)
-        // Di file asli ada fungsi getHijriDate internal, kita salin yang simple
+        // [PERBAIKAN] Menggunakan fungsi lokal getTrackerHijriDate yang sudah diisi logikanya
         tEl.innerText = getTrackerHijriDate(state.trackerDate, -1);
     }
 }
 
-// Helper Hijri simple lokal (agar tidak dependensi silang ribet)
-function getTrackerHijriDate(date, adjustment = 0) {
-    // ... (Fungsi Hijriyah standar, sama seperti sebelumnya) ...
-    // Untuk ringkasnya, gunakan logika yang sudah ada di file lama atau import dari home.js jika export
-    // Di sini saya asumsikan Valdi pakai kode lama untuk logic hijriah, 
-    // tapi agar file ini jalan, pastikan fungsi ini ada.
-    return window.calculateHijri ? window.calculateHijri(date, adjustment) : "...";
+// [PERBAIKAN] Fungsi perhitungan Hijriah (Algoritma Kuwaiti) ditambahkan di sini
+function getTrackerHijriDate(date, adjustment = -1) {
+    const iMonthNames = ["Muharram", "Safar", "Rabi'ul Awal", "Rabi'ul Akhir", "Jumadil Awal", "Jumadil Akhir", "Rajab", "Sya'ban", "Ramadhan", "Syawal", "Dzulkaidah", "Dzulhijjah"];
+
+    let d = new Date(date);
+    d.setDate(d.getDate() + adjustment);
+
+    let day = d.getDate();
+    let month = d.getMonth();
+    let year = d.getFullYear();
+
+    let m = month + 1;
+    let y = year;
+    if (m < 3) { y -= 1; m += 12; }
+
+    let a = Math.floor(y / 100);
+    let b = 2 - a + Math.floor(a / 4);
+    if (y < 1583) b = 0;
+    if (y == 1582) {
+        if (m > 10) b = -10;
+        if (m == 10) { b = 0; if (day > 4) b = -10; }
+    }
+
+    let jd = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + day + b - 1524;
+
+    let b0 = 0;
+    if (jd > 2299160) {
+        let a = Math.floor((jd - 1867216.25) / 36524.25);
+        b0 = 1 + a - Math.floor(a / 4);
+    }
+    let bb = jd + b0 + 1524;
+    let cc = Math.floor((bb - 122.1) / 365.25);
+    let dd = Math.floor(365.25 * cc);
+    let ee = Math.floor((bb - dd) / 30.6001);
+    day = (bb - dd) - Math.floor(30.6001 * ee);
+    month = ee - 1;
+    if (ee > 13) { cc += 1; month = ee - 13; }
+    year = cc - 4716;
+
+    let iyear = 10631.0 / 30.0;
+    let epochastro = 1948084;
+    let shift1 = 8.01 / 60.0;
+
+    let z = jd - epochastro;
+    let cyc = Math.floor(z / 10631.0);
+    z = z - 10631.0 * cyc;
+    let j = Math.floor((z - shift1) / iyear);
+    let iy = 30 * cyc + j;
+    z = z - Math.floor(j * iyear + shift1);
+    let im = Math.floor((z + 28.5001) / 29.5);
+    if (im == 13) im = 12;
+    let id = z - Math.floor(29.5001 * im - 29);
+
+    return `${id} ${iMonthNames[im - 1]} ${iy} H`;
 }
 
 export async function loadRecordsFromCloud() {
@@ -133,12 +181,11 @@ function resetToToday() {
     loadRecordsFromCloud();
 }
 
-// [OPTIMASI] Toggle dengan Debounce Save
+// Toggle dengan Debounce Save
 function togglePrayer(id, locked) {
     if (locked) return;
     if (navigator.vibrate) navigator.vibrate(50);
 
-    // 1. Update STATE & UI SEKETIKA (Optimistic UI)
     const newState = !state.currentRecords[id];
     state.currentRecords[id] = newState;
 
@@ -147,21 +194,17 @@ function togglePrayer(id, locked) {
     if (card && p) updateCardVisuals(card, p, newState);
     updateProgressBar();
 
-    // 2. Tunda penyimpanan ke DB (Debounce)
     if (state.currentUser) {
-        // Hapus timer sebelumnya jika user klik lagi sebelum 1 detik
         if (saveDebounceTimer) clearTimeout(saveDebounceTimer);
 
         saveDebounceTimer = setTimeout(() => {
             const dateKey = formatDateKey(state.trackerDate);
-            // Simpan seluruh state hari ini agar konsisten
-            // Tambahkan last_updated agar server tau ini data baru
             const dataToSave = { ...state.currentRecords, last_updated: new Date() };
 
             setDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey), dataToSave, { merge: true })
                 .then(() => console.log("Data tersimpan (Debounced)"))
                 .catch(e => console.error("Gagal simpan:", e));
-        }, 1000); // Tunggu 1 detik hening baru simpan
+        }, 1000);
     }
 }
 
