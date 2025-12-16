@@ -76,8 +76,8 @@
         <div class="px-6 mb-8 space-y-3">
             <h3 class="px-2 text-xs font-bold text-slate-400 uppercase tracking-widest">Informasi & Akun</h3>
             
-            <div class="bg-white dark:bg-slate-900 rounded-[1.5rem] p-1 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div class="p-4 flex items-center gap-4 border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition cursor-pointer">
+            <div class="bg-white dark:bg-slate-900 rounded-[1.5rem] p-1 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden space-y-1">
+                <div class="p-4 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition cursor-pointer">
                     <div class="w-10 h-10 rounded-full bg-violet-50 dark:bg-violet-900/20 text-violet-600 flex items-center justify-center shrink-0">
                         <i data-lucide="calendar" class="w-5 h-5"></i>
                     </div>
@@ -96,6 +96,17 @@
                         <p id="lastLocation" class="font-bold text-slate-800 dark:text-white text-sm truncate max-w-[200px]">-</p>
                     </div>
                 </div>
+
+                <button onclick="vibrateSoft(); window.openCredits()" class="w-full p-4 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition cursor-pointer text-left">
+                    <div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="info" class="w-5 h-5"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-bold text-slate-800 dark:text-white text-sm">Tentang Aplikasi</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Credits & Versi</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300 dark:text-slate-600"></i>
+                </button>
             </div>
 
             <button id="logoutBtnProfile" class="w-full p-4 rounded-[1.5rem] font-bold border transition flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border-red-100 dark:border-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/30 hover:shadow-lg hover:shadow-red-500/10 active:scale-98">

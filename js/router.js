@@ -22,7 +22,9 @@ export function setupRouter() {
             'profile': 'profileView',
             'doa': 'doaView',
             'asmaul-husna': 'asmaulHusnaView',
-            'fasting': 'fastingView'
+            'fasting': 'fastingView',
+            // [BARU] Tambahkan route credits
+            'credits': 'creditsView'
         };
 
         const targetViewId = routes[hash] || 'homeView';
@@ -47,6 +49,8 @@ export function setupRouter() {
     window.openDoa = () => navigateTo('doa');
     window.openAsma = () => navigateTo('asmaul-husna');
     window.openFasting = () => navigateTo('fasting');
+    // [BARU] Fungsi global navigasi
+    window.openCredits = () => navigateTo('credits');
 
     window.goBack = () => {
         if (window.history.length > 1) {
@@ -63,13 +67,12 @@ export function setupRouter() {
 }
 
 export function switchView(targetId) {
-    const allViews = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView', 'fastingView'];
+    // [BARU] Tambahkan creditsView ke array
+    const allViews = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView', 'fastingView', 'creditsView'];
     const targetEl = document.getElementById(targetId);
 
     if (!targetEl) return;
 
-    // [OPTIMASI] Render icon HANYA JIKA BELUM dirender
-    // Ini mencegah flicker icon setiap pindah halaman
     if (window.lucide && targetEl.querySelectorAll('i[data-lucide]').length > 0) {
         if (!targetEl.hasAttribute('data-icons-rendered')) {
             try {
@@ -79,7 +82,6 @@ export function switchView(targetId) {
         }
     }
 
-    // [OPTIMASI] Gunakan requestAnimationFrame agar browser siap
     requestAnimationFrame(() => {
         allViews.forEach(id => {
             const el = document.getElementById(id);
@@ -109,7 +111,9 @@ function updateSidebarUI(activeViewId) {
         'profileView': 'nav-profile',
         'doaView': 'nav-doa',
         'asmaulHusnaView': 'nav-asma',
-        'fastingView': 'nav-fasting'
+        'fastingView': 'nav-fasting',
+        // [BARU] Highlight menu profile saat di halaman credits
+        'creditsView': 'nav-profile'
     };
 
     const activeBtnId = map[activeViewId];

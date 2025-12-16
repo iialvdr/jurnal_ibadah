@@ -15,6 +15,8 @@ import { initProfile } from './modules/profile.js';
 import { initDoa } from './modules/doa.js';
 import { initAsmaulHusna } from './modules/asmaul_husna.js';
 import { initFasting } from './modules/fasting.js';
+// [BARU] Import module credits
+import { initCredits } from './modules/credits.js';
 
 window.vibrateSoft = () => { if (navigator.vibrate) navigator.vibrate(10); };
 window.vibrateSuccess = () => { if (navigator.vibrate) navigator.vibrate([10, 30, 10]); };
@@ -23,17 +25,17 @@ const VIEWS = [
     'views/login.html', 'views/home.html', 'views/profile.html',
     'views/tasbih.html', 'views/qibla.html', 'views/tracker.html', 'views/quran.html',
     'views/doa.html', 'views/asmaul_husna.html',
-    'views/fasting.html'
+    'views/fasting.html',
+    // [BARU] Daftarkan file HTML credits
+    'views/credits.html'
 ];
 
-// [OPTIMASI LOADING: PARALLEL FETCH]
 async function loadAllViews() {
     const appContainer = document.getElementById('appContainer');
     if (!appContainer) return;
 
     appContainer.innerHTML = '';
-    
-    // 1. Jalankan semua request fetch secara BERSAMAAN (Parallel)
+
     const fetchPromises = VIEWS.map(async (viewPath) => {
         try {
             const response = await fetch(viewPath);
@@ -41,33 +43,31 @@ async function loadAllViews() {
             return await response.text();
         } catch (error) {
             console.error(error);
-            return ''; // Return string kosong jika gagal biar gak error blocking
+            return '';
         }
     });
 
-    // 2. Tunggu sampai SEMUANYA selesai
     const viewsContent = await Promise.all(fetchPromises);
 
-    // 3. Masukkan ke HTML sekaligus sesuai urutan
     viewsContent.forEach(html => {
-        if(html) appContainer.insertAdjacentHTML('beforeend', html);
+        if (html) appContainer.insertAdjacentHTML('beforeend', html);
     });
-    
+
     updateVersionLabels();
     initializeApp();
 }
 
 function updateVersionLabels() {
     const vLogin = document.getElementById('versionTextLogin');
-    if(vLogin) vLogin.innerText = APP_VERSION;
-    
+    if (vLogin) vLogin.innerText = APP_VERSION;
+
     const vProfile = document.getElementById('versionTextProfile');
-    if(vProfile) vProfile.innerText = APP_VERSION;
+    if (vProfile) vProfile.innerText = APP_VERSION;
 }
 
 function initializeApp() {
     setupRouter();
-    
+
     initAuth();
     initHome();
     initTracker();
@@ -78,6 +78,8 @@ function initializeApp() {
     initDoa();
     initAsmaulHusna();
     initProfile();
+    // [BARU] Jalankan init credits
+    initCredits();
 
     onAuthStateChanged(auth, (user) => {
         const splash = document.getElementById('splashScreen');
@@ -87,14 +89,14 @@ function initializeApp() {
         if (user) {
             setCurrentUser(user);
             syncThemeWithCloud();
-            
+
             const loginOverlay = document.getElementById('loginOverlay');
-            if(loginOverlay) loginOverlay.classList.add('hidden-force');
-            if(sidebar) sidebar.classList.remove('hidden-force');
+            if (loginOverlay) loginOverlay.classList.add('hidden-force');
+            if (sidebar) sidebar.classList.remove('hidden-force');
             switchView('homeView', false);
         } else {
             setCurrentUser(null);
-            if(sidebar) sidebar.classList.add('hidden-force');
+            if (sidebar) sidebar.classList.add('hidden-force');
 
             if (appContainer) {
                 Array.from(appContainer.children).forEach(child => {
@@ -108,12 +110,11 @@ function initializeApp() {
             }
         }
 
-        if(splash) {
-            // Percepat hilangnya splash screen
+        if (splash) {
             setTimeout(() => {
                 splash.classList.add('opacity-0');
                 setTimeout(() => splash.classList.add('hidden-force'), 300);
-            }, 500); 
+            }, 500);
         }
     });
 }
