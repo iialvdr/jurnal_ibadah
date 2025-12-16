@@ -21,7 +21,6 @@ export function initFasting() {
     window.openNiatModal = openNiatModal;
     window.closeNiatModal = closeNiatModal;
 
-    // --- [AUTO-PATCH MODAL] ---
     const modal = document.getElementById('niatModal');
     const content = document.getElementById('niatModalContent');
 
@@ -41,7 +40,6 @@ export function initFasting() {
         content.classList.add('transition-transform', 'duration-300', 'ease-out');
         content.style.willChange = "transform";
     }
-    // --- [END PATCH] ---
 
     window.addEventListener('viewChanged', (e) => {
         if (e.detail.viewId === 'homeView') {
@@ -118,7 +116,6 @@ function renderFastingPage() {
     const listContainer = document.getElementById('upcomingFastingList');
     if (!listContainer) return;
 
-    // [OPTIMASI] Gunakan DocumentFragment agar 1x Render
     const fragment = document.createDocumentFragment();
     let foundUpcoming = false;
     const startOffset = isTomorrow ? 2 : 1;
@@ -135,11 +132,12 @@ function renderFastingPage() {
             let badgeColor = st.type === 'haram' ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' : st.type === 'wajib' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400';
 
             const div = document.createElement('div');
+            // Cek apakah ada niat untuk kartu upcoming
             if (st.niat.length > 0) {
                 div.setAttribute('onclick', `openNiatModal('${st.niat.join(',')}')`);
                 div.className = `flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm transition active:scale-[0.98] cursor-pointer hover:border-emerald-400 dark:hover:border-emerald-600 group`;
             } else {
-                div.className = `flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm transition active:scale-[0.98] group`;
+                div.className = `flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm transition cursor-default group`;
             }
 
             div.innerHTML = `
@@ -186,17 +184,34 @@ function renderCard(container, status, isHome = false, labelOverride = null) {
     } else {
         bgClass = "bg-emerald-50 dark:bg-emerald-900/10"; borderClass = "border-emerald-100 dark:border-emerald-900/30"; textClass = "text-emerald-600 dark:text-emerald-400"; iconBgClass = "bg-emerald-100 dark:bg-emerald-900/20";
     }
-    const actionClick = isHome ? "openFasting()" : `openNiatModal('${status.niat.join(',')}')`;
+
+    // [MODIFIKASI] Logika Interaksi: Hanya bisa diklik jika di Home ATAU (di halaman Puasa DAN ada niatnya)
+    let actionClick = '';
+    let interactionClass = 'cursor-default'; // Default mati
+
+    if (isHome) {
+        actionClick = "openFasting()";
+        interactionClass = "cursor-pointer active:scale-[0.98]";
+    } else {
+        if (status.niat && status.niat.length > 0) {
+            actionClick = `openNiatModal('${status.niat.join(',')}')`;
+            interactionClass = "cursor-pointer active:scale-[0.98]";
+        }
+    }
+
     const btnText = isHome ? "Selengkapnya" : "Lihat Niat";
     const btnAction = (status.niat && status.niat.length > 0)
-        ? `<button onclick="event.stopPropagation(); ${actionClick}" class="shrink-0 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-xs font-bold ${textClass} hover:opacity-80 transition active:scale-95">${btnText}</button>`
+        ? `<button onclick="event.stopPropagation(); ${isHome ? "openFasting()" : `openNiatModal('${status.niat.join(',')}')`}" class="shrink-0 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-xs font-bold ${textClass} hover:opacity-80 transition active:scale-95">${btnText}</button>`
         : '';
+
     let headerLabel = labelOverride;
     if (!headerLabel) {
         headerLabel = status.type === 'haram' ? 'PERINGATAN' : (status.type === 'none' ? 'INFO PUASA' : 'INFO HARI INI');
     }
+
+    // Perhatikan onclick menggunakan variabel actionClick yang mungkin kosong
     container.innerHTML = `
-        <div onclick="${actionClick}" class="relative w-full ${bgClass} rounded-[1.8rem] p-5 border ${borderClass} shadow-sm flex items-center gap-4 transition-all duration-300 cursor-pointer active:scale-[0.98]">
+        <div onclick="${actionClick}" class="relative w-full ${bgClass} rounded-[1.8rem] p-5 border ${borderClass} shadow-sm flex items-center gap-4 transition-all duration-300 ${interactionClass}">
             <div class="w-12 h-12 rounded-2xl ${iconBgClass} ${textClass} flex items-center justify-center shrink-0"><i data-lucide="${status.icon}" class="w-6 h-6"></i></div>
             <div class="flex-1 min-w-0">
                 <p class="text-[10px] font-bold opacity-60 uppercase tracking-wider ${textClass}">${headerLabel}</p>
@@ -220,6 +235,7 @@ function openNiatModal(keysStr) {
 }
 
 function showNiatModalInternal(keysStr) {
+    if (!keysStr) return; // Safety check
     const keys = keysStr.split(',');
     const container = document.getElementById('niatListContainer');
     const modal = document.getElementById('niatModal');
