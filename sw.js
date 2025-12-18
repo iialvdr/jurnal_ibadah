@@ -36,6 +36,7 @@ const urlsToCache = [
   './views/doa.html',
   './views/asmaul_husna.html',
   './views/fasting.html',
+  './views/credits.html',
 
   './assets/logo.png',
   './assets/favicon/android-chrome-192x192.png',
@@ -46,10 +47,11 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
+  self.skipWaiting(); // Paksa update segera
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Membuka cache versi:', APP_VERSION);
+        console.log('Install SW Versi:', APP_VERSION);
         return cache.addAll(urlsToCache);
       })
   );
@@ -58,33 +60,25 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // [OPTIMASI] Strategi Cache-First untuk API Publik (EQuran & GitHub)
-  // Data ini jarang berubah, jadi aman di-cache agar akses berikutnya INSTANT & OFFLINE-READY
+  // Strategi Cache-First untuk API Publik (EQuran & GitHub)
   if (url.origin === 'https://equran.id' || url.href.includes('githubusercontent.com') || url.href.includes('api.bigdatacloud.net')) {
     event.respondWith(
       caches.open(API_CACHE_NAME).then(cache => {
         return cache.match(event.request).then(response => {
-          // Jika ada di cache, kembalikan cache (Instant)
           if (response) return response;
-
-          // Jika tidak, fetch dari internet lalu simpan ke cache
           return fetch(event.request).then(networkResponse => {
-            // Pastikan respon valid sebelum di-cache
             if (networkResponse && networkResponse.status === 200) {
               cache.put(event.request, networkResponse.clone());
             }
             return networkResponse;
-          }).catch(() => {
-            // Jika fetch gagal (offline) dan tidak ada di cache, biarkan error (atau return fallback json)
-            // Untuk sekarang kita biarkan default error browser
-          });
+          }).catch(() => { });
         });
       })
     );
     return;
   }
 
-  // Strategi Default: Stale-While-Revalidate untuk aset lokal
+  // Strategi Default: Stale-While-Revalidate
   event.respondWith(
     caches.match(event.request)
       .then(response => {
@@ -101,7 +95,7 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Menghapus cache lama:', cacheName);
+            console.log('Hapus Cache Lama:', cacheName);
             return caches.delete(cacheName);
           }
         })

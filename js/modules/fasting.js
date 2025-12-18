@@ -52,6 +52,13 @@ export function initFasting() {
             renderFastingPage();
         }
     });
+
+    // [LISTENER RESET OTOMATIS]
+    window.addEventListener('viewExit', (e) => {
+        if (e.detail.viewId === 'fastingView') {
+            closeNiatModal();
+        }
+    });
 }
 
 function getRelevantDateInfo() {
@@ -132,7 +139,6 @@ function renderFastingPage() {
             let badgeColor = st.type === 'haram' ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' : st.type === 'wajib' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400';
 
             const div = document.createElement('div');
-            // Cek apakah ada niat untuk kartu upcoming
             if (st.niat.length > 0) {
                 div.setAttribute('onclick', `openNiatModal('${st.niat.join(',')}')`);
                 div.className = `flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm transition active:scale-[0.98] cursor-pointer hover:border-emerald-400 dark:hover:border-emerald-600 group`;
@@ -185,9 +191,8 @@ function renderCard(container, status, isHome = false, labelOverride = null) {
         bgClass = "bg-emerald-50 dark:bg-emerald-900/10"; borderClass = "border-emerald-100 dark:border-emerald-900/30"; textClass = "text-emerald-600 dark:text-emerald-400"; iconBgClass = "bg-emerald-100 dark:bg-emerald-900/20";
     }
 
-    // [MODIFIKASI] Logika Interaksi: Hanya bisa diklik jika di Home ATAU (di halaman Puasa DAN ada niatnya)
     let actionClick = '';
-    let interactionClass = 'cursor-default'; // Default mati
+    let interactionClass = 'cursor-default';
 
     if (isHome) {
         actionClick = "openFasting()";
@@ -209,7 +214,6 @@ function renderCard(container, status, isHome = false, labelOverride = null) {
         headerLabel = status.type === 'haram' ? 'PERINGATAN' : (status.type === 'none' ? 'INFO PUASA' : 'INFO HARI INI');
     }
 
-    // Perhatikan onclick menggunakan variabel actionClick yang mungkin kosong
     container.innerHTML = `
         <div onclick="${actionClick}" class="relative w-full ${bgClass} rounded-[1.8rem] p-5 border ${borderClass} shadow-sm flex items-center gap-4 transition-all duration-300 ${interactionClass}">
             <div class="w-12 h-12 rounded-2xl ${iconBgClass} ${textClass} flex items-center justify-center shrink-0"><i data-lucide="${status.icon}" class="w-6 h-6"></i></div>
@@ -235,7 +239,7 @@ function openNiatModal(keysStr) {
 }
 
 function showNiatModalInternal(keysStr) {
-    if (!keysStr) return; // Safety check
+    if (!keysStr) return;
     const keys = keysStr.split(',');
     const container = document.getElementById('niatListContainer');
     const modal = document.getElementById('niatModal');

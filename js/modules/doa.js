@@ -33,14 +33,12 @@ export function initDoa() {
     }
     // --- END PATCH ---
 
-    // Lazy GPU Logic
     window.addEventListener('viewChanged', (e) => {
         const searchWrapper = document.getElementById('doaSearchWrapper');
 
         if (e.detail.viewId === 'doaView') {
             if (allDoa.length === 0) fetchDoaList();
 
-            // Animasi masuk halus untuk searchbar
             if (searchWrapper) {
                 searchWrapper.style.transform = "";
                 setTimeout(() => {
@@ -57,9 +55,16 @@ export function initDoa() {
         }
     });
 
+    // [LISTENER RESET OTOMATIS]
+    window.addEventListener('viewExit', (e) => {
+        if (e.detail.viewId === 'doaView') {
+            closeDoaDetail();
+            closeAllDropdowns();
+        }
+    });
+
     document.addEventListener('click', (e) => {
         if (!activeDropdown) return;
-        // Tutup dropdown jika klik di luar wrapper
         const grpWrapper = document.getElementById('filterGrupWrapper');
         const tagWrapper = document.getElementById('filterTagWrapper');
 
@@ -76,11 +81,8 @@ function toggleFilter(event, type) {
     }
 
     const isClosingSameDropdown = (activeDropdown === type);
-
-    // Tutup semua dulu
     closeAllDropdowns();
 
-    // Jika yang diklik bukan yang sedang aktif (artinya mau membuka)
     if (!isClosingSameDropdown) {
         const listId = type === 'grup' ? 'listGrup' : 'listTag';
         const iconId = type === 'grup' ? 'iconGrup' : 'iconTag';
@@ -89,7 +91,6 @@ function toggleFilter(event, type) {
 
         if (listEl) {
             listEl.classList.remove('hidden');
-            // [OPTIMASI] Gunakan requestAnimationFrame untuk memastikan browser siap merender animasi
             requestAnimationFrame(() => {
                 listEl.classList.add('opacity-100', 'scale-100');
                 listEl.classList.remove('opacity-0', 'scale-95');
@@ -98,8 +99,6 @@ function toggleFilter(event, type) {
         if (iconEl) iconEl.classList.add('rotate-180');
 
         activeDropdown = type;
-
-        // [PENTING] Hapus lucide.createIcons dari sini agar tidak berat!
     }
 }
 
@@ -110,7 +109,6 @@ function closeAllDropdowns() {
 
         if (list && !list.classList.contains('hidden')) {
             list.classList.add('hidden');
-            // Reset state animasi
             list.classList.remove('opacity-100', 'scale-100');
             list.classList.add('opacity-0', 'scale-95');
         }
@@ -148,7 +146,6 @@ async function fetchDoaList(grup = '', tag = '') {
     if (container) container.classList.add('hidden');
 
     try {
-        // [OPTIMASI] Cek cache atau data lokal jika memungkinkan di masa depan
         const url = new URL('https://equran.id/api/doa');
         if (grup) url.searchParams.append('grup', grup);
         if (tag) url.searchParams.append('tag', tag);
@@ -158,7 +155,7 @@ async function fetchDoaList(grup = '', tag = '') {
         let data = (Array.isArray(result)) ? result : (result.data || []);
 
         if (!grup && !tag && !isFiltersLoaded) {
-            allDoa = data; // Simpan master data
+            allDoa = data;
             extractAndRenderFilters(data);
             isFiltersLoaded = true;
         }
@@ -184,25 +181,21 @@ function extractAndRenderFilters(data) {
         }
     });
 
-    // Render Grup
     const listGrup = document.getElementById('listGrup');
     if (listGrup) {
         const sortedGrups = Array.from(uniqueGrups).sort();
         let html = generateDropdownItem('grup', '', 'Semua Kategori', true);
         sortedGrups.forEach(g => html += generateDropdownItem('grup', g, g, false));
         listGrup.innerHTML = html;
-        // [OPTIMASI] Render icon SEKALI SAJA di sini
         if (window.lucide) lucide.createIcons({ root: listGrup });
     }
 
-    // Render Tag
     const listTag = document.getElementById('listTag');
     if (listTag) {
         const sortedTags = Array.from(uniqueTags).sort();
         let html = generateDropdownItem('tag', '', 'Semua Tag', true);
         sortedTags.forEach(t => html += generateDropdownItem('tag', t, t, false));
         listTag.innerHTML = html;
-        // [OPTIMASI] Render icon SEKALI SAJA di sini
         if (window.lucide) lucide.createIcons({ root: listTag });
     }
 }
@@ -230,11 +223,9 @@ function renderDoaList(data) {
     });
     container.innerHTML = html;
 
-    // Render icon untuk list utama
     if (window.lucide) lucide.createIcons({ root: container });
 }
 
-// [OPTIMASI] Search dengan requestAnimationFrame agar tidak lag saat ngetik
 let searchTimeout;
 function searchDoa(query) {
     if (searchTimeout) cancelAnimationFrame(searchTimeout);
@@ -244,7 +235,6 @@ function searchDoa(query) {
         const items = document.querySelectorAll('#doaListContainer .item-doa');
 
         items.forEach(item => {
-            // Ambil text dari elemen judul spesifik, bukan seluruh innerText (lebih ringan)
             const titleEl = item.querySelector('.text-doa');
             const text = titleEl ? titleEl.textContent.toLowerCase() : '';
 
@@ -281,7 +271,6 @@ async function openDoaDetail(id, title) {
     }
 
     try {
-        // Cek data di memory dulu (optional optimization)
         const doaData = allDoa.find(d => d.id === id);
         if (doaData && (doaData.arab || doaData.ar)) {
             updateDetailContent(doaData);

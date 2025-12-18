@@ -23,8 +23,8 @@ export function setupRouter() {
             'doa': 'doaView',
             'asmaul-husna': 'asmaulHusnaView',
             'fasting': 'fastingView',
-            // [BARU] Tambahkan route credits
-            'credits': 'creditsView'
+            'credits': 'creditsView',
+            'changelog': 'changelogView' // [BARU] Route untuk changelog
         };
 
         const targetViewId = routes[hash] || 'homeView';
@@ -40,6 +40,9 @@ export function setupRouter() {
         setTimeout(() => { isExplicitNavigation = false; }, 100);
     };
 
+    // [PENTING] Expose navigateTo agar bisa dipanggil di HTML (onclick)
+    window.navigateTo = navigateTo;
+
     window.goHome = () => navigateTo('home');
     window.openTracker = () => navigateTo('tracker');
     window.openTasbih = () => navigateTo('tasbih');
@@ -49,8 +52,10 @@ export function setupRouter() {
     window.openDoa = () => navigateTo('doa');
     window.openAsma = () => navigateTo('asmaul-husna');
     window.openFasting = () => navigateTo('fasting');
-    // [BARU] Fungsi global navigasi
     window.openCredits = () => navigateTo('credits');
+
+    // Opsional: shortcut khusus changelog jika butuh
+    // window.openChangelog = () => navigateTo('changelog');
 
     window.goBack = () => {
         if (window.history.length > 1) {
@@ -67,11 +72,24 @@ export function setupRouter() {
 }
 
 export function switchView(targetId) {
-    // [BARU] Tambahkan creditsView ke array
-    const allViews = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView', 'fastingView', 'creditsView'];
+    // [BARU] Tambahkan 'changelogView' ke dalam daftar view
+    const allViews = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView', 'fastingView', 'creditsView', 'changelogView'];
     const targetEl = document.getElementById(targetId);
 
     if (!targetEl) return;
+
+    // --- [LOGIC RESET HALAMAN] ---
+    // Cari halaman yang sedang aktif SEBELUM pindah
+    const currentActive = document.querySelector('.absolute.z-50.active');
+
+    // Jika ada halaman aktif dan id-nya beda dengan tujuan (artinya kita pindah halaman)
+    if (currentActive && currentActive.id !== targetId) {
+        // Kirim sinyal 'viewExit' ke modul terkait agar mereset dirinya
+        window.dispatchEvent(new CustomEvent('viewExit', {
+            detail: { viewId: currentActive.id }
+        }));
+    }
+    // -----------------------------------
 
     if (window.lucide && targetEl.querySelectorAll('i[data-lucide]').length > 0) {
         if (!targetEl.hasAttribute('data-icons-rendered')) {
@@ -112,8 +130,8 @@ function updateSidebarUI(activeViewId) {
         'doaView': 'nav-doa',
         'asmaulHusnaView': 'nav-asma',
         'fastingView': 'nav-fasting',
-        // [BARU] Highlight menu profile saat di halaman credits
-        'creditsView': 'nav-profile'
+        'creditsView': 'nav-profile',
+        'changelogView': 'nav-profile' // [BARU] Changelog tetap highlight menu Profile
     };
 
     const activeBtnId = map[activeViewId];

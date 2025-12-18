@@ -46,6 +46,14 @@ export function initProfile() {
     window.addEventListener('viewChanged', (e) => {
         if (e.detail.viewId === 'profileView') updateProfileUI();
     });
+
+    // [BARU] Tutup Modal Otomatis saat Keluar Halaman
+    window.addEventListener('viewExit', (e) => {
+        if (e.detail.viewId === 'profileView') {
+            closeEditProfile();
+            toggleLogoutModal(false);
+        }
+    });
 }
 
 function updateProfileUI() {
@@ -114,7 +122,6 @@ async function loadChartData(days) {
 
     try {
         // 2. Eksekusi semua request SERENTAK (Parallel Execution)
-        // Ini membuat loading 7 hari sama cepatnya dengan loading 1 hari
         const results = await Promise.all(tasks);
 
         const labels = [];

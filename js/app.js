@@ -15,8 +15,8 @@ import { initProfile } from './modules/profile.js';
 import { initDoa } from './modules/doa.js';
 import { initAsmaulHusna } from './modules/asmaul_husna.js';
 import { initFasting } from './modules/fasting.js';
-// [BARU] Import module credits
 import { initCredits } from './modules/credits.js';
+import { initChangelog } from './modules/changelog.js'; // [BARU] Import module changelog
 
 window.vibrateSoft = () => { if (navigator.vibrate) navigator.vibrate(10); };
 window.vibrateSuccess = () => { if (navigator.vibrate) navigator.vibrate([10, 30, 10]); };
@@ -26,8 +26,8 @@ const VIEWS = [
     'views/tasbih.html', 'views/qibla.html', 'views/tracker.html', 'views/quran.html',
     'views/doa.html', 'views/asmaul_husna.html',
     'views/fasting.html',
-    // [BARU] Daftarkan file HTML credits
-    'views/credits.html'
+    'views/credits.html',
+    'views/changelog.html' // [BARU] Daftarkan view changelog
 ];
 
 async function loadAllViews() {
@@ -78,8 +78,8 @@ function initializeApp() {
     initDoa();
     initAsmaulHusna();
     initProfile();
-    // [BARU] Jalankan init credits
     initCredits();
+    initChangelog(); // [BARU] Jalankan init changelog
 
     onAuthStateChanged(auth, (user) => {
         const splash = document.getElementById('splashScreen');

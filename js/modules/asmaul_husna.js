@@ -2,7 +2,7 @@
 
 let asmaulHusnaData = [];
 let currentDetailIndex = 0;
-let searchTimeout = null; // Untuk debounce/rAF search
+let searchTimeout = null;
 
 export function initAsmaulHusna() {
     window.searchAsma = searchAsma;
@@ -10,14 +10,12 @@ export function initAsmaulHusna() {
     window.closeAsmaDetail = closeAsmaDetail;
     window.changeAsma = changeAsma;
 
-    // Auto-patch modal agar transisi halus (sama seperti Doa)
     const detailModal = document.getElementById('asmaDetailModal');
     const content = document.getElementById('asmaDetailContent');
 
     if (detailModal) {
         detailModal.classList.remove('hidden-force');
         detailModal.classList.add('invisible', 'opacity-0', 'pointer-events-none', 'transition-opacity', 'duration-300', 'ease-out');
-        // Pastikan background gelap konsisten
         if (detailModal.classList.contains('bg-slate-900/60')) detailModal.classList.remove('bg-slate-900/60');
         detailModal.classList.add('bg-slate-900/90');
 
@@ -29,22 +27,27 @@ export function initAsmaulHusna() {
     if (content) {
         content.classList.remove('transition-all', 'scale-90');
         content.classList.add('transition-transform', 'duration-300', 'ease-out', 'scale-95');
-        // Hardware acceleration hint
         content.style.willChange = "transform, opacity";
     }
 
     window.addEventListener('viewChanged', (e) => {
         if (e.detail.viewId === 'asmaulHusnaView') {
             const searchInput = document.getElementById('asmaSearchInput');
-            if (searchInput) searchInput.value = ''; // Reset search
+            if (searchInput) searchInput.value = '';
 
             if (asmaulHusnaData.length === 0) {
                 fetchAsmaulHusna();
             } else {
-                // Pastikan semua item terlihat saat kembali ke view ini
                 const items = document.querySelectorAll('.item-asma');
                 items.forEach(el => el.classList.remove('hidden'));
             }
+        }
+    });
+
+    // [LISTENER RESET OTOMATIS]
+    window.addEventListener('viewExit', (e) => {
+        if (e.detail.viewId === 'asmaulHusnaView') {
+            closeAsmaDetail();
         }
     });
 }
@@ -79,16 +82,12 @@ function renderList(data) {
         return;
     }
 
-    // Gunakan DocumentFragment agar hanya 1x repaint browser (Performance Boost)
     const fragment = document.createDocumentFragment();
 
     data.forEach(item => {
         const div = document.createElement('div');
-        // Tambahkan class 'item-asma' untuk target pencarian nanti
         div.className = "item-asma group bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 cursor-pointer active:scale-[0.98] flex items-center justify-between relative overflow-hidden";
         div.onclick = () => openAsmaDetail(item.index);
-
-        // Simpan data teks di atribut data agar pencarian super cepat (tanpa baca DOM innerText)
         div.setAttribute('data-search', `${item.index} ${item.latin.toLowerCase()} ${item.meaning.toLowerCase()}`);
 
         div.innerHTML = `
@@ -114,7 +113,6 @@ function renderList(data) {
     container.appendChild(fragment);
 }
 
-// [OPTIMASI SEARCH] Menggunakan requestAnimationFrame & class toggle (Bukan re-render HTML)
 function searchAsma(query) {
     if (searchTimeout) cancelAnimationFrame(searchTimeout);
 
@@ -123,7 +121,6 @@ function searchAsma(query) {
         const items = document.querySelectorAll('.item-asma');
 
         items.forEach(item => {
-            // Ambil text dari atribut data (Jauh lebih cepat daripada baca innerText)
             const searchText = item.getAttribute('data-search') || '';
 
             if (searchText.includes(lowerQ)) {

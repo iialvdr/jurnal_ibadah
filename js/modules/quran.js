@@ -10,7 +10,6 @@ let lastReadData = null;
 let nextAudioPreload = null;
 let searchTimeout = null;
 
-// Variabel untuk menyimpan Promise tafsir yang sedang diambil
 let currentTafsirPromise = null;
 let currentTafsirData = null;
 
@@ -24,6 +23,29 @@ export function initQuran() {
     window.toggleTafsir = toggleTafsir;
 
     if (allSurahs.length === 0) fetchSurahList();
+
+    // [LISTENER RESET OTOMATIS]
+    window.addEventListener('viewExit', (e) => {
+        if (e.detail.viewId === 'quranView') {
+            forceCloseSurahDetail();
+        }
+    });
+}
+
+function forceCloseSurahDetail() {
+    // 1. Matikan Audio
+    stopCurrentAudio();
+
+    // 2. Kembalikan UI ke List Surah
+    const ayahContainer = document.getElementById('ayahListContainer');
+    const searchContainer = document.getElementById('quranSearchContainer');
+    const navButtons = document.getElementById('surahNavButtons');
+    const title = document.getElementById('quranTitle');
+
+    if (ayahContainer) ayahContainer.classList.add('translate-x-full');
+    if (searchContainer) searchContainer.classList.remove('-translate-y-24', 'opacity-0', 'pointer-events-none');
+    if (navButtons) navButtons.classList.add('translate-y-40');
+    if (title) title.innerText = "Al-Qur'an";
 }
 
 async function fetchSurahList() {
@@ -135,13 +157,12 @@ function renderAyahSkeleton() {
     container.innerHTML = skeletonHtml;
 }
 
-// Fungsi Fetch Tafsir Khusus
 async function fetchTafsirData(nomorSurat) {
     try {
         const response = await fetch(`https://equran.id/api/v2/tafsir/${nomorSurat}`);
         const result = await response.json();
         if (result.code === 200 && result.data && result.data.tafsir) {
-            return result.data.tafsir; // Mengembalikan array tafsir
+            return result.data.tafsir;
         }
         return null;
     } catch (error) {
@@ -205,7 +226,6 @@ function renderAyahs(ayatList, surahName) {
     if (window.lucide) lucide.createIcons();
 }
 
-// Logika Toggle Tafsir dengan Async Fetch
 async function toggleTafsir(ayatId) {
     const container = document.getElementById(`tafsir-container-${ayatId}`);
     const contentText = document.getElementById(`tafsir-text-${ayatId}`);
@@ -213,20 +233,16 @@ async function toggleTafsir(ayatId) {
     const btnText = btn.querySelector('span');
 
     if (container.classList.contains('hidden')) {
-        // Tampilkan Container
         container.classList.remove('hidden');
         btnText.innerText = 'Tutup Tafsir';
         btn.classList.add('bg-emerald-50', 'dark:bg-emerald-900/20', 'text-emerald-600', 'border-emerald-200');
 
-        // Cek apakah data sudah ada
         if (!currentTafsirData) {
             try {
                 if (!currentTafsirPromise) {
                     contentText.innerHTML = `<span class="text-red-500">Gagal memuat koneksi.</span>`;
                     return;
                 }
-
-                // Tunggu data tafsir selesai diunduh
                 currentTafsirData = await currentTafsirPromise;
             } catch (e) {
                 contentText.innerHTML = `<span class="text-red-500">Gagal memuat tafsir. Periksa internet.</span>`;
@@ -234,9 +250,7 @@ async function toggleTafsir(ayatId) {
             }
         }
 
-        // Render teks tafsir jika data tersedia
         if (currentTafsirData && Array.isArray(currentTafsirData)) {
-            // Cari tafsir untuk ayat yang sesuai
             const tafsirItem = currentTafsirData.find(t => t.ayat === ayatId);
             if (tafsirItem) {
                 contentText.innerHTML = tafsirItem.teks;
@@ -246,7 +260,6 @@ async function toggleTafsir(ayatId) {
         }
 
     } else {
-        // Sembunyikan Container
         container.classList.add('hidden');
         btnText.innerText = 'Baca Tafsir';
         btn.classList.remove('bg-emerald-50', 'dark:bg-emerald-900/20', 'text-emerald-600', 'border-emerald-200');
@@ -255,7 +268,6 @@ async function toggleTafsir(ayatId) {
 
 async function openSurah(nomor, targetAyah = null, surahName = null) {
     currentSurahNumber = nomor;
-    // Reset Data Tafsir setiap ganti surat
     currentTafsirData = null;
     currentTafsirPromise = null;
 
@@ -277,7 +289,6 @@ async function openSurah(nomor, targetAyah = null, surahName = null) {
 
     stopCurrentAudio();
 
-    // Mulai fetch tafsir di background SEGERA
     currentTafsirPromise = fetchTafsirData(nomor);
 
     try {
@@ -317,19 +328,12 @@ async function openSurah(nomor, targetAyah = null, surahName = null) {
 
 function handleQuranBack() {
     const ayahContainer = document.getElementById('ayahListContainer');
-    const searchContainer = document.getElementById('quranSearchContainer');
-    const navButtons = document.getElementById('surahNavButtons');
-    const title = document.getElementById('quranTitle');
 
+    // Jika sedang di detail ayat (class translate-x-full TIDAK ada)
     if (ayahContainer && !ayahContainer.classList.contains('translate-x-full')) {
-        ayahContainer.classList.add('translate-x-full');
-
-        if (searchContainer) searchContainer.classList.remove('-translate-y-24', 'opacity-0', 'pointer-events-none');
-        if (navButtons) navButtons.classList.add('translate-y-40');
-        if (title) title.innerText = "Al-Qur'an";
-
-        stopCurrentAudio();
+        forceCloseSurahDetail();
     } else {
+        // Jika sudah di list, jalankan fungsi back router normal
         if (window.goBack) window.goBack();
     }
 }

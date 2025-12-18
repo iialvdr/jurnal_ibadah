@@ -45,6 +45,25 @@ export function initTasbih() {
     // --- [END PATCH] ---
 
     updateTargetUI(33);
+
+    // [LISTENER RESET OTOMATIS]
+    window.addEventListener('viewExit', (e) => {
+        if (e.detail.viewId === 'tasbihView') {
+            fullResetTasbih();
+        }
+    });
+}
+
+function fullResetTasbih() {
+    // 1. Reset Angka
+    tasbihCount = 0;
+    const countEl = document.getElementById('tasbihCount');
+    if (countEl) countEl.innerText = '0';
+
+    // 2. Sembunyikan Bacaan Dzikir
+    const displayArea = document.getElementById('dhikrDisplayArea');
+    if (displayArea) displayArea.classList.add('hidden');
+    currentDhikrIndex = -1;
 }
 
 function countTasbih() {

@@ -80,7 +80,8 @@ button, a, .transition-all {
 }
 
 /* --- SYSTEM TAMPILAN (NO ANIMATION / INSTANT) --- */
-#homeView, #trackerView, #tasbihView, #qiblaView, #quranView, #profileView, #doaView, #asmaulHusnaView, #fastingView {
+/* Hapus #quranView dan #asmaulHusnaView agar layout mengikuti HTML (header fixed, list scroll) */
+#homeView, #trackerView, #tasbihView, #qiblaView, #profileView, #fastingView {
     position: absolute;
     inset: 0;
     width: 100%;
