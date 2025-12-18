@@ -2,6 +2,7 @@ import { auth, db } from '../config.js';
 import { signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { state } from '../state.js';
+import { APP_VERSION } from '../version.js'; // Import Versi
 
 let activityChart = null;
 let isChartLibLoaded = false;
@@ -14,40 +15,10 @@ export function initProfile() {
     setupLogoutListeners();
     setupEditProfileListeners();
 
-    // --- [AUTO-PATCH MODALS] ---
-    const modals = [
-        { id: 'editProfileModal', contentId: 'editProfileContent' },
-        { id: 'logoutModal', contentId: 'logoutModalContent' }
-    ];
-
-    modals.forEach(({ id, contentId }) => {
-        const m = document.getElementById(id);
-        const c = document.getElementById(contentId);
-
-        if (m) {
-            m.classList.remove('hidden-force', 'backdrop-blur-sm', 'transition-all');
-            m.classList.add('invisible', 'opacity-0', 'pointer-events-none', 'transition-opacity', 'duration-300', 'ease-out');
-            if (m.classList.contains('bg-slate-900/60')) m.classList.remove('bg-slate-900/60');
-            m.classList.add('bg-slate-900/90');
-            m.addEventListener('click', (e) => {
-                if (e.target === m) {
-                    if (id === 'editProfileModal') closeEditProfile();
-                    else toggleLogoutModal(false);
-                }
-            });
-        }
-        if (c) {
-            c.classList.remove('transition-all');
-            c.classList.add('transition-transform', 'duration-300', 'ease-out');
-            c.style.willChange = "transform";
-        }
-    });
-
     window.addEventListener('viewChanged', (e) => {
         if (e.detail.viewId === 'profileView') updateProfileUI();
     });
 
-    // [BARU] Tutup Modal Otomatis saat Keluar Halaman
     window.addEventListener('viewExit', (e) => {
         if (e.detail.viewId === 'profileView') {
             closeEditProfile();
@@ -57,28 +28,157 @@ export function initProfile() {
 }
 
 function updateProfileUI() {
+    // [BARU] Update versi di footer Profil
+    const footerVer = document.getElementById('versionTextProfile');
+    if (footerVer) footerVer.innerText = APP_VERSION;
+
     const user = state.currentUser;
     if (!user) return;
 
-    document.getElementById('profileNameLarge').innerText = user.displayName;
-    document.getElementById('profileEmail').innerText = user.email;
-    document.getElementById('lastLocation').innerText = state.lastCity || "Lokasi Tidak Dikenal";
+    const nameEl = document.getElementById('profileNameLarge');
+    const emailEl = document.getElementById('profileEmail');
+    if (nameEl) nameEl.innerText = user.displayName;
+    if (emailEl) emailEl.innerText = user.email;
+
+    const locEl = document.getElementById('lastLocation');
+    if (locEl) locEl.innerText = state.lastCity || "Lokasi Tidak Dikenal";
 
     const img = document.getElementById('profilePhotoLarge');
     if (img) img.src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=10b981&color=fff&size=128`;
 
     if (user.metadata) {
         const joinDate = new Date(user.metadata.creationTime);
-        document.getElementById('joinDate').innerText = joinDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        const joinEl = document.getElementById('joinDate');
+        if (joinEl) joinEl.innerText = joinDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+
         const diff = Math.ceil(Math.abs(new Date() - joinDate) / (1000 * 60 * 60 * 24));
-        document.getElementById('statDays').innerText = `${diff} Hari`;
+        const dayEl = document.getElementById('statDays');
+        if (dayEl) dayEl.innerText = `${diff}`;
     }
 
-    // Load grafik sedikit delay agar animasi masuk halaman mulus dulu
     setTimeout(() => loadChartData(7), 300);
 }
 
-// [OPTIMASI] Lazy Load Library Chart.js (Hapus script di index.html jika pakai ini)
+// ... (Sisa fungsi lainnya: openEditProfile, closeEditProfile, toggleLogoutModal dll tetap sama) ...
+// (Pastikan sisa kode di file ini tetap ada seperti sebelumnya)
+
+// --- [ANIMATION LOGIC PERBAIKAN] ---
+function openEditProfile() {
+    const user = state.currentUser;
+    if (!user) return;
+
+    const modal = document.getElementById('editProfileModal');
+    const backdrop = document.getElementById('editProfileBackdrop');
+    const content = document.getElementById('editProfileContent');
+    const input = document.getElementById('editNameInput');
+    const dmToggle = document.getElementById('darkModeToggleProfile');
+
+    if (input) input.value = user.displayName || "";
+    if (dmToggle) {
+        const isDark = document.documentElement.classList.contains('dark');
+        dmToggle.checked = isDark;
+    }
+
+    if (modal && content && backdrop) {
+        modal.classList.remove('invisible', 'pointer-events-none');
+
+        // Double RAF for smoother entry
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                backdrop.classList.remove('opacity-0');
+                content.classList.remove('translate-y-full', 'sm:translate-y-10', 'sm:scale-95');
+                content.classList.add('translate-y-0', 'sm:scale-100');
+            });
+        });
+    }
+}
+
+function closeEditProfile() {
+    const modal = document.getElementById('editProfileModal');
+    const backdrop = document.getElementById('editProfileBackdrop');
+    const content = document.getElementById('editProfileContent');
+
+    if (modal && content && backdrop) {
+        backdrop.classList.add('opacity-0');
+
+        content.classList.remove('translate-y-0', 'sm:scale-100');
+        content.classList.add('translate-y-full', 'sm:translate-y-10', 'sm:scale-95');
+
+        setTimeout(() => {
+            modal.classList.add('invisible', 'pointer-events-none');
+        }, 500); // Samakan dengan duration di CSS (500ms)
+    }
+}
+
+function toggleLogoutModal(show) {
+    const modal = document.getElementById('logoutModal');
+    const backdrop = document.getElementById('logoutBackdrop');
+    const content = document.getElementById('logoutModalContent');
+    if (!modal) return;
+
+    if (show) {
+        modal.classList.remove('invisible', 'pointer-events-none');
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                backdrop.classList.remove('opacity-0');
+                content.classList.remove('scale-90', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            });
+        });
+    } else {
+        backdrop.classList.add('opacity-0');
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-90', 'opacity-0');
+        setTimeout(() => { modal.classList.add('invisible', 'pointer-events-none'); }, 300);
+    }
+}
+
+// ------------------------------------
+
+function setupEditProfileListeners() {
+    const saveBtn = document.getElementById('saveProfileBtn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+            const input = document.getElementById('editNameInput');
+            const newName = input.value.trim();
+
+            if (!newName) return alert("Nama tidak boleh kosong!");
+
+            const originalHTML = saveBtn.innerHTML;
+            saveBtn.innerHTML = `<i class="animate-spin" data-lucide="loader-2"></i> Menyimpan...`;
+            saveBtn.disabled = true;
+
+            try {
+                if (auth.currentUser) {
+                    await updateProfile(auth.currentUser, { displayName: newName });
+                    state.currentUser.displayName = newName;
+
+                    updateProfileUI();
+
+                    const homeName = document.getElementById('homeUserName');
+                    if (homeName) homeName.innerText = newName;
+
+                    closeEditProfile();
+                }
+            } catch (error) {
+                console.error("Gagal update:", error);
+                alert("Gagal menyimpan perubahan.");
+            } finally {
+                saveBtn.innerHTML = originalHTML;
+                saveBtn.disabled = false;
+                if (window.lucide) window.lucide.createIcons();
+            }
+        });
+    }
+
+    const dmToggle = document.getElementById('darkModeToggleProfile');
+    if (dmToggle) {
+        dmToggle.addEventListener('change', () => {
+            if (window.toggleDarkMode) window.toggleDarkMode();
+        });
+    }
+}
+
 async function loadChartLibrary() {
     if (isChartLibLoaded || typeof Chart !== 'undefined') return true;
     return new Promise((resolve) => {
@@ -99,21 +199,17 @@ function formatDateKey(date) {
 async function loadChartData(days) {
     if (!state.currentUser) return;
     updateChartToggleUI(days);
-
-    // Pastikan library siap sebelum lanjut
     await loadChartLibrary();
 
     const today = new Date();
     const tasks = [];
 
-    // 1. Siapkan daftar request (Parallel Preparation)
     for (let i = days - 1; i >= 0; i--) {
         const d = new Date();
         d.setDate(today.getDate() - i);
         const dateKey = formatDateKey(d);
         const label = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
 
-        // Push promise ke array, jangan await di sini!
         tasks.push(
             getDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey))
                 .then(snap => ({ snap, label, isToday: i === 0 }))
@@ -121,9 +217,7 @@ async function loadChartData(days) {
     }
 
     try {
-        // 2. Eksekusi semua request SERENTAK (Parallel Execution)
         const results = await Promise.all(tasks);
-
         const labels = [];
         const dataPoints = [];
         let totalCompletedInPeriod = 0;
@@ -133,9 +227,7 @@ async function loadChartData(days) {
             let count = 0;
             if (snap.exists()) {
                 const data = snap.data();
-                ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'].forEach(p => {
-                    if (data[p]) count++;
-                });
+                ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'].forEach(p => { if (data[p]) count++; });
             }
             dataPoints.push(count);
             totalCompletedInPeriod += count;
@@ -149,9 +241,7 @@ async function loadChartData(days) {
         renderChart(labels, dataPoints);
         calculateConsistency(totalCompletedInPeriod, days);
 
-    } catch (e) {
-        console.error("Error fetching chart data:", e);
-    }
+    } catch (e) { console.error("Error chart:", e); }
 }
 
 function calculateConsistency(totalCompleted, days) {
@@ -162,23 +252,31 @@ function calculateConsistency(totalCompleted, days) {
     const statEl = document.getElementById('statConsistency');
     if (statEl) {
         statEl.innerText = `${percentage}%`;
-        if (percentage >= 80) statEl.className = "text-sm font-black text-emerald-500";
-        else if (percentage >= 50) statEl.className = "text-sm font-black text-amber-500";
-        else statEl.className = "text-sm font-black text-slate-800 dark:text-white";
+        statEl.className = "block text-sm font-black leading-none";
+
+        if (percentage >= 80) statEl.classList.add("text-emerald-500");
+        else if (percentage >= 50) statEl.classList.add("text-amber-500");
+        else statEl.classList.add("text-slate-800", "dark:text-white");
     }
 }
 
 function updateChartToggleUI(days) {
     const btn7 = document.getElementById('btn7Days');
     const btn14 = document.getElementById('btn14Days');
-    const activeClass = "px-3 py-1.5 text-[10px] rounded-lg font-bold transition shadow-sm bg-white dark:bg-slate-700 text-emerald-600";
-    const inactiveClass = "px-3 py-1.5 text-[10px] rounded-lg font-bold transition text-slate-400 hover:text-emerald-600";
-    if (days === 7) {
-        if (btn7) btn7.className = activeClass;
-        if (btn14) btn14.className = inactiveClass;
-    } else {
-        if (btn7) btn7.className = inactiveClass;
-        if (btn14) btn14.className = activeClass;
+    const activeClass = ["bg-white", "dark:bg-slate-700", "text-emerald-600", "shadow-sm"];
+    const inactiveClass = ["text-slate-400", "hover:text-emerald-600"];
+
+    if (btn7 && btn14) {
+        btn7.classList.remove(...activeClass, ...inactiveClass);
+        btn14.classList.remove(...activeClass, ...inactiveClass);
+
+        if (days === 7) {
+            btn7.classList.add(...activeClass);
+            btn14.classList.add(...inactiveClass);
+        } else {
+            btn7.classList.add(...inactiveClass);
+            btn14.classList.add(...activeClass);
+        }
     }
 }
 
@@ -186,8 +284,6 @@ function renderChart(labels, data) {
     const ctx = document.getElementById('activityChart');
     if (!ctx) return;
     if (activityChart) activityChart.destroy();
-
-    // Safety check kalau library gagal load
     if (typeof Chart === 'undefined') return;
 
     activityChart = new Chart(ctx, {
@@ -200,125 +296,42 @@ function renderChart(labels, data) {
                 borderColor: '#10b981',
                 backgroundColor: (context) => {
                     const ctx = context.chart.ctx;
-                    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-                    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 160);
+                    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
                     gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
                     return gradient;
                 },
-                borderWidth: 3,
+                borderWidth: 2,
                 pointBackgroundColor: '#ffffff',
                 pointBorderColor: '#10b981',
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                pointHoverBorderWidth: 3,
+                pointRadius: 3,
+                pointHoverRadius: 5,
                 fill: true,
-                tension: 0.3 // Sedikit curve biar lebih smooth
+                tension: 0.4
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#0f172a',
-                    titleColor: '#fff',
-                    bodyColor: '#cbd5e1',
-                    padding: 12,
-                    cornerRadius: 12,
-                    displayColors: false,
-                    callbacks: { label: function (context) { return context.parsed.y + ' Wajib'; } }
-                }
-            },
+            plugins: { legend: { display: false }, tooltip: { enabled: true } },
             scales: {
-                y: { beginAtZero: true, suggestedMax: 5, display: false },
-                x: { grid: { display: false }, ticks: { font: { size: 10, family: 'Inter' }, color: '#94a3b8' } }
+                y: { beginAtZero: true, max: 5, display: false },
+                x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#94a3b8' } }
             },
             interaction: { intersect: false, mode: 'index' },
         }
     });
 }
 
-// ... (SISA KODE SAMA: openEditProfile, closeEditProfile, Listeners...) ...
-function openEditProfile() {
-    const user = state.currentUser;
-    if (!user) return;
-    const modal = document.getElementById('editProfileModal');
-    const content = document.getElementById('editProfileContent');
-    const input = document.getElementById('editNameInput');
-    const dmToggle = document.getElementById('darkModeToggleProfile');
-    if (input) input.value = user.displayName || "";
-    if (dmToggle) {
-        const isDark = document.documentElement.classList.contains('dark');
-        dmToggle.checked = isDark;
-    }
-    if (modal) {
-        modal.classList.remove('invisible', 'pointer-events-none');
-        requestAnimationFrame(() => {
-            modal.classList.remove('opacity-0');
-            if (content) content.classList.remove('translate-y-20', 'scale-95');
-        });
-    }
-}
-function closeEditProfile() {
-    const modal = document.getElementById('editProfileModal');
-    const content = document.getElementById('editProfileContent');
-    if (modal) {
-        modal.classList.add('opacity-0');
-        if (content) content.classList.add('translate-y-20', 'scale-95');
-        setTimeout(() => { modal.classList.add('invisible', 'pointer-events-none'); }, 300);
-    }
-}
-function setupEditProfileListeners() {
-    const saveBtn = document.getElementById('saveProfileBtn');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', async () => {
-            const input = document.getElementById('editNameInput');
-            const newName = input.value.trim();
-            if (!newName) return alert("Nama tidak boleh kosong!");
-            const originalText = saveBtn.innerText;
-            saveBtn.innerText = "Menyimpan...";
-            saveBtn.disabled = true;
-            try {
-                if (auth.currentUser) {
-                    await updateProfile(auth.currentUser, { displayName: newName });
-                    state.currentUser.displayName = newName;
-                    updateProfileUI();
-                    const homeName = document.getElementById('homeUserName');
-                    if (homeName) homeName.innerText = newName;
-                    closeEditProfile();
-                }
-            } catch (error) { console.error("Gagal update:", error); alert("Gagal menyimpan."); }
-            finally { saveBtn.innerText = originalText; saveBtn.disabled = false; }
-        });
-    }
-    const dmToggle = document.getElementById('darkModeToggleProfile');
-    if (dmToggle) { dmToggle.addEventListener('change', () => { if (window.toggleDarkMode) window.toggleDarkMode(); }); }
-}
 function setupLogoutListeners() {
     const logoutBtn = document.getElementById('logoutBtnProfile');
     const cancelBtn = document.getElementById('cancelLogoutBtn');
     const confirmBtn = document.getElementById('confirmLogoutBtn');
+
     if (logoutBtn) logoutBtn.addEventListener('click', () => toggleLogoutModal(true));
     if (cancelBtn) cancelBtn.addEventListener('click', () => toggleLogoutModal(false));
     if (confirmBtn) confirmBtn.addEventListener('click', async () => {
         toggleLogoutModal(false);
         try { await signOut(auth); window.location.reload(); } catch (e) { console.error("Logout error", e); }
     });
-}
-function toggleLogoutModal(show) {
-    const modal = document.getElementById('logoutModal');
-    const content = document.getElementById('logoutModalContent');
-    if (!modal) return;
-    if (show) {
-        modal.classList.remove('invisible', 'pointer-events-none');
-        requestAnimationFrame(() => {
-            modal.classList.remove('opacity-0');
-            if (content) { content.classList.remove('scale-90'); content.classList.add('scale-100'); }
-        });
-    } else {
-        modal.classList.add('opacity-0');
-        if (content) { content.classList.remove('scale-100'); content.classList.add('scale-90'); }
-        setTimeout(() => { modal.classList.add('invisible', 'pointer-events-none'); }, 300);
-    }
 }

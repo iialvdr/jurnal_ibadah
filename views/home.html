@@ -1,162 +1,152 @@
-<div id="homeView" class="hidden-force flex flex-col h-full absolute inset-0 z-40 overflow-y-auto pb-32 pt-[calc(2rem+env(safe-area-inset-top))] bg-slate-100 dark:bg-slate-950 no-scrollbar">
+<div id="homeView" class="hidden-force flex flex-col h-full absolute inset-0 z-40 overflow-y-auto bg-transparent no-scrollbar">
     
-    <div class="px-6 pb-6 flex justify-between items-end">
-        <div>
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm mb-3">
-                <span class="relative flex h-2 w-2">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span class="text-[10px] font-bold tracking-[0.1em] text-emerald-700 dark:text-emerald-400 uppercase">Assalamu'alaikum</span>
-            </div>
-            <h1 id="homeUserName" class="text-3xl font-black text-slate-800 dark:text-white leading-tight tracking-tight">Hamba Allah</h1>
-        </div>
-        
-        <div class="flex items-center gap-3">
-            <button onclick="vibrateSoft(); toggleDarkMode()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-600 dark:text-slate-400 shadow-md border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-amber-500 group">
-                <i data-lucide="moon" class="w-5 h-5 group-hover:rotate-12 transition"></i>
-            </button>
+    <div class="fixed top-0 left-0 right-0 h-28 bg-gradient-to-b from-slate-100/90 via-slate-100/50 to-transparent dark:from-slate-950/90 dark:via-slate-950/50 pointer-events-none z-40"></div>
+
+    <div class="sticky top-0 z-50 pt-[calc(1rem+env(safe-area-inset-top))] px-4 pb-2">
+        <div class="glass-pill flex items-center justify-between p-2 pl-3 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-lg shadow-slate-200/20 dark:shadow-black/20 transition-all duration-300">
             
-            <div onclick="vibrateSoft(); openProfile()" class="relative group cursor-pointer ml-1">
-                <img id="homeUserPhoto" src="" referrerpolicy="no-referrer" class="relative w-11 h-11 rounded-2xl border-2 border-white dark:border-slate-800 object-cover shadow-lg group-hover:scale-105 group-hover:border-emerald-500 transition transform duration-300">
+            <div class="flex items-center gap-3" onclick="vibrateSoft(); openProfile()">
+                <div class="relative group cursor-pointer">
+                    <div class="absolute -inset-1 bg-gradient-to-tr from-emerald-400 to-teal-500 rounded-full opacity-0 group-hover:opacity-50 blur transition duration-500"></div>
+                    <img id="homeUserPhoto" src="" referrerpolicy="no-referrer" class="relative w-10 h-10 rounded-full object-cover border-2 border-white dark:border-slate-800 bg-slate-200">
+                    <div class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full"></div>
+                </div>
+                <div class="flex flex-col justify-center">
+                    <h1 id="homeUserName" class="text-sm font-bold text-slate-800 dark:text-white leading-tight truncate max-w-[150px]">Valdi</h1>
+                    <p id="hijriDisplay" class="text-[10px] font-medium text-slate-500 dark:text-slate-400 leading-tight">Loading...</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1 pr-1">
+                <button onclick="vibrateSoft(); toggleDarkMode()" class="w-9 h-9 rounded-full hover:bg-black/5 dark:hover:bg-white/10 flex items-center justify-center text-slate-600 dark:text-slate-400 transition active:scale-95">
+                    <i data-lucide="moon" class="w-5 h-5"></i>
+                </button>
             </div>
         </div>
     </div>
 
-    <div class="px-6 mb-8">
-        <div class="relative w-full group cursor-pointer transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98] will-change-transform" onclick="vibrateSoft(); refreshLocation()">
-            
-            <div class="relative bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[1.8rem] p-7 text-white shadow-2xl shadow-emerald-500/30 ring-1 ring-white/20 overflow-hidden">
-                <div class="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
-                <div class="absolute bottom-0 left-0 w-40 h-40 bg-emerald-400/20 rounded-full -ml-16 -mb-16 blur-2xl"></div>
+    <div class="px-5 pt-4 pb-6 space-y-5 relative z-0">
+        
+        <div class="relative w-full group cursor-pointer" onclick="vibrateSoft(); refreshLocation()">
+            <div class="bento-card bg-slate-900 dark:bg-black rounded-[2.5rem] p-7 text-white border border-slate-800 relative overflow-hidden shadow-2xl shadow-emerald-900/20">
                 
-                <div class="relative z-10">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <div class="inline-flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg border border-white/10 mb-2 backdrop-blur-md">
-                                <i data-lucide="clock" class="w-3 h-3 text-emerald-200"></i>
-                                <span class="text-[10px] font-bold text-emerald-50 tracking-wide uppercase">Waktu Berikutnya</span>
-                            </div>
-                            <h2 id="nextPrayerName" class="text-4xl font-black tracking-tighter mb-0 drop-shadow-sm">...</h2>
-                            <div class="flex items-baseline gap-2 mt-1">
-                                <p id="nextPrayerTime" class="text-xl font-medium font-mono opacity-90 tracking-wide">--:--</p>
-                                <p id="countdownTimer" class="text-xs font-bold font-mono text-emerald-100 bg-white/20 px-2 py-0.5 rounded-md backdrop-blur-sm">
-                                    - : - : -
-                                </p>
-                            </div>
-                        </div>
-                        <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center shadow-lg group-hover:rotate-12 transition duration-300">
-                             <i id="locIcon" data-lucide="map-pin" class="w-6 h-6 text-white drop-shadow-md"></i>
-                        </div>
+                <div class="absolute inset-0 opacity-40">
+                    <div class="absolute top-[-50%] left-[-20%] w-[150%] h-[150%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-500/30 via-transparent to-transparent animate-spin-slow"></div>
+                    <div class="absolute bottom-[-20%] right-[-20%] w-[100%] h-[100%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-500/20 via-transparent to-transparent"></div>
+                </div>
+
+                <div class="relative z-10 flex flex-col items-center text-center">
+                    <div class="mb-2 flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full backdrop-blur-md border border-white/5">
+                        <i id="locIcon" data-lucide="map-pin" class="w-3 h-3 text-emerald-300"></i>
+                        <span id="homeLocationText" class="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Mencari Lokasi...</span>
                     </div>
-                    <div class="mt-6 flex items-center gap-2 opacity-90 group-hover:opacity-100 transition">
-                        <span id="homeLocationText" class="text-xs font-bold truncate max-w-[200px]">Mencari Lokasi...</span>
-                        <i data-lucide="chevron-right" class="w-3 h-3"></i>
+
+                    <div class="my-3">
+                        <h2 id="nextPrayerName" class="text-5xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400">...</h2>
+                        <p id="nextPrayerTime" class="text-lg font-medium text-emerald-400 mt-1 font-mono">--:--</p>
+                    </div>
+
+                    <div class="mt-2 bg-emerald-500/20 border border-emerald-500/30 px-4 py-1.5 rounded-xl flex items-center gap-2">
+                        <i data-lucide="timer" class="w-3.5 h-3.5 text-emerald-400"></i>
+                        <span id="countdownTimer" class="text-xs font-mono font-bold text-emerald-100">--:--:--</span>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="homeFastingContainer" class="px-6 mb-4 hidden"></div>
-    <div id="homeLastReadContainer" class="px-6 mb-6 hidden"></div>
-    
-    <div class="px-6 mb-8">
-        <div class="flex items-center justify-between mb-4 px-1">
-             <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 uppercase tracking-wide">
-                <i data-lucide="calendar-days" class="w-4 h-4 text-emerald-600"></i> Jadwal Hari Ini
-             </h3>
-             <span id="hijriDisplay" class="text-[10px] font-bold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
-                 Loading...
-             </span>
-        </div>
-        
-        <div id="todayPrayerGrid" class="grid grid-cols-5 gap-2">
-            <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm animate-pulse">
-                <div class="h-2 w-8 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-3 w-10 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-800"></div>
-            </div>
-            <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm animate-pulse delay-75">
-                <div class="h-2 w-8 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-3 w-10 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-800"></div>
-            </div>
-            <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm animate-pulse delay-150">
-                <div class="h-2 w-8 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-3 w-10 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-800"></div>
-            </div>
-            <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm animate-pulse delay-200">
-                <div class="h-2 w-8 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-3 w-10 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-800"></div>
-            </div>
-            <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm animate-pulse delay-300">
-                <div class="h-2 w-8 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-3 w-10 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-800"></div>
+        <div class="space-y-3">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest px-2">Jadwal Sholat</h3>
+            
+            <div id="todayPrayerGrid" class="grid grid-cols-5 gap-2">
+                 <div class="h-14 rounded-2xl bg-white dark:bg-slate-800 animate-pulse"></div>
+                 <div class="h-14 rounded-2xl bg-white dark:bg-slate-800 animate-pulse delay-75"></div>
+                 <div class="h-14 rounded-2xl bg-white dark:bg-slate-800 animate-pulse delay-100"></div>
+                 <div class="h-14 rounded-2xl bg-white dark:bg-slate-800 animate-pulse delay-150"></div>
+                 <div class="h-14 rounded-2xl bg-white dark:bg-slate-800 animate-pulse delay-200"></div>
             </div>
         </div>
-    </div>
 
-    <div class="px-6 grid grid-cols-2 gap-5 pb-10">
-        <button onclick="vibrateSoft(); openTracker()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-200 transition-all duration-300 text-left active:scale-95">
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-lg shadow-emerald-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
-                <i data-lucide="list-checks" class="w-7 h-7"></i>
-            </div>
-            <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Jurnal</h3>
-            <p class="text-xs text-slate-500 font-medium mt-1">Checklist Harian</p>
-        </button>
-
-        <button onclick="vibrateSoft(); openTasbih()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-200 transition-all duration-300 text-left active:scale-95">
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 shadow-lg shadow-blue-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
-                <i data-lucide="grip" class="w-7 h-7"></i>
-            </div>
-            <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Tasbih</h3>
-            <p class="text-xs text-slate-500 font-medium mt-1">Counter Dzikir</p>
-        </button>
-
-        <button onclick="vibrateSoft(); openQuran()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-purple-500/10 hover:border-purple-200 transition-all duration-300 text-left active:scale-95">
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-400 to-purple-600 shadow-lg shadow-purple-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
-                <i data-lucide="book-open" class="w-7 h-7"></i>
-            </div>
-            <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Al-Qur'an</h3>
-            <p class="text-xs text-slate-500 font-medium mt-1">Baca & Terjemah</p>
-        </button>
-
-        <button onclick="vibrateSoft(); openQibla()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-teal-500/10 hover:border-teal-200 transition-all duration-300 text-left active:scale-95">
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-400 to-teal-600 shadow-lg shadow-teal-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
-                <i data-lucide="compass" class="w-7 h-7"></i>
-            </div>
-            <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Kiblat</h3>
-            <p class="text-xs text-slate-500 font-medium mt-1">Arah Ka'bah</p>
-        </button>
-        
-        <button onclick="vibrateSoft(); openDoa()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-pink-500/10 hover:border-pink-200 transition-all duration-300 text-left active:scale-95">
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-400 to-rose-500 shadow-lg shadow-pink-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
-                <i data-lucide="book-heart" class="w-7 h-7"></i>
-            </div>
-            <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Doa</h3>
-            <p class="text-xs text-slate-500 font-medium mt-1">Harian & Tahlil</p>
-        </button>
-
-        <button onclick="vibrateSoft(); openAsma()" class="relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-200 transition-all duration-300 text-left active:scale-95">
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-500 shadow-lg shadow-indigo-500/30 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition duration-300">
-                <i data-lucide="grid" class="w-7 h-7"></i>
-            </div>
-            <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Asmaul Husna</h3>
-            <p class="text-xs text-slate-500 font-medium mt-1">99 Nama Allah</p>
-        </button>
-        
-        <button onclick="vibrateSoft(); openProfile()" class="col-span-2 relative group bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl hover:shadow-amber-500/10 hover:border-amber-200 transition-all duration-300 text-left flex items-center gap-5 active:scale-95">
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-lg shadow-amber-500/30 flex items-center justify-center text-white shrink-0 group-hover:rotate-12 transition duration-300">
-                <i data-lucide="user" class="w-7 h-7"></i>
-            </div>
+        <div class="space-y-4">
+            <div id="homeFastingContainer" class="hidden"></div>
             
-            <div class="relative z-10 flex-1">
-                <h3 class="font-black text-slate-800 dark:text-slate-100 text-lg">Profil Saya</h3>
-                <p class="text-xs text-slate-500 font-medium mt-1">Statistik & Akun</p>
+            <div id="homeLastReadContainer" class="hidden"></div>
+        </div>
+
+        <div>
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest px-2 mb-3">Menu Utama</h3>
+            <div class="grid grid-cols-2 gap-3">
+                
+                <button onclick="vibrateSoft(); openTracker()" class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2rem] text-left group hover:border-emerald-500/30 transition-colors">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center">
+                            <i data-lucide="list-checks" class="w-5 h-5"></i>
+                        </div>
+                        <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                    </div>
+                    <h4 class="font-bold text-slate-800 dark:text-slate-100 text-lg">Jurnal</h4>
+                    <p class="text-[11px] text-slate-500 mt-1">Checklist Harian</p>
+                </button>
+
+                <button onclick="vibrateSoft(); openQuran()" class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2rem] text-left group hover:border-purple-500/30 transition-colors">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 flex items-center justify-center">
+                            <i data-lucide="book-open" class="w-5 h-5"></i>
+                        </div>
+                        <i data-lucide="arrow-up-right" class="w-4 h-4 text-slate-300"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 dark:text-slate-100 text-lg">Al-Qur'an</h4>
+                    <p class="text-[11px] text-slate-500 mt-1">Baca & Terjemah</p>
+                </button>
+
+                <button onclick="vibrateSoft(); openTasbih()" class="bento-card bg-white dark:bg-slate-900 p-4 rounded-[1.8rem] flex flex-col items-center justify-center text-center gap-2 group">
+                    <i data-lucide="grip" class="w-6 h-6 text-blue-500 group-hover:scale-110 transition"></i>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Tasbih</span>
+                </button>
+
+                <button onclick="vibrateSoft(); openQibla()" class="bento-card bg-white dark:bg-slate-900 p-4 rounded-[1.8rem] flex flex-col items-center justify-center text-center gap-2 group">
+                    <i data-lucide="compass" class="w-6 h-6 text-teal-500 group-hover:rotate-45 transition"></i>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Kiblat</span>
+                </button>
+
+                <button onclick="vibrateSoft(); openFasting()" class="col-span-2 bento-card bg-white dark:bg-slate-900 p-4 rounded-[1.8rem] flex items-center px-5 gap-4 group hover:border-amber-500/30 transition-colors">
+                    <div class="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-500 flex items-center justify-center shrink-0">
+                        <i data-lucide="utensils-crossed" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1 text-left">
+                        <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Kalender Puasa</h4>
+                        <p class="text-[10px] text-slate-500">Senin Kamis & Ayyamul Bidh</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-amber-500 transition"></i>
+                </button>
+
+                <button onclick="vibrateSoft(); openDoa()" class="col-span-2 bento-card bg-white dark:bg-slate-900 p-4 rounded-[1.8rem] flex items-center px-5 gap-4 group">
+                    <div class="w-9 h-9 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-500 flex items-center justify-center shrink-0">
+                        <i data-lucide="book-heart" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1 text-left">
+                        <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Kumpulan Doa</h4>
+                        <p class="text-[10px] text-slate-500">Doa harian & tahlil</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-rose-500 transition"></i>
+                </button>
+
+                <button onclick="vibrateSoft(); openAsma()" class="col-span-2 bento-card bg-white dark:bg-slate-900 p-4 rounded-[1.8rem] flex items-center px-5 gap-4 group">
+                    <div class="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-500 flex items-center justify-center shrink-0">
+                        <i data-lucide="grid" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1 text-left">
+                        <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Asmaul Husna</h4>
+                        <p class="text-[10px] text-slate-500">99 Nama Allah</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition"></i>
+                </button>
+
             </div>
-            
-            <div class="bg-slate-50 dark:bg-slate-800 p-2.5 rounded-xl text-slate-400 group-hover:translate-x-1 transition relative z-10 border border-slate-100 dark:border-slate-700">
-                <i data-lucide="chevron-right" class="w-5 h-5"></i>
-            </div>
-        </button>
-    </div>
-    
-    <div class="text-center pb-8 opacity-60">
-        <div class="w-12 h-1 bg-slate-300 dark:bg-slate-800 rounded-full mx-auto mb-2"></div>
-        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-600 tracking-widest uppercase">Jurnal Ibadah App</p>
+        </div>
+
+        <div class="text-center opacity-40">
+            <p id="homeFooterVersion" class="text-[9px] font-bold text-slate-500 tracking-widest uppercase">Jurnal Ibadah App</p>
+        </div>
+
     </div>
 </div>

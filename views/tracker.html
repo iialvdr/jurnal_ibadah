@@ -1,64 +1,78 @@
-<div id="trackerView" class="hidden-force flex flex-col h-full absolute inset-0 z-40 transition-all duration-300 overflow-hidden bg-slate-100 dark:bg-slate-950">
+<div id="trackerView" class="hidden-force flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-hidden bg-slate-100 dark:bg-slate-950">
     
-    <div class="px-6 pb-4 pt-[calc(2rem+env(safe-area-inset-top))] flex justify-between items-center relative shrink-0 z-30 bg-slate-100/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50">
-        <button onclick="goBack()" class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-slate-800 active:scale-95 transition hover:text-emerald-600 group">
+    <div class="fixed top-0 left-0 right-0 h-48 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
+
+    <div class="px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 flex justify-between items-center relative shrink-0 z-30">
+        <button onclick="goBack()" class="w-10 h-10 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-sm border border-white/50 dark:border-slate-700 active:scale-95 transition hover:text-emerald-600 group">
             <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-0.5 transition"></i>
         </button>
-        <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Jurnal Harian</h2>
-        <div class="w-11"></div> 
+        <h2 class="text-lg font-bold text-slate-800 dark:text-white tracking-tight">Jurnal Harian</h2>
+        <div class="w-10"></div> 
     </div>
 
-    <div class="px-6 pt-4 pb-2 shrink-0 z-20 space-y-4">
+    <div class="flex-1 overflow-y-auto relative z-10 scroll-smooth pb-24 no-scrollbar px-5 pt-2" id="trackerContent">
         
-        <div class="bg-white dark:bg-slate-900 p-2 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
-            <button onclick="changeDate(-1)" class="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 hover:text-emerald-600 transition active:scale-90">
-                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+        <div class="bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm p-1 rounded-2xl flex w-full shadow-sm border border-white/40 dark:border-slate-800 mb-6 sticky top-0 z-20">
+            <button onclick="changeTrackerTab('daily')" id="tabDaily" class="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 shadow-sm bg-white dark:bg-slate-800 text-emerald-600 border border-slate-100 dark:border-slate-700">
+                Harian
             </button>
-            <div class="text-center">
-                <span id="dateDisplay" class="font-black text-slate-800 dark:text-white text-sm block tracking-tight">Loading...</span>
-                <span id="trackerHijriDisplay" class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mt-0.5 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-md mx-auto w-fit">...</span>
-            </div>
-            <button onclick="changeDate(1)" class="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 hover:text-emerald-600 transition active:scale-90">
-                <i data-lucide="chevron-right" class="w-5 h-5"></i>
-            </button>
-        </div>
-        
-        <div class="text-center">
-            <button id="resetDateBtn" onclick="resetToToday()" class="hidden text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 py-1.5 px-4 rounded-full border border-emerald-200 dark:border-emerald-800 active:scale-95 transition hover:bg-emerald-200 mb-1">
-                Kembali ke Hari Ini
+            <button onclick="changeTrackerTab('history')" id="tabHistory" class="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 text-slate-400 hover:text-emerald-600 hover:bg-white/50 dark:hover:bg-slate-800/50">
+                Riwayat
             </button>
         </div>
 
-        <div id="progressContainer" class="px-1 pb-2">
-            <div class="flex justify-between items-end mb-2">
-                <div>
-                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Capaian Harian</span>
-                    <h3 class="text-2xl font-black text-slate-800 dark:text-white leading-none mt-1" id="progressText">0%</h3>
+        <div id="viewDaily" class="space-y-5 pb-10">
+            
+            <div class="flex items-center justify-between bg-white dark:bg-slate-900 p-3 rounded-[1.5rem] shadow-sm border border-slate-200 dark:border-slate-800 relative">
+                
+                <button onclick="vibrateSoft(); changeDate(-1)" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition active:scale-95 shrink-0 z-10">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                </button>
+                
+                <div class="text-center flex-1 min-w-0 px-2 flex flex-col items-center justify-center min-h-[3rem]">
+                    <span id="dateDisplay" class="block text-sm font-black text-slate-800 dark:text-white tracking-tight leading-tight">Hari Ini</span>
+                    
+                    <span id="trackerHijriDisplay" class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-md mt-1 inline-block transition-all">...</span>
+                    
+                    <button id="resetDateContainer" onclick="vibrateSoft(); resetToToday()" class="hidden mt-1.5 text-[9px] font-bold text-slate-400 hover:text-emerald-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5 active:scale-95 mx-auto">
+                        <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Kembali
+                    </button>
                 </div>
-                <div class="bg-emerald-100 dark:bg-emerald-900/30 p-1.5 rounded-lg text-emerald-600">
-                    <i data-lucide="trending-up" class="w-4 h-4"></i>
-                </div>
+
+                <button onclick="vibrateSoft(); changeDate(1)" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition active:scale-95 shrink-0 z-10">
+                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
             </div>
-            <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-3 overflow-hidden border border-slate-300/50 dark:border-slate-700">
-                <div id="progressBar" class="h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-emerald-400 to-teal-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] relative" style="width: 0%">
-                    <div class="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]"></div>
+
+            <div id="trackerList" class="space-y-3"></div>
+            
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black rounded-[2rem] p-6 text-white relative overflow-hidden shadow-lg shadow-slate-500/20 dark:shadow-black/40 group">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                
+                <div class="flex justify-between items-end mb-4 relative z-10">
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Progress</span>
+                        <h3 class="text-3xl font-black tracking-tighter" id="progressText">0%</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10">
+                        <i data-lucide="trending-up" class="w-5 h-5 text-emerald-400"></i>
+                    </div>
+                </div>
+                
+                <div class="w-full bg-white/10 rounded-full h-3 overflow-hidden p-0.5 border border-white/5 relative z-10">
+                    <div id="progressBar" class="h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-emerald-400 to-teal-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]" style="width: 0%"></div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="flex-1 px-6 py-2 overflow-y-auto relative scroll-smooth" id="trackerContent">
-        
-        <div id="dataLoading" class="absolute inset-0 z-20 px-6 py-2 space-y-4 pb-32 hidden">
-            <div class="animate-pulse flex items-center justify-between p-4 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800"></div><div><div class="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-2 w-12 bg-slate-200 dark:bg-slate-800 rounded"></div></div></div><div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800"></div></div>
-            <div class="animate-pulse flex items-center justify-between p-4 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800"></div><div><div class="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-2 w-12 bg-slate-200 dark:bg-slate-800 rounded"></div></div></div><div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800"></div></div>
-            <div class="animate-pulse flex items-center justify-between p-4 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800"></div><div><div class="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-2 w-12 bg-slate-200 dark:bg-slate-800 rounded"></div></div></div><div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800"></div></div>
-            <div class="animate-pulse flex items-center justify-between p-4 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800"></div><div><div class="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-2 w-12 bg-slate-200 dark:bg-slate-800 rounded"></div></div></div><div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800"></div></div>
-            <div class="animate-pulse flex items-center justify-between p-4 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800"></div><div><div class="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-2 w-12 bg-slate-200 dark:bg-slate-800 rounded"></div></div></div><div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800"></div></div>
-            <div class="animate-pulse flex items-center justify-between p-4 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800"></div><div><div class="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-2 w-12 bg-slate-200 dark:bg-slate-800 rounded"></div></div></div><div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800"></div></div>
-            <div class="animate-pulse flex items-center justify-between p-4 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800"></div><div><div class="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded mb-2"></div><div class="h-2 w-12 bg-slate-200 dark:bg-slate-800 rounded"></div></div></div><div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800"></div></div>
+        <div id="viewHistory" class="hidden space-y-4 pt-10 text-center">
+             <div class="flex flex-col items-center justify-center p-8 opacity-60">
+                <div class="w-16 h-16 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                    <i data-lucide="calendar-clock" class="w-7 h-7 text-slate-400"></i>
+                </div>
+                <h3 class="font-bold text-slate-700 dark:text-white text-sm">Riwayat Bulanan</h3>
+                <p class="text-[10px] text-slate-400 mt-1 max-w-[200px] leading-relaxed">Fitur ini sedang disiapkan. Kamu bisa melihat rekap mingguan di halaman Profil.</p>
+             </div>
         </div>
-
-        <div id="prayerList" class="space-y-4 pb-32"></div>
     </div>
 </div>

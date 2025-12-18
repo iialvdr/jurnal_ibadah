@@ -1,5 +1,3 @@
-// js/modules/asmaul_husna.js
-
 let asmaulHusnaData = [];
 let currentDetailIndex = 0;
 let searchTimeout = null;
@@ -10,27 +8,9 @@ export function initAsmaulHusna() {
     window.closeAsmaDetail = closeAsmaDetail;
     window.changeAsma = changeAsma;
 
-    const detailModal = document.getElementById('asmaDetailModal');
-    const content = document.getElementById('asmaDetailContent');
-
-    if (detailModal) {
-        detailModal.classList.remove('hidden-force');
-        detailModal.classList.add('invisible', 'opacity-0', 'pointer-events-none', 'transition-opacity', 'duration-300', 'ease-out');
-        if (detailModal.classList.contains('bg-slate-900/60')) detailModal.classList.remove('bg-slate-900/60');
-        detailModal.classList.add('bg-slate-900/90');
-
-        detailModal.addEventListener('click', (e) => {
-            if (e.target === detailModal) closeAsmaDetail();
-        });
-    }
-
-    if (content) {
-        content.classList.remove('transition-all', 'scale-90');
-        content.classList.add('transition-transform', 'duration-300', 'ease-out', 'scale-95');
-        content.style.willChange = "transform, opacity";
-    }
-
     window.addEventListener('viewChanged', (e) => {
+        const searchWrapper = document.getElementById('asmaSearchWrapper');
+
         if (e.detail.viewId === 'asmaulHusnaView') {
             const searchInput = document.getElementById('asmaSearchInput');
             if (searchInput) searchInput.value = '';
@@ -41,6 +21,18 @@ export function initAsmaulHusna() {
                 const items = document.querySelectorAll('.item-asma');
                 items.forEach(el => el.classList.remove('hidden'));
             }
+
+            // Animasi Search Bar Masuk
+            if (searchWrapper) {
+                searchWrapper.style.transform = "";
+                setTimeout(() => {
+                    if (document.getElementById('asmaulHusnaView').classList.contains('active')) {
+                        searchWrapper.style.transform = "translate3d(0,0,0)";
+                    }
+                }, 350);
+            }
+        } else {
+            if (searchWrapper) searchWrapper.style.transform = "";
         }
     });
 
@@ -69,7 +61,8 @@ async function fetchAsmaulHusna() {
     } catch (error) {
         console.error("Gagal fetch Asmaul Husna:", error);
         const container = document.getElementById('asmaList');
-        if (container) container.innerHTML = `<p class="text-center text-slate-400 text-sm mt-8">Gagal memuat data. Periksa koneksi.</p>`;
+        if (container) container.innerHTML = `<div class="flex flex-col items-center justify-center pt-10 text-slate-400"><i data-lucide="wifi-off" class="w-8 h-8 mb-2"></i><p class="text-sm">Gagal memuat data</p></div>`;
+        if (window.lucide) lucide.createIcons();
     }
 }
 
@@ -78,7 +71,8 @@ function renderList(data) {
     if (!container) return;
 
     if (data.length === 0) {
-        container.innerHTML = `<p class="text-center text-slate-400 text-sm mt-8">Tidak ditemukan.</p>`;
+        container.innerHTML = `<div class="flex flex-col items-center justify-center pt-10 text-slate-400"><i data-lucide="search-x" class="w-8 h-8 mb-2"></i><p class="text-sm">Tidak ditemukan</p></div>`;
+        if (window.lucide) lucide.createIcons();
         return;
     }
 
@@ -87,7 +81,7 @@ function renderList(data) {
     data.forEach(item => {
         const div = document.createElement('div');
         div.className = "item-asma group bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 cursor-pointer active:scale-[0.98] flex items-center justify-between relative overflow-hidden";
-        div.onclick = () => openAsmaDetail(item.index);
+        div.onclick = () => { if (window.vibrateSoft) window.vibrateSoft(); openAsmaDetail(item.index); };
         div.setAttribute('data-search', `${item.index} ${item.latin.toLowerCase()} ${item.meaning.toLowerCase()}`);
 
         div.innerHTML = `
@@ -98,7 +92,7 @@ function renderList(data) {
                 
                 <div class="flex-1 min-w-0">
                     <h4 class="font-bold text-slate-700 dark:text-white text-base group-hover:text-emerald-600 transition-colors truncate">${item.latin}</h4>
-                    <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5 leading-tight">${item.meaning}</p>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5 leading-tight truncate">${item.meaning}</p>
                 </div>
 
                 <div class="text-right pl-2 shrink-0">
@@ -111,6 +105,7 @@ function renderList(data) {
 
     container.innerHTML = '';
     container.appendChild(fragment);
+    if (window.lucide) lucide.createIcons();
 }
 
 function searchAsma(query) {
@@ -148,16 +143,16 @@ function openAsmaDetail(index) {
     if (btnNext) btnNext.disabled = (index >= 99);
 
     const modal = document.getElementById('asmaDetailModal');
+    const backdrop = document.getElementById('asmaBackdrop');
     const content = document.getElementById('asmaDetailContent');
 
-    if (modal) {
+    if (modal && content && backdrop) {
         modal.classList.remove('invisible', 'pointer-events-none');
         requestAnimationFrame(() => {
-            modal.classList.remove('opacity-0');
-            if (content) {
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
-            }
+            requestAnimationFrame(() => {
+                backdrop.classList.remove('opacity-0');
+                content.classList.remove('translate-y-full');
+            });
         });
     }
 }
@@ -171,13 +166,12 @@ function changeAsma(direction) {
 
 function closeAsmaDetail() {
     const modal = document.getElementById('asmaDetailModal');
+    const backdrop = document.getElementById('asmaBackdrop');
     const content = document.getElementById('asmaDetailContent');
-    if (modal) {
-        modal.classList.add('opacity-0');
-        if (content) {
-            content.classList.remove('scale-100');
-            content.classList.add('scale-95');
-        }
+
+    if (modal && content && backdrop) {
+        backdrop.classList.add('opacity-0');
+        content.classList.add('translate-y-full');
         setTimeout(() => { modal.classList.add('invisible', 'pointer-events-none'); }, 300);
     }
 }

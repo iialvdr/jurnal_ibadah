@@ -14,88 +14,49 @@
     <script>
         tailwind.config = {
             darkMode: 'class',
-            theme: { extend: { colors: { slate: { 850: '#1e293b' } } } }
+            theme: { 
+                extend: { 
+                    colors: { 
+                        slate: { 850: '#1e293b', 950: '#020617' },
+                        emerald: { 450: '#10b981' } // Custom emerald
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                } 
+            }
         }
     </script>
+    
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet">
     
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#10b981">
-    
-    <link rel="stylesheet" href="css/style.css?v=2">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="stylesheet" href="css/style.css?v=3">
 </head>
-<body class="bg-slate-100 dark:bg-slate-950 flex justify-center items-center h-[100dvh] text-slate-800 dark:text-slate-200 transition-colors duration-300 overflow-hidden relative">
+<body class="bg-slate-50 dark:bg-slate-950 flex justify-center items-center h-[100dvh] text-slate-800 dark:text-slate-200 transition-colors duration-300 overflow-hidden relative selection:bg-emerald-500 selection:text-white">
 
-    <div id="splashScreen" class="fixed inset-0 z-[100] bg-slate-100 dark:bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="relative">
-            <div class="w-16 h-16 border-4 border-slate-200 dark:border-slate-800 rounded-full"></div>
-            <div class="absolute top-0 w-16 h-16 border-4 border-emerald-500 rounded-full border-t-transparent animate-spin"></div>
-            <div class="absolute inset-0 flex items-center justify-center">
-                <img src="assets/logo.png" class="w-10 h-10 rounded-full object-cover shadow-sm animate-pulse" alt="Logo">
-            </div>
+    <div id="splashScreen" class="fixed inset-0 z-[100] bg-white dark:bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="relative flex items-center justify-center">
+            <div class="absolute w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full animate-ping opacity-75"></div>
+            <img src="assets/favicon/apple-touch-icon.png" class="w-10 h-10 rounded-lg object-cover shadow-lg relative z-10" alt="Logo">
         </div>
-        <p class="mt-4 text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse tracking-widest">MEMUAT...</p>
+        <p class="mt-6 text-[10px] font-bold text-slate-400 dark:text-slate-600 tracking-[0.3em] uppercase">Memuat...</p>
     </div>
 
     <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div class="absolute inset-0 z-[1] opacity-[0.03] dark:opacity-[0.05]" style="background-image: url('https://grainy-gradients.vercel.app/noise.svg');"></div>
+        <div class="absolute inset-0 z-[1] opacity-[0.04] dark:opacity-[0.06]" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22 opacity=%221%22/%3E%3C/svg%3E');"></div>
         
-        <div class="blob absolute w-[500px] h-[500px] bg-emerald-400/30 dark:bg-emerald-600/20 rounded-full top-[-100px] left-[-100px] blur-[80px] mix-blend-multiply dark:mix-blend-screen animate-blob"></div>
-        
-        <div class="blob absolute w-[400px] h-[400px] bg-purple-400/30 dark:bg-purple-600/20 rounded-full top-[20%] right-[-100px] blur-[80px] mix-blend-multiply dark:mix-blend-screen animate-blob animation-delay-2000"></div>
-        
-        <div class="blob absolute w-[400px] h-[400px] bg-amber-300/30 dark:bg-amber-600/20 rounded-full bottom-[-50px] left-[-50px] blur-[80px] mix-blend-multiply dark:mix-blend-screen animate-blob animation-delay-4000"></div>
-        
-        <div class="blob absolute w-[300px] h-[300px] bg-teal-300/30 dark:bg-teal-600/20 rounded-full bottom-[10%] right-[20%] blur-[60px] mix-blend-multiply dark:mix-blend-screen animate-blob animation-delay-3000"></div>
+        <div class="blob w-[60vh] h-[60vh] bg-emerald-400/20 dark:bg-emerald-600/10 rounded-full -top-20 -left-20 mix-blend-multiply dark:mix-blend-normal"></div>
+        <div class="blob w-[50vh] h-[50vh] bg-blue-400/20 dark:bg-blue-600/10 rounded-full top-1/2 -right-20 animation-delay-2000 mix-blend-multiply dark:mix-blend-normal"></div>
+        <div class="blob w-[40vh] h-[40vh] bg-purple-400/20 dark:bg-purple-600/10 rounded-full -bottom-20 left-1/2 animation-delay-4000 mix-blend-multiply dark:mix-blend-normal"></div>
     </div>
 
-    <div class="relative z-10 w-full h-full md:max-w-6xl md:h-[90vh] md:rounded-[2.5rem] md:border md:border-white/40 md:dark:border-slate-700/30 md:shadow-2xl md:backdrop-blur-xl bg-white/60 dark:bg-slate-900/60 overflow-hidden flex transition-all duration-500">
+    <div class="relative z-10 w-full h-full md:max-w-md md:h-[92vh] md:rounded-[3rem] md:border md:border-white/50 md:dark:border-slate-800 md:shadow-2xl md:backdrop-blur-2xl bg-white/40 dark:bg-slate-900/40 overflow-hidden flex flex-col transition-all duration-500">
         
-        <div id="desktopSidebar" class="hidden md:flex flex-col w-64 border-r border-white/20 dark:border-slate-700/30 p-6 bg-white/20 dark:bg-slate-800/20 backdrop-blur-md hidden-force">
-            <div class="flex items-center gap-3 mb-10 px-2">
-                <img src="assets/logo.png" class="w-10 h-10 rounded-full object-cover shadow-sm">
-                <div>
-                    <h1 class="font-bold text-lg leading-none text-slate-800 dark:text-white">Jurnal</h1>
-                    <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium tracking-widest uppercase">Ibadah App</p>
-                </div>
-            </div>
-            
-            <div class="space-y-2 flex-1">
-                <button id="nav-home" onclick="vibrateSoft(); goHome()" class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group">
-                    <i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition"></i>Dashboard
-                </button>
-                <button id="nav-tracker" onclick="openTracker()" class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group">
-                    <i data-lucide="list-checks" class="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition"></i>Jurnal Harian
-                </button>
-                <button id="nav-tasbih" onclick="openTasbih()" class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group">
-                    <i data-lucide="grip" class="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition"></i>Tasbih Digital
-                </button>
-                <button id="nav-qibla" onclick="openQibla()" class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group">
-                    <i data-lucide="compass" class="w-5 h-5 text-slate-400 group-hover:text-teal-500 transition"></i>Arah Kiblat
-                </button>
-                <button id="nav-quran" onclick="openQuran()" class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group">
-                    <i data-lucide="book-open" class="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition"></i>Al-Qur'an
-                </button>
-                
-                <button id="nav-doa" onclick="openDoa()" class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group">
-                    <i data-lucide="book-heart" class="w-5 h-5 text-slate-400 group-hover:text-pink-500 transition"></i>Kumpulan Doa
-                </button>
-
-                <button id="nav-asma" onclick="openAsma()" class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group">
-                    <i data-lucide="grid" class="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition"></i>Asmaul Husna
-                </button>   
-            </div>
-            
-            <div class="pt-4 border-t border-white/10 dark:border-slate-700/30 mt-2">
-                <button id="nav-profile" onclick="openProfile()" class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group">
-                    <i data-lucide="user" class="w-5 h-5 text-slate-400 group-hover:text-amber-500 transition"></i>Profil & Statistik
-                </button>
-            </div>
-        </div>
+        <div class="hidden-force"></div>
 
         <div class="flex-1 relative h-full overflow-hidden flex flex-col" id="appContainer">
             </div>

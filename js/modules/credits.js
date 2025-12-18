@@ -14,4 +14,10 @@ function updateCreditsInfo() {
     if (versionEl) {
         versionEl.textContent = `Versi ${APP_VERSION}`;
     }
+
+    // [BARU] Update badge versi di logo
+    const badgeEl = document.getElementById('creditsVersionBadge');
+    if (badgeEl) {
+        badgeEl.textContent = APP_VERSION;
+    }
 }

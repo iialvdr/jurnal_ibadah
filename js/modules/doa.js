@@ -11,28 +11,6 @@ export function initDoa() {
     window.toggleFilter = toggleFilter;
     window.selectFilter = selectFilter;
 
-    // --- AUTO-PATCH MODAL ---
-    const modal = document.getElementById('doaDetailModal');
-    const content = document.getElementById('doaDetailContent');
-
-    if (modal) {
-        modal.classList.remove('hidden-force', 'backdrop-blur-sm', 'transition-all');
-        modal.classList.add('invisible', 'opacity-0', 'pointer-events-none', 'transition-opacity', 'duration-300', 'ease-out');
-        if (modal.classList.contains('bg-slate-900/60')) modal.classList.remove('bg-slate-900/60');
-        modal.classList.add('bg-slate-900/90');
-
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeDoaDetail();
-        });
-    }
-
-    if (content) {
-        content.classList.remove('transition-all');
-        content.classList.add('transition-transform', 'duration-300', 'ease-out');
-        content.style.transform = "translate3d(0,100%,0)";
-    }
-    // --- END PATCH ---
-
     window.addEventListener('viewChanged', (e) => {
         const searchWrapper = document.getElementById('doaSearchWrapper');
 
@@ -55,7 +33,6 @@ export function initDoa() {
         }
     });
 
-    // [LISTENER RESET OTOMATIS]
     window.addEventListener('viewExit', (e) => {
         if (e.detail.viewId === 'doaView') {
             closeDoaDetail();
@@ -123,7 +100,7 @@ function selectFilter(type, value, label) {
 
     if (labelEl) {
         if (value === '') {
-            labelEl.innerText = type === 'grup' ? 'Semua Kategori' : 'Semua Tag';
+            labelEl.innerText = type === 'grup' ? 'Kategori' : 'Tagar';
             labelEl.classList.remove('text-emerald-600', 'dark:text-emerald-400');
         } else {
             labelEl.innerText = label;
@@ -193,7 +170,7 @@ function extractAndRenderFilters(data) {
     const listTag = document.getElementById('listTag');
     if (listTag) {
         const sortedTags = Array.from(uniqueTags).sort();
-        let html = generateDropdownItem('tag', '', 'Semua Tag', true);
+        let html = generateDropdownItem('tag', '', 'Semua Tagar', true);
         sortedTags.forEach(t => html += generateDropdownItem('tag', t, t, false));
         listTag.innerHTML = html;
         if (window.lucide) lucide.createIcons({ root: listTag });
@@ -202,7 +179,7 @@ function extractAndRenderFilters(data) {
 
 function generateDropdownItem(type, value, label, isDefault) {
     const safeVal = value.replace(/'/g, "\\'");
-    return `<div onclick="event.stopPropagation(); selectFilter('${type}', '${safeVal}', '${label}')" class="px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg cursor-pointer transition-colors flex items-center justify-between group"><span>${label}</span>${isDefault ? '' : '<i data-lucide="check" class="w-3 h-3 opacity-0 group-hover:opacity-100 text-emerald-500"></i>'}</div>`;
+    return `<div onclick="event.stopPropagation(); selectFilter('${type}', '${safeVal}', '${label}')" class="px-3 py-2.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg cursor-pointer transition-colors flex items-center justify-between group"><span>${label}</span>${isDefault ? '' : '<i data-lucide="check" class="w-3 h-3 opacity-0 group-hover:opacity-100 text-emerald-500"></i>'}</div>`;
 }
 
 function renderDoaList(data) {
@@ -218,8 +195,20 @@ function renderDoaList(data) {
     let html = '';
     data.forEach(doa => {
         const safeNama = doa.nama.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const kategoriBadge = doa.grup ? `<span class="text-[9px] font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400 mb-1 block">${doa.grup}</span>` : '';
-        html += `<div onclick="openDoaDetail('${doa.id}', '${safeNama}')" class="group bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 cursor-pointer active:scale-[0.98] flex items-center justify-between item-doa"><div class="flex items-center gap-4 overflow-hidden"><div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800/50 group-hover:bg-emerald-500 group-hover:text-white transition-colors"><i data-lucide="book-heart" class="w-5 h-5"></i></div><div class="flex-1 min-w-0">${kategoriBadge}<h4 class="font-bold text-slate-700 dark:text-white text-sm group-hover:text-emerald-600 transition-colors truncate text-doa">${doa.nama}</h4></div></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-emerald-500 transition-colors shrink-0 ml-2"></i></div>`;
+        const kategoriBadge = doa.grup ? `<span class="text-[9px] font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400 mb-0.5 block">${doa.grup}</span>` : '';
+        html += `
+        <div onclick="vibrateSoft(); openDoaDetail('${doa.id}', '${safeNama}')" class="group bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 cursor-pointer active:scale-[0.98] flex items-center justify-between item-doa">
+            <div class="flex items-center gap-4 overflow-hidden">
+                <div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800/50 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                    <i data-lucide="book-heart" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    ${kategoriBadge}
+                    <h4 class="font-bold text-slate-700 dark:text-white text-sm group-hover:text-emerald-600 transition-colors truncate text-doa">${doa.nama}</h4>
+                </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-emerald-500 transition-colors shrink-0 ml-2"></i>
+        </div>`;
     });
     container.innerHTML = html;
 
@@ -249,6 +238,7 @@ function searchDoa(query) {
 
 async function openDoaDetail(id, title) {
     const modal = document.getElementById('doaDetailModal');
+    const backdrop = document.getElementById('doaBackdrop');
     const content = document.getElementById('doaDetailContent');
     const modalTitle = document.getElementById('modalDoaTitle');
 
@@ -259,14 +249,13 @@ async function openDoaDetail(id, title) {
 
     if (modalTitle) modalTitle.innerText = title;
 
-    if (modal) {
+    if (modal && content && backdrop) {
         modal.classList.remove('invisible', 'pointer-events-none');
         requestAnimationFrame(() => {
-            modal.classList.remove('opacity-0');
-            if (content) {
-                content.style.transform = "translate3d(0,0,0)";
+            requestAnimationFrame(() => {
+                backdrop.classList.remove('opacity-0');
                 content.classList.remove('translate-y-full', 'sm:translate-y-20');
-            }
+            });
         });
     }
 
@@ -299,13 +288,12 @@ function updateDetailContent(data) {
 
 function closeDoaDetail() {
     const modal = document.getElementById('doaDetailModal');
+    const backdrop = document.getElementById('doaBackdrop');
     const content = document.getElementById('doaDetailContent');
-    if (modal) {
-        modal.classList.add('opacity-0');
-        if (content) {
-            content.style.transform = "translate3d(0,100%,0)";
-            content.classList.add('translate-y-full', 'sm:translate-y-20');
-        }
+
+    if (modal && content && backdrop) {
+        backdrop.classList.add('opacity-0');
+        content.classList.add('translate-y-full', 'sm:translate-y-20');
         setTimeout(() => { modal.classList.add('invisible', 'pointer-events-none'); }, 300);
     }
 }

@@ -1,36 +1,45 @@
-<div id="loginOverlay" class="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 transition-all duration-500 bg-slate-50/50 dark:bg-slate-950/50 backdrop-blur-sm">
+<div id="loginOverlay" class="absolute inset-0 z-50 flex flex-col items-center justify-center p-5 transition-all duration-500 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md">
     
-    <div class="relative w-full max-w-sm group">
+    <div class="relative w-full max-w-[320px] group">
         
-        <div class="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-[2rem] blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
+        <div class="absolute -inset-0.5 bg-gradient-to-b from-emerald-400/40 to-teal-500/40 rounded-[2rem] blur-lg opacity-40 group-hover:opacity-60 transition duration-1000"></div>
         
-        <div class="relative w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xl rounded-[1.7rem] p-8 flex flex-col items-center text-center">
+        <div class="relative w-full bg-white dark:bg-slate-900 border border-white/50 dark:border-slate-800 shadow-xl rounded-[1.8rem] p-6 flex flex-col items-center text-center">
             
-            <span class="mb-6 text-[10px] font-bold tracking-[0.2em] text-emerald-600 dark:text-emerald-400 uppercase py-1 px-3 bg-emerald-50 dark:bg-emerald-950/50 rounded-full border border-emerald-100 dark:border-emerald-900/50">
+            <span class="mb-5 text-[9px] font-bold tracking-[0.2em] text-emerald-600 dark:text-emerald-400 uppercase py-1 px-2.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-full border border-emerald-100 dark:border-emerald-800">
                 Assalamu'alaikum
             </span>
             
-            <div class="relative mb-5">
-                <div class="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full"></div>
-                <img src="assets/logo.png" class="relative w-16 h-16 object-contain drop-shadow-sm transform hover:scale-105 transition duration-300 rounded-2xl" alt="Logo">
+            <div class="relative mb-4">
+                <div class="absolute inset-0 bg-emerald-500/30 blur-2xl rounded-full scale-110"></div>
+                <img src="assets/logo.png" class="relative w-14 h-14 object-contain drop-shadow-md rounded-2xl" alt="Logo">
             </div>
             
-            <h1 class="text-2xl font-black text-slate-800 dark:text-white tracking-tight mb-2">Jurnal Ibadah</h1>
-            <p class="text-slate-400 dark:text-slate-500 text-xs font-medium mb-8 leading-relaxed max-w-[80%]">
-                Teman setia perjalanan ibadahmu. Catat, pantau, dan istiqomah.
+            <h1 class="text-xl font-black text-slate-800 dark:text-white tracking-tight mb-1">Jurnal Ibadah</h1>
+            <p class="text-slate-400 dark:text-slate-500 text-[11px] font-medium mb-6 leading-relaxed max-w-[90%]">
+                Teman setia perjalanan ibadahmu.<br>Catat, pantau, dan istiqomah.
             </p>
             
-            <button id="googleLoginBtn" class="w-full relative overflow-hidden bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-2xl transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 flex items-center justify-center gap-3 group/btn">
-                <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite]"></div>
-                <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/></svg>
-                <span>Masuk dengan Google</span>
+            <button id="googleLoginBtn" class="w-full relative overflow-hidden bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 active:scale-95 flex items-center justify-center gap-2.5 group/btn">
+                <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite]"></div>
+                
+                <div class="bg-white p-1 rounded-full text-emerald-600">
+                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/></svg>
+                </div>
+                <span class="text-xs tracking-wide">Masuk dengan Google</span>
             </button>
             
-            <div class="mt-6 flex flex-col gap-1">
-                <p id="loginStatus" class="text-[10px] font-bold text-emerald-600 animate-pulse hidden">MENGHUBUNGKAN...</p>
-                <p id="errorMsg" class="text-[10px] font-bold text-red-500 hidden"></p>
-                <p class="text-[10px] text-slate-300 dark:text-slate-700 mt-2"><span id="versionTextLogin"></span> • Secure Login</p>
+            <div class="mt-5 flex flex-col gap-1 w-full">
+                <p id="loginStatus" class="text-[9px] font-bold text-emerald-600 animate-pulse hidden uppercase tracking-wider">Menghubungkan...</p>
+                <p id="errorMsg" class="text-[9px] font-bold text-red-500 hidden bg-red-50 p-1 rounded-lg border border-red-100">Error Message</p>
+                
+                <div class="flex items-center justify-center gap-2 text-[9px] text-slate-300 dark:text-slate-700 mt-1">
+                    <span id="versionTextLogin">v2.0</span>
+                    <span>•</span>
+                    <span>Secure Login</span>
+                </div>
             </div>
+
         </div>
     </div>
 </div>

@@ -1,13 +1,12 @@
 import { state, setPrayerTimes, setLastCity, setTodayRecords } from '../state.js';
 import { updateProgressBar } from './tracker.js';
 import { db } from '../config.js';
-// [UBAH] Menambahkan onSnapshot ke import
 import { doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { switchView } from '../router.js';
+import { APP_VERSION } from '../version.js'; // Import Versi
 
 let isDarkMode = false;
 let countdownInterval = null;
-// [BARU] Variabel untuk menyimpan listener agar tidak duplikat
 let unsubscribeRecords = null;
 
 export function initHome() {
@@ -29,6 +28,46 @@ export function initHome() {
         loadLastReadCard();
     });
 }
+
+// ... (kode loadCachedLocation dan syncThemeWithCloud tetap sama) ...
+
+export function updateHomeUI() {
+    // [BARU] Update versi di footer Home
+    const footerVer = document.getElementById('homeFooterVersion');
+    if (footerVer) footerVer.innerText = `Jurnal Ibadah App ${APP_VERSION}`;
+
+    updateNextPrayer();
+    loadFastingWidget();
+
+    if (state.currentUser) {
+        loadHomeRecords();
+        loadLastReadCard();
+    } else {
+        renderTodayPrayers();
+        const c = document.getElementById('homeLastReadContainer');
+        if (c) c.classList.add('hidden');
+    }
+
+    const locText = document.getElementById('homeLocationText');
+    if (locText) locText.innerText = state.lastCity || "Mencari...";
+
+    if (state.currentUser) {
+        const hName = document.getElementById('homeUserName');
+        const hPhoto = document.getElementById('homeUserPhoto');
+        if (hName) hName.innerText = state.currentUser.displayName || "Hamba Allah";
+        if (hPhoto) {
+            const photoUrl = state.currentUser.photoURL ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(state.currentUser.displayName || 'User')}&background=10b981&color=fff`;
+            hPhoto.src = photoUrl;
+        }
+    } else {
+        const hName = document.getElementById('homeUserName');
+        if (hName) hName.innerText = "Memuat...";
+    }
+}
+
+// ... (Sisa fungsi lainnya: loadFastingWidget, loadLastReadCard, dll tetap sama) ...
+// (Pastikan sisa kode di file ini tetap ada seperti sebelumnya)
 
 function loadCachedLocation() {
     const cachedCity = localStorage.getItem('last_city_name');
@@ -62,33 +101,102 @@ export async function syncThemeWithCloud() {
     } catch (e) { console.error("Gagal sinkronisasi tema:", e); }
 }
 
-export function updateHomeUI() {
-    updateNextPrayer();
+// [UPDATED] Widget Puasa: Cek Maghrib & Cek Besok
+function loadFastingWidget() {
+    const container = document.getElementById('homeFastingContainer');
+    if (!container) return;
 
-    if (state.currentUser) {
-        loadHomeRecords();
-        loadLastReadCard();
-    } else {
-        renderTodayPrayers();
-        const c = document.getElementById('homeLastReadContainer');
-        if (c) c.classList.add('hidden');
+    const now = new Date();
+    const currentDay = now.getDay();
+
+    // Cek apakah sudah lewat Maghrib
+    let isPastMaghrib = false;
+    if (state.prayerTimes && state.prayerTimes.Maghrib && state.prayerTimes.Maghrib !== '--:--') {
+        const [h, m] = state.prayerTimes.Maghrib.split(':').map(Number);
+        const maghribDate = new Date();
+        maghribDate.setHours(h, m, 0, 0);
+
+        // Jika waktu sekarang > waktu Maghrib, anggap sudah masuk malam (ganti hari untuk konteks puasa)
+        if (now >= maghribDate) {
+            isPastMaghrib = true;
+        }
     }
 
-    const locText = document.getElementById('homeLocationText');
-    if (locText) locText.innerText = state.lastCity || "Mencari...";
+    let fastingTitle = "";
+    let fastingDesc = "";
+    let showWidget = false;
+    let widgetLabel = "Hari Ini";
 
-    if (state.currentUser) {
-        const hName = document.getElementById('homeUserName');
-        const hPhoto = document.getElementById('homeUserPhoto');
-        if (hName) hName.innerText = state.currentUser.displayName || "Hamba Allah";
-        if (hPhoto) {
-            const photoUrl = state.currentUser.photoURL ||
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(state.currentUser.displayName || 'User')}&background=10b981&color=fff`;
-            hPhoto.src = photoUrl;
+    if (!isPastMaghrib) {
+        // --- SKENARIO SIANG (Belum Maghrib): Cek Puasa HARI INI ---
+        const h = calculateHijri(now, -1);
+        const isSenin = currentDay === 1;
+        const isKamis = currentDay === 4;
+        const isAyyamulBidh = [13, 14, 15].includes(h.day);
+
+        if (isSenin) {
+            fastingTitle = "Puasa Senin";
+            fastingDesc = "Sunnah Senin-Kamis";
+            showWidget = true;
+        } else if (isKamis) {
+            fastingTitle = "Puasa Kamis";
+            fastingDesc = "Sunnah Senin-Kamis";
+            showWidget = true;
+        } else if (isAyyamulBidh) {
+            fastingTitle = "Ayyamul Bidh";
+            fastingDesc = `Tanggal ${h.day} Hijriyah`;
+            showWidget = true;
         }
     } else {
-        const hName = document.getElementById('homeUserName');
-        if (hName) hName.innerText = "Memuat...";
+        // --- SKENARIO MALAM (Lewat Maghrib): Cek Puasa BESOK ---
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const nextDay = tomorrow.getDay();
+        const hTom = calculateHijri(tomorrow, -1);
+
+        const isTomSenin = nextDay === 1;
+        const isTomKamis = nextDay === 4;
+        const isTomAyyamul = [13, 14, 15].includes(hTom.day);
+
+        if (isTomSenin) {
+            fastingTitle = "Puasa Senin";
+            fastingDesc = "Insya Allah Besok";
+            widgetLabel = "Besok";
+            showWidget = true;
+        } else if (isTomKamis) {
+            fastingTitle = "Puasa Kamis";
+            fastingDesc = "Insya Allah Besok";
+            widgetLabel = "Besok";
+            showWidget = true;
+        } else if (isTomAyyamul) {
+            fastingTitle = "Ayyamul Bidh";
+            fastingDesc = `Besok Tanggal ${hTom.day}`;
+            widgetLabel = "Besok";
+            showWidget = true;
+        }
+    }
+
+    if (showWidget) {
+        container.innerHTML = `
+            <div class="bento-card bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 p-4 rounded-[2rem] flex items-center justify-between border border-amber-200 dark:border-amber-800/30">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-lg shadow-amber-500/30">
+                        <i data-lucide="utensils-crossed" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-amber-800 dark:text-amber-400 text-sm uppercase tracking-wide">${widgetLabel}</h4>
+                        <p class="text-xs text-amber-700 dark:text-amber-200 font-medium">${fastingTitle} - ${fastingDesc}</p>
+                    </div>
+                </div>
+                <div class="bg-white/50 dark:bg-black/20 px-3 py-1 rounded-full">
+                    <span class="text-[10px] font-bold text-amber-800 dark:text-amber-400">Sunnah</span>
+                </div>
+            </div>
+        `;
+        container.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons({ root: container });
+    } else {
+        container.classList.add('hidden');
     }
 }
 
@@ -106,21 +214,21 @@ async function loadLastReadCard() {
             window.lastReadData = data;
 
             container.innerHTML = `
-                <div onclick="continueReading()" class="relative w-full bg-white dark:bg-slate-900 rounded-[1.8rem] p-5 border border-slate-200 dark:border-slate-800 shadow-lg cursor-pointer group hover:border-emerald-300 dark:hover:border-emerald-700 transition-all active:scale-[0.98]">
-                    <div class="absolute right-0 top-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-2xl -mr-5 -mt-5"></div>
+                <div onclick="continueReading()" class="bento-card relative w-full bg-white dark:bg-slate-900 rounded-[2rem] p-5 cursor-pointer group hover:border-emerald-300 dark:hover:border-emerald-700 transition-all">
+                    <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-3xl -mr-5 -mt-5"></div>
                     <div class="flex items-center justify-between relative z-10">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-100 dark:border-emerald-800 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300 shadow-inner">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300 shadow-sm border border-emerald-100 dark:border-emerald-800">
                                 <i data-lucide="bookmark" class="w-6 h-6 fill-current"></i>
                             </div>
                             <div>
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Terakhir Dibaca</p>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Lanjutkan</p>
                                 <h3 class="text-lg font-black text-slate-800 dark:text-white leading-tight">QS. ${data.name}</h3>
                                 <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400">Ayat ${data.ayat}</p>
                             </div>
                         </div>
-                        <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-emerald-500 transition">
-                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        <div class="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-emerald-500 group-hover:bg-white dark:group-hover:bg-slate-700 transition">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
                         </div>
                     </div>
                 </div>
@@ -147,22 +255,18 @@ function continueReading() {
     }
 }
 
-// [OPTIMASI] Menggunakan onSnapshot untuk Realtime Update & Cache Instant
 function loadHomeRecords() {
     if (!state.currentUser) return;
     const offset = state.currentDate.getTimezoneOffset();
     const localDate = new Date(state.currentDate.getTime() - (offset * 60 * 1000));
     const dateKey = localDate.toISOString().split('T')[0];
 
-    // Bersihkan listener sebelumnya agar tidak menumpuk
     if (unsubscribeRecords) {
         unsubscribeRecords();
         unsubscribeRecords = null;
     }
 
     try {
-        // onSnapshot akan langsung membaca cache lokal dulu (latency compensation)
-        // baru kemudian sync ke server di background
         unsubscribeRecords = onSnapshot(doc(db, "users", state.currentUser.uid, "daily_records", dateKey), (docSnap) => {
             setTodayRecords(docSnap.exists() ? docSnap.data() : {});
             renderTodayPrayers();
@@ -188,22 +292,22 @@ function renderTodayPrayers() {
         let cardStyle, textNameStyle, textTimeStyle, checkIconStyle;
 
         if (isDone) {
-            cardStyle = "bg-emerald-500 border-emerald-500 shadow-md shadow-emerald-500/20";
+            cardStyle = "bg-emerald-500 border-emerald-500 shadow-lg shadow-emerald-500/30 ring-1 ring-emerald-400";
             textNameStyle = "text-emerald-100";
             textTimeStyle = "text-white";
-            checkIconStyle = '<div class="bg-white/20 rounded-full p-0.5 animate-[zoomIn_0.2s_ease-out]"><i data-lucide="check" class="w-3 h-3 text-white"></i></div>';
+            checkIconStyle = '<div class="bg-white/20 rounded-full p-1 animate-[zoomIn_0.2s_ease-out]"><i data-lucide="check" class="w-3 h-3 text-white"></i></div>';
         } else {
-            cardStyle = "bg-slate-200 dark:bg-slate-800/60 border-transparent shadow-sm hover:bg-slate-300 dark:hover:bg-slate-700 active:scale-95";
-            textNameStyle = "text-slate-600 dark:text-slate-400";
-            textTimeStyle = "text-slate-900 dark:text-white";
-            checkIconStyle = '<div class="w-4 h-4 rounded-full border-2 border-slate-400/50 dark:border-slate-600"></div>';
+            cardStyle = "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700 shadow-sm";
+            textNameStyle = "text-slate-500 dark:text-slate-400";
+            textTimeStyle = "text-slate-800 dark:text-slate-200";
+            checkIconStyle = '<div class="w-5 h-5 rounded-full border-2 border-slate-200 dark:border-slate-700"></div>';
         }
 
         html += `
-            <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl border transition-all duration-300 ${cardStyle} cursor-pointer">
-                <span class="text-[10px] font-bold uppercase tracking-wide ${textNameStyle} mb-0.5">${name}</span>
-                <span class="text-xs font-bold font-mono ${textTimeStyle}">${time}</span>
-                <div class="h-4 flex items-center justify-center mt-1">${checkIconStyle}</div>
+            <div class="flex flex-col items-center justify-center py-3 px-1 rounded-2xl border transition-all duration-300 ${cardStyle} cursor-pointer group">
+                <span class="text-[9px] font-bold uppercase tracking-widest ${textNameStyle} mb-1">${name}</span>
+                <span class="text-xs font-black font-mono ${textTimeStyle}">${time}</span>
+                <div class="mt-2 group-hover:scale-110 transition-transform">${checkIconStyle}</div>
             </div>`;
     });
 
@@ -275,13 +379,11 @@ async function fetchCityName(lat, lng) {
     try {
         const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=id`);
         const data = await res.json();
-        const cityName = data.locality || data.city || data.principalSubdivision || "Lokasi Anda";
+        const cityName = data.locality || data.city || "Lokasi Anda";
 
         setLastCity(cityName);
         localStorage.setItem('last_city_name', cityName);
         updateHomeUI();
-        const t1 = document.getElementById('locationText');
-        if (t1) t1.innerText = state.lastCity;
     } catch (e) {
         if (!state.lastCity || state.lastCity === "Menunggu GPS...") {
             setLastCity("Lokasi Terdeteksi");
@@ -336,6 +438,7 @@ async function fetchJadwal(lat, lng) {
 
     updateNextPrayer();
     renderTodayPrayers();
+    loadFastingWidget(); // Reload widget puasa setelah jadwal sholat (maghrib) didapat
     window.dispatchEvent(new Event('prayerTimesUpdated'));
 }
 
@@ -404,7 +507,7 @@ export function calculateHijri(date, adjustment = 0) {
 function getHijriDate(date, adjustment = 0) {
     const h = calculateHijri(date, adjustment);
 
-    const iMonthNames = ["Muharram", "Safar", "Rabi'ul Awal", "Rabi'ul Akhir",
+    const iMonthNames = ["Muharram", "Safar", "Rabiul Awal", "Rabiul Akhir",
         "Jumadil Awal", "Jumadil Akhir", "Rajab", "Sya'ban",
         "Ramadhan", "Syawal", "Dzulkaidah", "Dzulhijjah"];
 
@@ -477,7 +580,7 @@ function startCountdown(targetTimeStr) {
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-        countEl.innerText = `- ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        countEl.innerText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
 
     tick();
@@ -495,10 +598,14 @@ function applyTheme() {
 
     if (isDarkMode) {
         html.classList.add('dark');
-        btns.forEach(btn => { btn.innerHTML = `<i data-lucide="sun" class="w-5 h-5 text-yellow-300"></i>`; });
+        btns.forEach(btn => {
+            btn.innerHTML = `<i data-lucide="sun" class="w-4 h-4 text-yellow-300"></i>`;
+        });
     } else {
         html.classList.remove('dark');
-        btns.forEach(btn => { btn.innerHTML = `<i data-lucide="moon" class="w-5 h-5"></i>`; });
+        btns.forEach(btn => {
+            btn.innerHTML = `<i data-lucide="moon" class="w-4 h-4 text-slate-600"></i>`;
+        });
     }
     if (window.lucide) lucide.createIcons();
 }
