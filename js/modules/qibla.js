@@ -7,9 +7,8 @@ let isAligned = false;
 let isCompassActive = false;
 let animationFrameId = null;
 
-// [VARIABEL SMOOTHING]
-let currentSmoothHeading = 0; // Heading yang ditampilkan (sudah halus)
-let rawHeading = 0;           // Heading asli dari sensor
+let currentSmoothHeading = 0;
+let rawHeading = 0;
 let firstReading = true;
 
 export function initQibla() {
@@ -44,7 +43,6 @@ function calculateQibla(lat, lng) {
     const degreeEl = document.getElementById('qiblaDegree');
     if (degreeEl) degreeEl.innerText = `${Math.round(qiblaAngle)}°`;
 
-    // Putar jarum kiblat relatif terhadap piringan
     const pointer = document.getElementById('qiblaPointer');
     if (pointer) {
         pointer.style.transform = `rotate(${qiblaAngle}deg)`;
@@ -122,11 +120,8 @@ function handleSensorData(event) {
 function lerpAngle(start, end, amount) {
     let difference = Math.abs(end - start);
     if (difference > 180) {
-        if (end > start) {
-            start += 360;
-        } else {
-            end += 360;
-        }
+        if (end > start) start += 360;
+        else end += 360;
     }
     let value = (start + ((end - start) * amount));
     return (value % 360 + 360) % 360;
@@ -161,7 +156,7 @@ function checkQiblaAlignment(heading) {
     let diff = Math.abs(heading - calculatedQiblaAngle);
     if (diff > 180) diff = 360 - diff;
 
-    const TOLERANCE = 4;
+    const TOLERANCE = 3;
 
     const disc = document.getElementById('compassDisc');
     const indicator = document.getElementById('qiblaSuccessIndicator');
@@ -172,24 +167,27 @@ function checkQiblaAlignment(heading) {
     if (diff <= TOLERANCE) {
         if (!isAligned) {
             isAligned = true;
-            if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+            if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
 
             if (disc) {
                 disc.style.borderColor = '#10b981';
-                disc.style.boxShadow = '0 0 40px rgba(16, 185, 129, 0.25)';
+                disc.style.boxShadow = '0 0 50px rgba(16, 185, 129, 0.4)';
             }
             if (indicator) {
                 indicator.classList.remove('opacity-0', 'scale-90', '-translate-y-4');
                 indicator.classList.add('opacity-100', 'scale-100', 'translate-y-0');
             }
-            if (glow) glow.classList.remove('opacity-0');
+            if (glow) glow.classList.add('animate-pulse', 'opacity-60');
 
-            /** * PERBAIKAN: Sertakan translateX(-50%) agar tetap di tengah 
-             * saat efek scale diaktifkan melalui JavaScript.
-             */
-            if (iconContainer) iconContainer.style.transform = "translateX(-50%) scale(1.15)";
+            // Fix posisi dan tambah class animasi
+            if (iconContainer) {
+                iconContainer.style.transform = "translateX(-50%) scale(1.25)";
+                iconContainer.classList.add('qibla-active-pulse');
+            }
 
-            if (pointerLine) pointerLine.classList.add('from-emerald-400', 'to-emerald-500');
+            if (pointerLine) {
+                pointerLine.classList.add('qibla-line-active');
+            }
         }
     } else {
         if (isAligned) {
@@ -203,13 +201,16 @@ function checkQiblaAlignment(heading) {
                 indicator.classList.add('opacity-0', 'scale-90', '-translate-y-4');
                 indicator.classList.remove('opacity-100', 'scale-100', 'translate-y-0');
             }
-            if (glow) glow.classList.add('opacity-0');
+            if (glow) glow.classList.remove('animate-pulse', 'opacity-60');
 
-            /** * PERBAIKAN: Kembalikan translateX(-50%) saat mereset scale.
-             */
-            if (iconContainer) iconContainer.style.transform = "translateX(-50%) scale(1)";
+            if (iconContainer) {
+                iconContainer.style.transform = "translateX(-50%) scale(1)";
+                iconContainer.classList.remove('qibla-active-pulse');
+            }
 
-            if (pointerLine) pointerLine.classList.remove('from-emerald-400', 'to-emerald-500');
+            if (pointerLine) {
+                pointerLine.classList.remove('qibla-line-active');
+            }
         }
     }
 }
