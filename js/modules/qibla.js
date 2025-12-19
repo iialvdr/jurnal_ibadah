@@ -44,8 +44,8 @@ function calculateQibla(lat, lng) {
     const degreeEl = document.getElementById('qiblaDegree');
     if (degreeEl) degreeEl.innerText = `${Math.round(qiblaAngle)}°`;
 
-    // Putar jarum kiblat relatif terhadap piringan
-    // Jarum ini statis di angka derajat kiblat pada piringan
+    // PERBAIKAN: Gunakan absolute positioning pada piringan
+    // Jarum menunjuk ke derajat kiblat pada piringan kompas
     const pointer = document.getElementById('qiblaPointer');
     if (pointer) {
         pointer.style.transform = `rotate(${qiblaAngle}deg)`;
@@ -71,7 +71,7 @@ async function requestCompassPermission() {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             const response = await DeviceOrientationEvent.requestPermission();
             if (response === 'granted') {
-                document.getElementById('compassPermissionBtn').classList.add('hidden');
+                document.getElementById('compassPermissionBtn')?.classList.add('hidden');
                 startCompass();
             } else {
                 alert('Izin kompas ditolak.');
@@ -120,20 +120,13 @@ function handleSensorData(event) {
     }
 }
 
-// [Fungsi Lerp untuk Rotasi Sudut agar lewat jalur terpendek]
 function lerpAngle(start, end, amount) {
     let difference = Math.abs(end - start);
     if (difference > 180) {
-        // Handle wrap-around (misal dari 350 ke 10 derajat)
-        if (end > start) {
-            start += 360;
-        } else {
-            end += 360;
-        }
+        if (end > start) start += 360;
+        else end += 360;
     }
-    // Interpolasi
     let value = (start + ((end - start) * amount));
-    // Normalisasi kembali ke 0-360
     return (value % 360 + 360) % 360;
 }
 
@@ -145,20 +138,15 @@ function updateCompassUI() {
             currentSmoothHeading = rawHeading;
             firstReading = false;
         } else {
-            // [SMOOTHING]
-            // Gunakan factor 0.15 (semakin kecil = semakin lambat/halus)
             currentSmoothHeading = lerpAngle(currentSmoothHeading, rawHeading, 0.15);
         }
 
-        // Update Text
         const textEl = document.getElementById('compassHeading');
         if (textEl) textEl.innerText = `${Math.round(currentSmoothHeading)}°`;
 
-        // Update Rotasi Piringan
-        // Piringan berputar berlawanan arah dengan heading HP
-        // agar jarum 'Utara' di piringan selalu menunjuk Utara bumi
         const disc = document.getElementById('compassDisc');
         if (disc) {
+            // Rotasi piringan agar 'U' selalu ke Utara
             disc.style.transform = `rotate(${-currentSmoothHeading}deg)`;
         }
 
@@ -169,11 +157,10 @@ function updateCompassUI() {
 }
 
 function checkQiblaAlignment(heading) {
-    // Selisih antara arah HP saat ini dengan arah kiblat
     let diff = Math.abs(heading - calculatedQiblaAngle);
     if (diff > 180) diff = 360 - diff;
 
-    const TOLERANCE = 4; // Toleransi derajat
+    const TOLERANCE = 3; // Sedikit diperketat untuk akurasi
 
     const disc = document.getElementById('compassDisc');
     const indicator = document.getElementById('qiblaSuccessIndicator');
@@ -186,9 +173,8 @@ function checkQiblaAlignment(heading) {
             isAligned = true;
             if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
 
-            // Efek Visual Aktif
             if (disc) {
-                disc.style.borderColor = '#10b981'; // Emerald Color
+                disc.style.borderColor = '#10b981';
                 disc.style.boxShadow = '0 0 40px rgba(16, 185, 129, 0.25)';
             }
             if (indicator) {
@@ -197,13 +183,14 @@ function checkQiblaAlignment(heading) {
             }
             if (glow) glow.classList.remove('opacity-0');
             if (iconContainer) iconContainer.style.transform = "scale(1.15)";
-            if (pointerLine) pointerLine.classList.add('from-emerald-400', 'to-emerald-500');
+            if (pointerLine) {
+                pointerLine.style.backgroundColor = '#10b981';
+                pointerLine.classList.add('shadow-[0_0_10px_rgba(16,185,129,0.5)]');
+            }
         }
     } else {
         if (isAligned) {
             isAligned = false;
-
-            // Efek Visual Reset
             if (disc) {
                 disc.style.borderColor = '';
                 disc.style.boxShadow = '';
@@ -214,7 +201,10 @@ function checkQiblaAlignment(heading) {
             }
             if (glow) glow.classList.add('opacity-0');
             if (iconContainer) iconContainer.style.transform = "scale(1)";
-            if (pointerLine) pointerLine.classList.remove('from-emerald-400', 'to-emerald-500');
+            if (pointerLine) {
+                pointerLine.style.backgroundColor = '';
+                pointerLine.classList.remove('shadow-[0_0_10px_rgba(16,185,129,0.5)]');
+            }
         }
     }
 }
