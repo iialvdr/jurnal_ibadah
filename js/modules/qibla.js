@@ -7,8 +7,9 @@ let isAligned = false;
 let isCompassActive = false;
 let animationFrameId = null;
 
-let currentSmoothHeading = 0;
-let rawHeading = 0;
+// [VARIABEL SMOOTHING]
+let currentSmoothHeading = 0; // Heading yang ditampilkan (sudah halus)
+let rawHeading = 0;           // Heading asli dari sensor
 let firstReading = true;
 
 export function initQibla() {
@@ -37,22 +38,17 @@ function calculateQibla(lat, lng) {
     const y = Math.sin(lng2 - lng1) * Math.cos(lat2);
     const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lng2 - lng1);
 
-    calculatedQiblaAngle = (Math.atan2(y, x) * 180 / PI + 360) % 360;
+    let qiblaAngle = (Math.atan2(y, x) * 180 / PI + 360) % 360;
+    calculatedQiblaAngle = qiblaAngle;
 
     const degreeEl = document.getElementById('qiblaDegree');
-    if (degreeEl) degreeEl.innerText = `${Math.round(calculatedQiblaAngle)}°`;
+    if (degreeEl) degreeEl.innerText = `${Math.round(qiblaAngle)}°`;
 
+    // Putar jarum kiblat relatif terhadap piringan
+    // Jarum ini statis di angka derajat kiblat pada piringan
     const pointer = document.getElementById('qiblaPointer');
     if (pointer) {
-        // Kunci posisi di tengah piringan
-        pointer.style.position = 'absolute';
-        pointer.style.top = '50%';
-        pointer.style.left = '50%';
-        pointer.style.width = '100%';
-        pointer.style.height = '100%';
-        pointer.style.transformOrigin = 'center center';
-        // Reset transform awal (nanti diupdate di loop)
-        pointer.style.transform = `translate(-50%, -50%) rotate(${calculatedQiblaAngle}deg)`;
+        pointer.style.transform = `rotate(${qiblaAngle}deg)`;
     }
 }
 
@@ -75,8 +71,10 @@ async function requestCompassPermission() {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             const response = await DeviceOrientationEvent.requestPermission();
             if (response === 'granted') {
-                document.getElementById('compassPermissionBtn')?.classList.add('hidden');
+                document.getElementById('compassPermissionBtn').classList.add('hidden');
                 startCompass();
+            } else {
+                alert('Izin kompas ditolak.');
             }
         } else {
             startCompass();
@@ -86,20 +84,27 @@ async function requestCompassPermission() {
 
 function startCompass() {
     if (isCompassActive) return;
+
     firstReading = true;
     isCompassActive = true;
+    isAligned = false;
 
     if ('ondeviceorientationabsolute' in window) {
         window.addEventListener('deviceorientationabsolute', handleSensorData, true);
-    } else {
+    } else if (window.DeviceOrientationEvent) {
         window.addEventListener('deviceorientation', handleSensorData, true);
+    } else {
+        alert("Sensor kompas tidak terdeteksi.");
     }
+
     updateCompassUI();
 }
 
 function stopCompass() {
     isCompassActive = false;
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    window.removeEventListener('deviceorientationabsolute', handleSensorData, true);
+    window.removeEventListener('deviceorientation', handleSensorData, true);
 }
 
 function handleSensorData(event) {
@@ -109,72 +114,107 @@ function handleSensorData(event) {
     } else if (event.alpha) {
         heading = 360 - event.alpha;
     }
-    if (heading !== null) rawHeading = heading;
+
+    if (heading !== null) {
+        rawHeading = heading;
+    }
 }
 
+// [Fungsi Lerp untuk Rotasi Sudut agar lewat jalur terpendek]
 function lerpAngle(start, end, amount) {
-    let diff = Math.abs(end - start);
-    if (diff > 180) {
-        if (end > start) start += 360;
-        else end += 360;
+    let difference = Math.abs(end - start);
+    if (difference > 180) {
+        // Handle wrap-around (misal dari 350 ke 10 derajat)
+        if (end > start) {
+            start += 360;
+        } else {
+            end += 360;
+        }
     }
-    return (start + (end - start) * amount) % 360;
+    // Interpolasi
+    let value = (start + ((end - start) * amount));
+    // Normalisasi kembali ke 0-360
+    return (value % 360 + 360) % 360;
 }
 
 function updateCompassUI() {
     if (!isCompassActive) return;
 
-    if (firstReading) {
-        currentSmoothHeading = rawHeading;
-        firstReading = false;
-    } else {
-        currentSmoothHeading = lerpAngle(currentSmoothHeading, rawHeading, 0.15);
+    if (rawHeading !== null) {
+        if (firstReading) {
+            currentSmoothHeading = rawHeading;
+            firstReading = false;
+        } else {
+            // [SMOOTHING]
+            // Gunakan factor 0.15 (semakin kecil = semakin lambat/halus)
+            currentSmoothHeading = lerpAngle(currentSmoothHeading, rawHeading, 0.15);
+        }
+
+        // Update Text
+        const textEl = document.getElementById('compassHeading');
+        if (textEl) textEl.innerText = `${Math.round(currentSmoothHeading)}°`;
+
+        // Update Rotasi Piringan
+        // Piringan berputar berlawanan arah dengan heading HP
+        // agar jarum 'Utara' di piringan selalu menunjuk Utara bumi
+        const disc = document.getElementById('compassDisc');
+        if (disc) {
+            disc.style.transform = `rotate(${-currentSmoothHeading}deg)`;
+        }
+
+        checkQiblaAlignment(currentSmoothHeading);
     }
 
-    const textEl = document.getElementById('compassHeading');
-    if (textEl) textEl.innerText = `${Math.round((currentSmoothHeading + 360) % 360)}°`;
-
-    const disc = document.getElementById('compassDisc');
-    if (disc) {
-        // Piringan berputar dengan poros tengah yang kaku
-        disc.style.transform = `rotate(${-currentSmoothHeading}deg)`;
-    }
-
-    checkQiblaAlignment(currentSmoothHeading);
     animationFrameId = requestAnimationFrame(updateCompassUI);
 }
 
 function checkQiblaAlignment(heading) {
-    let normalizedHeading = (heading + 360) % 360;
-    let diff = Math.abs(normalizedHeading - calculatedQiblaAngle);
+    // Selisih antara arah HP saat ini dengan arah kiblat
+    let diff = Math.abs(heading - calculatedQiblaAngle);
     if (diff > 180) diff = 360 - diff;
 
-    const TOLERANCE = 4;
-    const isNowAligned = diff <= TOLERANCE;
+    const TOLERANCE = 4; // Toleransi derajat
 
-    if (isNowAligned !== isAligned) {
-        isAligned = isNowAligned;
-        const indicator = document.getElementById('qiblaSuccessIndicator');
-        const glow = document.getElementById('kaabaGlow');
-        const iconContainer = document.getElementById('kaabaIconContainer');
-        const pointerLine = document.getElementById('pointerLine');
+    const disc = document.getElementById('compassDisc');
+    const indicator = document.getElementById('qiblaSuccessIndicator');
+    const glow = document.getElementById('kaabaGlow');
+    const pointerLine = document.getElementById('pointerLine');
+    const iconContainer = document.getElementById('kaabaIconContainer');
 
+    if (diff <= TOLERANCE) {
+        if (!isAligned) {
+            isAligned = true;
+            if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+
+            // Efek Visual Aktif
+            if (disc) {
+                disc.style.borderColor = '#10b981'; // Emerald Color
+                disc.style.boxShadow = '0 0 40px rgba(16, 185, 129, 0.25)';
+            }
+            if (indicator) {
+                indicator.classList.remove('opacity-0', 'scale-90', '-translate-y-4');
+                indicator.classList.add('opacity-100', 'scale-100', 'translate-y-0');
+            }
+            if (glow) glow.classList.remove('opacity-0');
+            if (iconContainer) iconContainer.style.transform = "scale(1.15)";
+            if (pointerLine) pointerLine.classList.add('from-emerald-400', 'to-emerald-500');
+        }
+    } else {
         if (isAligned) {
-            if (navigator.vibrate) navigator.vibrate(50);
-            indicator?.classList.replace('opacity-0', 'opacity-100');
-            indicator?.classList.replace('scale-90', 'scale-100');
-            glow?.classList.replace('opacity-0', 'opacity-100');
+            isAligned = false;
 
-            // PERBAIKAN: Gunakan scale saja tanpa ganggu layout flex
-            if (iconContainer) iconContainer.style.transform = "scale(1.2)";
-            if (pointerLine) pointerLine.style.backgroundColor = "#10b981";
-        } else {
-            indicator?.classList.replace('opacity-100', 'opacity-0');
-            indicator?.classList.replace('scale-100', 'scale-90');
-            glow?.classList.replace('opacity-100', 'opacity-0');
-
+            // Efek Visual Reset
+            if (disc) {
+                disc.style.borderColor = '';
+                disc.style.boxShadow = '';
+            }
+            if (indicator) {
+                indicator.classList.add('opacity-0', 'scale-90', '-translate-y-4');
+                indicator.classList.remove('opacity-100', 'scale-100', 'translate-y-0');
+            }
+            if (glow) glow.classList.add('opacity-0');
             if (iconContainer) iconContainer.style.transform = "scale(1)";
-            if (pointerLine) pointerLine.style.backgroundColor = "";
+            if (pointerLine) pointerLine.classList.remove('from-emerald-400', 'to-emerald-500');
         }
     }
 }
