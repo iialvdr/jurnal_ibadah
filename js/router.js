@@ -2,16 +2,22 @@ import { state } from './state.js';
 
 let isExplicitNavigation = false;
 
+/**
+ * Setup Router menggunakan History API (Clean URL)
+ */
 export function setupRouter() {
     const handleNavigation = () => {
-        if (!state.currentUser) {
-            if (window.location.hash && window.location.hash !== '#home') {
-                history.replaceState(null, null, window.location.pathname);
-            }
-            return;
-        }
+        // Mengambil segment terakhir dari path URL, default ke 'home' jika kosong
+        // Contoh: /tracker -> tracker, / -> home
+        const path = window.location.pathname.split('/').filter(Boolean).pop() || 'home';
 
-        const hash = window.location.hash.replace('#', '') || 'home';
+        // Proteksi: Jika belum login, pastikan tidak bisa akses halaman internal via URL
+        if (!state.currentUser) {
+            if (path !== 'home' && path !== '') {
+                history.replaceState(null, null, '/');
+                // Biarkan switchView menangani tampilan (biasanya balik ke landing/home)
+            }
+        }
 
         const routes = {
             'home': 'homeView',
@@ -24,25 +30,39 @@ export function setupRouter() {
             'asmaul-husna': 'asmaulHusnaView',
             'fasting': 'fastingView',
             'credits': 'creditsView',
-            'changelog': 'changelogView' // [BARU] Route untuk changelog
+            'changelog': 'changelogView'
         };
 
-        const targetViewId = routes[hash] || 'homeView';
+        const targetViewId = routes[path] || 'homeView';
         switchView(targetViewId);
     };
 
-    window.addEventListener('hashchange', handleNavigation);
+    // Event listener untuk tombol 'Back'/'Forward' di browser
+    window.addEventListener('popstate', handleNavigation);
+
+    // Inisialisasi route saat halaman pertama kali dimuat
     window.addEventListener('load', handleNavigation);
 
-    const navigateTo = (hash) => {
+    /**
+     * Fungsi utama untuk navigasi antar halaman
+     */
+    const navigateTo = (path) => {
         isExplicitNavigation = true;
-        window.location.hash = hash;
+
+        // Tentukan URL tujuan
+        const url = path === 'home' ? '/' : `/${path}`;
+
+        // Update URL tanpa reload halaman
+        history.pushState(null, null, url);
+
+        // Jalankan logika render view
+        handleNavigation();
+
         setTimeout(() => { isExplicitNavigation = false; }, 100);
     };
 
-    // [PENTING] Expose navigateTo agar bisa dipanggil di HTML (onclick)
+    // Ekspos fungsi navigasi agar bisa dipanggil langsung dari HTML (onclick)
     window.navigateTo = navigateTo;
-
     window.goHome = () => navigateTo('home');
     window.openTracker = () => navigateTo('tracker');
     window.openTasbih = () => navigateTo('tasbih');
@@ -54,43 +74,42 @@ export function setupRouter() {
     window.openFasting = () => navigateTo('fasting');
     window.openCredits = () => navigateTo('credits');
 
-    // Opsional: shortcut khusus changelog jika butuh
-    // window.openChangelog = () => navigateTo('changelog');
-
     window.goBack = () => {
         if (window.history.length > 1) {
             window.history.back();
         } else {
-            window.location.hash = 'home';
+            navigateTo('home');
         }
     };
 
     window.closeQibla = () => window.goBack();
     window.closeTasbih = () => window.goBack();
     window.closeProfile = () => window.goBack();
-    window.closeAsmaDetail = () => { /* Dihandle di module */ };
+    window.closeAsmaDetail = () => { /* Logic dihandle di module asmaul_husna.js */ };
 }
 
+/**
+ * Fungsi untuk mengganti tampilan view yang aktif
+ */
 export function switchView(targetId) {
-    // [BARU] Tambahkan 'changelogView' ke dalam daftar view
-    const allViews = ['homeView', 'trackerView', 'profileView', 'tasbihView', 'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView', 'fastingView', 'creditsView', 'changelogView'];
-    const targetEl = document.getElementById(targetId);
+    const allViews = [
+        'homeView', 'trackerView', 'profileView', 'tasbihView',
+        'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView',
+        'fastingView', 'creditsView', 'changelogView'
+    ];
 
+    const targetEl = document.getElementById(targetId);
     if (!targetEl) return;
 
-    // --- [LOGIC RESET HALAMAN] ---
-    // Cari halaman yang sedang aktif SEBELUM pindah
+    // Trigger event viewExit untuk pembersihan modul sebelum pindah
     const currentActive = document.querySelector('.absolute.z-50.active');
-
-    // Jika ada halaman aktif dan id-nya beda dengan tujuan (artinya kita pindah halaman)
     if (currentActive && currentActive.id !== targetId) {
-        // Kirim sinyal 'viewExit' ke modul terkait agar mereset dirinya
         window.dispatchEvent(new CustomEvent('viewExit', {
             detail: { viewId: currentActive.id }
         }));
     }
-    // -----------------------------------
 
+    // Pastikan icon Lucide dirender jika belum
     if (window.lucide && targetEl.querySelectorAll('i[data-lucide]').length > 0) {
         if (!targetEl.hasAttribute('data-icons-rendered')) {
             try {
@@ -114,11 +133,17 @@ export function switchView(targetId) {
             }
         });
 
+        // Update tampilan menu sidebar/navbar bawah
         updateSidebarUI(targetId);
+
+        // Beritahu modul lain bahwa halaman telah berganti
         window.dispatchEvent(new CustomEvent('viewChanged', { detail: { viewId: targetId } }));
     });
 }
 
+/**
+ * Update visual tombol navigasi yang aktif
+ */
 function updateSidebarUI(activeViewId) {
     const map = {
         'homeView': 'nav-home',
@@ -131,7 +156,7 @@ function updateSidebarUI(activeViewId) {
         'asmaulHusnaView': 'nav-asma',
         'fastingView': 'nav-fasting',
         'creditsView': 'nav-profile',
-        'changelogView': 'nav-profile' // [BARU] Changelog tetap highlight menu Profile
+        'changelogView': 'nav-profile'
     };
 
     const activeBtnId = map[activeViewId];
@@ -139,6 +164,7 @@ function updateSidebarUI(activeViewId) {
 
     const allBtns = document.querySelectorAll('.sidebar-btn');
     allBtns.forEach(btn => {
+        // Reset class ke default
         btn.className = "sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group";
         const icon = btn.querySelector('i');
         if (icon) icon.className = "w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition";
@@ -146,10 +172,13 @@ function updateSidebarUI(activeViewId) {
 
     const activeBtn = document.getElementById(activeBtnId);
     if (activeBtn) {
+        // Set class aktif
         activeBtn.className = "sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-white dark:bg-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none text-sm font-bold text-emerald-600 dark:text-emerald-400 group ring-1 ring-white/50 dark:ring-slate-700";
-        const icon = activeBtn.querySelector('i');
 
+        const icon = activeBtn.querySelector('i');
         let iconColorClass = "text-emerald-500";
+
+        // Pewarnaan khusus tiap menu
         if (activeBtnId === 'nav-tasbih') iconColorClass = "text-blue-500";
         if (activeBtnId === 'nav-qibla') iconColorClass = "text-teal-500";
         if (activeBtnId === 'nav-profile') iconColorClass = "text-amber-500";
