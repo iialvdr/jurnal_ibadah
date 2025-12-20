@@ -1,12 +1,12 @@
 import { auth } from './config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { setCurrentUser } from './state.js';
-import { setupRouter, switchView } from './router.js';
+import { setupRouter } from './router.js';
 import { APP_VERSION } from './version.js';
 
 // Import Modules
 import { initAuth } from './modules/auth.js';
-import { initHome, updateHomeUI, syncThemeWithCloud } from './modules/home.js';
+import { initHome, syncThemeWithCloud } from './modules/home.js';
 import { initTracker } from './modules/tracker.js';
 import { initTasbih } from './modules/tasbih.js';
 import { initQibla } from './modules/qibla.js';
@@ -16,7 +16,7 @@ import { initDoa } from './modules/doa.js';
 import { initAsmaulHusna } from './modules/asmaul_husna.js';
 import { initFasting } from './modules/fasting.js';
 import { initCredits } from './modules/credits.js';
-import { initChangelog } from './modules/changelog.js'; // [BARU] Import module changelog
+import { initChangelog } from './modules/changelog.js';
 
 window.vibrateSoft = () => { if (navigator.vibrate) navigator.vibrate(10); };
 window.vibrateSuccess = () => { if (navigator.vibrate) navigator.vibrate([10, 30, 10]); };
@@ -27,7 +27,7 @@ const VIEWS = [
     'views/doa.html', 'views/asmaul_husna.html',
     'views/fasting.html',
     'views/credits.html',
-    'views/changelog.html' // [BARU] Daftarkan view changelog
+    'views/changelog.html'
 ];
 
 async function loadAllViews() {
@@ -66,8 +66,7 @@ function updateVersionLabels() {
 }
 
 function initializeApp() {
-    setupRouter();
-
+    // Inisialisasi modul-modul
     initAuth();
     initHome();
     initTracker();
@@ -79,7 +78,7 @@ function initializeApp() {
     initAsmaulHusna();
     initProfile();
     initCredits();
-    initChangelog(); // [BARU] Jalankan init changelog
+    initChangelog();
 
     onAuthStateChanged(auth, (user) => {
         const splash = document.getElementById('splashScreen');
@@ -93,9 +92,16 @@ function initializeApp() {
             const loginOverlay = document.getElementById('loginOverlay');
             if (loginOverlay) loginOverlay.classList.add('hidden-force');
             if (sidebar) sidebar.classList.remove('hidden-force');
-            switchView('homeView', false);
+
+            // Jalankan router untuk mengaktifkan view
+            setupRouter();
         } else {
             setCurrentUser(null);
+
+            if (window.location.pathname !== '/' && window.location.pathname !== '/home') {
+                window.history.replaceState(null, null, '/');
+            }
+
             if (sidebar) sidebar.classList.add('hidden-force');
 
             if (appContainer) {
