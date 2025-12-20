@@ -7,17 +7,3 @@ export function initCredits() {
         }
     });
 }
-
-function updateCreditsInfo() {
-    // Update Versi Aplikasi dari version.js
-    const versionEl = document.getElementById('appVersionText');
-    if (versionEl) {
-        versionEl.textContent = `Versi ${APP_VERSION}`;
-    }
-
-    // [BARU] Update badge versi di logo
-    const badgeEl = document.getElementById('creditsVersionBadge');
-    if (badgeEl) {
-        badgeEl.textContent = APP_VERSION;
-    }
-}
