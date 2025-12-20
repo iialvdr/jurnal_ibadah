@@ -189,10 +189,8 @@ function renderAyahs(ayatList, surahName) {
                 </button>
             </div>
             
-            <div class="text-right mb-6 pl-1" dir="rtl">
-                <p class="font-quran text-[2rem] text-slate-800 dark:text-white" lang="ar">
-                    ${ayat.teksArab}
-                </p>
+            <div class="text-right mb-6 pl-1">
+                <p class="font-quran text-[1.7rem] leading-[2.4] text-slate-800 dark:text-white" dir="rtl" lang="ar">${ayat.teksArab}</p>
             </div>
             
             <div class="space-y-3 bg-slate-50/50 dark:bg-slate-800/30 -mx-5 -mb-5 p-5 border-t border-slate-100 dark:border-slate-800">

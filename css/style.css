@@ -98,12 +98,9 @@ body { font-family: 'Inter', sans-serif; }
 
 /* Font Arab */
 .font-quran {
-    font-family: 'Scheherazade New', serif !important;
-    line-height: 2.8 !important; /* Memberi ruang lebih untuk simbol atas/bawah */
-    font-weight: 400; 
-    direction: rtl;
-    unicode-bidi: isolate; /* Ini kunci agar simbol tidak pindah posisi */
-    text-align: right;
+    font-family: 'Noto Naskh Arabic', serif !important;
+    line-height: 2.2 !important;
+    font-weight: 600;
 }
 
 /* Utility */
