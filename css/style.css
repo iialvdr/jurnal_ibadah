@@ -98,11 +98,12 @@ body { font-family: 'Inter', sans-serif; }
 
 /* Font Arab */
 .font-quran {
-    font-family: 'Amiri', 'Noto Naskh Arabic', serif !important;
-    line-height: 2.4 !important;
-    font-weight: 400; /* Gunakan 400 agar simbol tidak pecah saat dirender bold oleh sistem */
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
+    font-family: 'Scheherazade New', serif !important;
+    line-height: 2.8 !important; /* Memberi ruang lebih untuk simbol atas/bawah */
+    font-weight: 400; 
+    direction: rtl;
+    unicode-bidi: isolate; /* Ini kunci agar simbol tidak pindah posisi */
+    text-align: right;
 }
 
 /* Utility */
