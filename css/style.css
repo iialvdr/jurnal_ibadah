@@ -98,9 +98,11 @@ body { font-family: 'Inter', sans-serif; }
 
 /* Font Arab */
 .font-quran {
-    font-family: 'Noto Naskh Arabic', serif !important;
-    line-height: 2.2 !important;
-    font-weight: 600;
+    font-family: 'Amiri', 'Noto Naskh Arabic', serif !important;
+    line-height: 2.4 !important;
+    font-weight: 400; /* Gunakan 400 agar simbol tidak pecah saat dirender bold oleh sistem */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* Utility */
