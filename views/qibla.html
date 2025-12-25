@@ -1,4 +1,4 @@
-<div id="qiblaView" class="hidden-force flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-hidden bg-slate-100 dark:bg-slate-950">
+<div id="qiblaView" class="hidden-force flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-hidden bg-slate-100 dark:bg-slate-950" style="touch-action: pan-y;">
     
     <div class="fixed top-0 left-0 right-0 h-48 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
@@ -10,7 +10,7 @@
         <div class="w-10"></div> 
     </div>
 
-    <div class="flex-1 flex flex-col items-center relative z-10 overflow-y-auto no-scrollbar pt-4 pb-20">
+    <div class="flex-1 flex flex-col items-center relative z-10 overflow-y-auto overflow-x-hidden no-scrollbar pt-4 pb-20">
         
         <div id="qiblaSuccessIndicator" class="absolute top-0 left-0 right-0 flex justify-center z-40 opacity-0 pointer-events-none transition-all duration-500 transform -translate-y-4 scale-90">
             <div class="bg-emerald-500 text-white px-5 py-2.5 rounded-full shadow-lg shadow-emerald-500/30 flex items-center gap-2.5 border border-emerald-400/50 backdrop-blur-md">
@@ -19,7 +19,7 @@
             </div>
         </div>
 
-        <div class="relative w-full max-w-[320px] aspect-square flex items-center justify-center mb-8 mt-6">
+        <div class="relative w-full max-w-[320px] aspect-square flex items-center justify-center mb-8 mt-6 touch-none">
             
             <div class="absolute inset-0 rounded-full border border-slate-200 dark:border-slate-800 opacity-50"></div>
             

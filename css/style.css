@@ -6,6 +6,8 @@
     user-select: none;
     -webkit-tap-highlight-color: transparent;
     -webkit-user-drag: none;
+    /* Mencegah tarikan horizontal secara default pada elemen interaktif */
+    touch-action: manipulation; 
 }
 
 input, textarea {
@@ -18,10 +20,24 @@ html, body {
     padding: 0;
     width: 100%;
     height: 100%;
+    /* Mencegah efek membal (overscroll) dan pergerakan horizontal */
     overscroll-behavior: none;
+    overflow-x: hidden;
+    position: fixed; /* Membantu mengunci posisi pada beberapa browser mobile */
 }
 
-body { font-family: 'Inter', sans-serif; }
+body { 
+    font-family: 'Inter', sans-serif; 
+    width: 100vw;
+    height: 100vh;
+}
+
+/* --- KHUSUS HALAMAN QIBLA --- */
+#qiblaView {
+    /* Mengunci swipe horizontal tapi tetap membiarkan scroll vertikal (pan-y) */
+    touch-action: pan-y;
+    overflow-x: hidden;
+}
 
 /* Scrollbar Custom */
 @media (min-width: 768px) {
@@ -47,46 +63,38 @@ body { font-family: 'Inter', sans-serif; }
     66% { transform: translate(-10px, 10px) scale(0.95); }
 }
 
-/* Modern Bento Card Style */
 .bento-card {
     position: relative;
     overflow: hidden;
     transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
-    border: 1px solid rgba(226, 232, 240, 0.8); /* Slate-200 */
+    border: 1px solid rgba(226, 232, 240, 0.8);
     box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.03);
 }
 
 .dark .bento-card {
-    border: 1px solid rgba(30, 41, 59, 0.8); /* Slate-800 */
-    background: #0f172a; /* Slate-900 */
+    border: 1px solid rgba(30, 41, 59, 0.8);
+    background: #0f172a;
     box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.2);
 }
 
-.bento-card:active {
-    transform: scale(0.97);
-}
+.bento-card:active { transform: scale(0.97); }
 
-/* Glass Pill Header */
 .glass-pill {
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
 }
 
-/* Helper Animations */
 .animate-spin-slow { animation: spin 3s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-/* Views Layout (DIPERBAIKI) */
-/* Kita hapus overflow-y dan padding-bottom paksa disini */
-/* Biarkan class Tailwind di masing-masing file HTML yang mengatur scroll & padding */
+/* Views Layout */
 #homeView, #trackerView, #tasbihView, #qiblaView, #profileView, #fastingView, #doaView, #quranView, #asmaulHusnaView {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    /* background-color: transparent; (Opsional, sudah dihandle HTML) */
     z-index: 0;
-    /* overflow-y & padding dihapus agar tidak konflik */
+    overflow-x: hidden; /* Tambahan untuk memastikan view tidak meluber ke samping */
 }
 
 .active {
@@ -96,18 +104,15 @@ body { font-family: 'Inter', sans-serif; }
 
 .hidden-force { display: none !important; }
 
-/* Font Arab */
 .font-quran {
     font-family: 'Noto Naskh Arabic', serif !important;
     line-height: 2.2 !important;
     font-weight: 600;
 }
 
-/* Utility */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .text-balance { text-wrap: balance; }
 
-/* Skeleton */
 .skeleton { background: #e2e8f0; border-radius: 0.5rem; }
 .dark .skeleton { background: #1e293b; }
