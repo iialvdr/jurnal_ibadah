@@ -11,6 +11,9 @@ export function initDoa() {
     window.toggleFilter = toggleFilter;
     window.selectFilter = selectFilter;
 
+    // --- GENERATE SKELETON OTOMATIS ---
+    renderSkeleton();
+
     window.addEventListener('viewChanged', (e) => {
         const searchWrapper = document.getElementById('doaSearchWrapper');
 
@@ -20,7 +23,8 @@ export function initDoa() {
             if (searchWrapper) {
                 searchWrapper.style.transform = "";
                 setTimeout(() => {
-                    if (document.getElementById('doaView').classList.contains('active')) {
+                    const view = document.getElementById('doaView');
+                    if (view && (view.classList.contains('active') || !view.classList.contains('hidden-force'))) {
                         searchWrapper.style.transform = "translate3d(0,0,0)";
                     }
                 }, 350);
@@ -49,6 +53,23 @@ export function initDoa() {
             closeAllDropdowns();
         }
     });
+}
+
+function renderSkeleton() {
+    const container = document.getElementById('doaLoading');
+    if (!container) return;
+
+    // Style Skeleton Mirip Kartu Asli
+    const item = `
+    <div class="animate-pulse bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 flex items-center gap-4 shadow-sm">
+        <div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 shrink-0"></div>
+        <div class="flex-1 space-y-2">
+            <div class="h-2 bg-slate-200 dark:bg-slate-800 rounded w-16"></div>
+            <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
+        </div>
+    </div>`;
+
+    container.innerHTML = item.repeat(12);
 }
 
 function toggleFilter(event, type) {
@@ -119,7 +140,8 @@ async function fetchDoaList(grup = '', tag = '') {
     const loader = document.getElementById('doaLoading');
     const container = document.getElementById('doaListContainer');
 
-    if (loader) loader.classList.remove('hidden');
+    // Gunakan hidden-force agar loader tampil
+    if (loader) loader.classList.remove('hidden-force');
     if (container) container.classList.add('hidden');
 
     try {
@@ -127,7 +149,12 @@ async function fetchDoaList(grup = '', tag = '') {
         if (grup) url.searchParams.append('grup', grup);
         if (tag) url.searchParams.append('tag', tag);
 
-        const response = await fetch(url);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
         let result = await response.json();
         let data = (Array.isArray(result)) ? result : (result.data || []);
 
@@ -138,10 +165,11 @@ async function fetchDoaList(grup = '', tag = '') {
         }
         renderDoaList(data);
     } catch (error) {
-        if (container) container.innerHTML = `<div class="flex flex-col items-center justify-center pt-10 text-slate-400"><i data-lucide="wifi-off" class="w-8 h-8 mb-2"></i><p class="text-sm">Gagal memuat data</p></div>`;
-        if (window.lucide) lucide.createIcons();
+        console.error("Gagal fetch doa:", error);
+        if (container) container.innerHTML = `<div class="flex flex-col items-center justify-center pt-10 text-slate-400 text-center"><i data-lucide="wifi-off" class="w-10 h-10 mb-2 opacity-50"></i><p class="text-sm font-bold">Gagal memuat data</p><button onclick="fetchDoaList('${grup}', '${tag}')" class="mt-3 px-4 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md hover:bg-emerald-600 transition">Coba Lagi</button></div>`;
+        if (window.lucide) lucide.createIcons({ root: container });
     } finally {
-        if (loader) loader.classList.add('hidden');
+        if (loader) loader.classList.add('hidden-force');
         if (container) container.classList.remove('hidden');
     }
 }

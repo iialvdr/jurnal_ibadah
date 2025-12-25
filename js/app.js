@@ -17,17 +17,26 @@ import { initAsmaulHusna } from './modules/asmaul_husna.js';
 import { initFasting } from './modules/fasting.js';
 import { initCredits } from './modules/credits.js';
 import { initChangelog } from './modules/changelog.js';
+import { initZakat } from './modules/zakat.js'; // <-- MODULE BARU
 
 window.vibrateSoft = () => { if (navigator.vibrate) navigator.vibrate(10); };
 window.vibrateSuccess = () => { if (navigator.vibrate) navigator.vibrate([10, 30, 10]); };
 
+// Daftar View HTML
 const VIEWS = [
-    'views/login.html', 'views/home.html', 'views/profile.html',
-    'views/tasbih.html', 'views/qibla.html', 'views/tracker.html', 'views/quran.html',
-    'views/doa.html', 'views/asmaul_husna.html',
+    'views/login.html',
+    'views/home.html',
+    'views/profile.html',
+    'views/tasbih.html',
+    'views/qibla.html',
+    'views/tracker.html',
+    'views/quran.html',
+    'views/doa.html',
+    'views/asmaul_husna.html',
     'views/fasting.html',
     'views/credits.html',
-    'views/changelog.html'
+    'views/changelog.html',
+    'views/zakat.html' // <-- VIEW BARU
 ];
 
 async function loadAllViews() {
@@ -66,7 +75,6 @@ function updateVersionLabels() {
 }
 
 function initializeApp() {
-    // Inisialisasi modul-modul
     initAuth();
     initHome();
     initTracker();
@@ -79,10 +87,10 @@ function initializeApp() {
     initProfile();
     initCredits();
     initChangelog();
+    initZakat(); // <-- INIT BARU
 
     onAuthStateChanged(auth, (user) => {
         const splash = document.getElementById('splashScreen');
-        const sidebar = document.getElementById('desktopSidebar');
         const appContainer = document.getElementById('appContainer');
 
         if (user) {
@@ -91,18 +99,13 @@ function initializeApp() {
 
             const loginOverlay = document.getElementById('loginOverlay');
             if (loginOverlay) loginOverlay.classList.add('hidden-force');
-            if (sidebar) sidebar.classList.remove('hidden-force');
 
-            // Jalankan router untuk mengaktifkan view
             setupRouter();
         } else {
             setCurrentUser(null);
-
             if (window.location.pathname !== '/' && window.location.pathname !== '/home') {
                 window.history.replaceState(null, null, '/');
             }
-
-            if (sidebar) sidebar.classList.add('hidden-force');
 
             if (appContainer) {
                 Array.from(appContainer.children).forEach(child => {

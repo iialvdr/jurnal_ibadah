@@ -1,8 +1,7 @@
 <div id="asmaulHusnaView" class="hidden-force flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-hidden bg-slate-100 dark:bg-slate-950">
-    
     <div class="fixed top-0 left-0 right-0 h-48 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
-    <div class="px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 flex justify-between items-center relative shrink-0 z-30">
+    <div class="px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 flex justify-between items-center relative shrink-0 z-30 md:px-8 md:pt-6">
         <button onclick="goBack()" class="w-10 h-10 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-sm border border-white/50 dark:border-slate-700 active:scale-95 transition hover:text-indigo-600 group">
             <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-0.5 transition"></i>
         </button>
@@ -11,8 +10,7 @@
     </div>
 
     <div class="flex-1 relative overflow-hidden flex flex-col z-10">
-        
-        <div class="px-5 pt-2 pb-2 z-20 transition-all duration-300">
+        <div class="px-5 pt-2 pb-2 z-20 transition-all duration-300 md:px-8 md:max-w-3xl md:mx-auto md:w-full">
             <div id="asmaSearchWrapper" class="relative group" style="will-change: transform;">
                 <div class="relative bg-white dark:bg-slate-900 rounded-[1.2rem] shadow-sm border border-slate-200 dark:border-slate-800 flex items-center px-4 py-3 transition-colors duration-200 ease-out group-focus-within:border-emerald-500 hover:border-emerald-300 dark:hover:border-emerald-700">
                     <i data-lucide="search" class="w-4 h-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors"></i>
@@ -21,48 +19,34 @@
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto px-5 pt-2 space-y-2.5 scroll-smooth pb-24 no-scrollbar" id="asmaListContainer">
-            <div id="asmaList" class="space-y-2.5">
-                <div class="animate-pulse bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 flex items-center gap-4"><div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800 shrink-0"></div><div class="flex-1 space-y-2"><div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-24"></div><div class="h-2 bg-slate-200 dark:bg-slate-800 rounded w-16"></div></div></div>
-                <div class="animate-pulse bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 flex items-center gap-4"><div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800 shrink-0"></div><div class="flex-1 space-y-2"><div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20"></div><div class="h-2 bg-slate-200 dark:bg-slate-800 rounded w-12"></div></div></div>
-                <div class="animate-pulse bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 flex items-center gap-4"><div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800 shrink-0"></div><div class="flex-1 space-y-2"><div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-28"></div><div class="h-2 bg-slate-200 dark:bg-slate-800 rounded w-14"></div></div></div>
-                <div class="animate-pulse bg-white dark:bg-slate-900 p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 flex items-center gap-4"><div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800 shrink-0"></div><div class="flex-1 space-y-2"><div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-24"></div><div class="h-2 bg-slate-200 dark:bg-slate-800 rounded w-16"></div></div></div>
+        <div class="flex-1 overflow-y-auto px-5 pt-2 space-y-2.5 scroll-smooth pb-8 md:pb-6 no-scrollbar md:px-8" id="asmaListContainer">
+            <div id="asmaList" class="space-y-2.5 md:grid md:grid-cols-3 lg:grid-cols-4 md:gap-4 md:space-y-0">
             </div>
         </div>
     </div>
-
-    <div id="asmaDetailModal" class="fixed inset-0 z-[100] flex items-end justify-center invisible pointer-events-none">
-        
+    
+    <div id="asmaDetailModal" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center invisible pointer-events-none">
         <div id="asmaBackdrop" class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm opacity-0 transition-opacity duration-500 ease-in-out" onclick="closeAsmaDetail()"></div>
-
-        <div id="asmaDetailContent" class="relative w-full sm:w-[90%] sm:max-w-md max-h-[85vh] flex flex-col bg-white dark:bg-slate-950 rounded-t-[2.5rem] rounded-b-none shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)] border-t border-x border-b-0 border-white/20 dark:border-slate-800 transform translate-y-full transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform overflow-hidden pb-[env(safe-area-inset-bottom)] -mb-[2px]">
-            
+        <div id="asmaDetailContent" class="relative w-full sm:w-[90%] sm:max-w-md max-h-[85vh] flex flex-col bg-white dark:bg-slate-950 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)] border-t border-x sm:border-b border-white/20 dark:border-slate-800 transform translate-y-full sm:translate-y-10 sm:scale-95 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform overflow-hidden pb-[env(safe-area-inset-bottom)] -mb-[2px]">
             <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mt-5 mb-1 shrink-0"></div>
-
             <div class="absolute top-4 right-4 z-20">
                 <button onclick="closeAsmaDetail()" class="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-red-500 transition active:scale-90">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-
             <div class="flex-1 overflow-y-auto p-8 pb-10 space-y-6 custom-scrollbar bg-slate-50/50 dark:bg-slate-950 relative">
-                
                 <div class="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -mt-10 pointer-events-none"></div>
-
                 <div class="flex flex-col items-center text-center relative z-10">
                     <div class="w-20 h-20 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mb-6 border-4 border-emerald-100 dark:border-emerald-800/50 shadow-inner">
                         <span id="detailNumber" class="text-2xl font-black text-emerald-600 dark:text-emerald-400">1</span>
                     </div>
-                    
                     <h2 id="detailArabic" class="font-quran text-6xl mb-4 text-slate-800 dark:text-white drop-shadow-sm leading-relaxed py-2">...</h2>
-                    
                     <div class="space-y-2">
                         <h3 id="detailLatin" class="text-xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">...</h3>
                         <p id="detailMeaning" class="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed px-4">...</p>
                     </div>
                 </div>
             </div>
-
             <div class="p-5 pt-0 bg-slate-50/50 dark:bg-slate-950 shrink-0">
                 <div class="flex items-center justify-between gap-3">
                     <button onclick="vibrateSoft(); changeAsma(-1)" id="btnPrevAsma" class="flex-1 py-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs hover:border-emerald-300 dark:hover:border-emerald-700 transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group shadow-sm">
@@ -73,7 +57,6 @@
                     </button>
                 </div>
             </div>
-
         </div>
     </div>
 </div>

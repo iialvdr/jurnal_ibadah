@@ -122,16 +122,14 @@ async function updateTrackerUI() {
     const resetBtn = document.getElementById('resetDateContainer');
     const hijriDisplay = document.getElementById('trackerHijriDisplay');
 
-    // PERBAIKAN DI SINI: Hijriyah tidak pernah di-hide
     if (resetBtn) {
         if (isToday) {
-            resetBtn.classList.add('hidden'); // Sembunyikan Reset kalau hari ini
+            resetBtn.classList.add('hidden');
         } else {
-            resetBtn.classList.remove('hidden'); // Tampilkan Reset kalau bukan hari ini
+            resetBtn.classList.remove('hidden');
         }
     }
 
-    // Pastikan Hijriyah selalu tampil
     if (hijriDisplay) {
         hijriDisplay.classList.remove('hidden');
     }
@@ -150,12 +148,6 @@ async function updateTrackerUI() {
 export async function loadRecordsFromCloud() {
     if (!state.currentUser) return;
     const dateKey = formatDateKey(state.trackerDate);
-
-    const container = document.getElementById('trackerList');
-    if (container) {
-        container.innerHTML = `<div class="p-8 text-center"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto text-slate-400"></i></div>`;
-        if (window.lucide) lucide.createIcons();
-    }
 
     try {
         const docSnap = await getDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey));
@@ -342,10 +334,18 @@ export function updateProgressBar() {
         }
     });
     const pct = wT === 0 ? 0 : Math.round((wD / wT) * 100);
+
+    // Update Desktop
     const pbText = document.getElementById('progressText');
     const pb = document.getElementById('progressBar');
     if (pbText) pbText.innerText = pct + '%';
     if (pb) pb.style.width = pct + '%';
+
+    // Update Mobile
+    const pbTextMobile = document.getElementById('progressTextMobile');
+    const pbMobile = document.getElementById('progressBarMobile');
+    if (pbTextMobile) pbTextMobile.innerText = pct + '%';
+    if (pbMobile) pbMobile.style.width = pct + '%';
 }
 
 function changeTrackerTab(tab) {
@@ -354,8 +354,24 @@ function changeTrackerTab(tab) {
     const viewDaily = document.getElementById('viewDaily');
     const viewHistory = document.getElementById('viewHistory');
 
-    const activeClass = ["bg-white", "dark:bg-slate-800", "text-emerald-600", "shadow-sm", "border", "border-slate-100", "dark:border-slate-700"];
-    const inactiveClass = ["text-slate-400", "hover:text-emerald-600", "hover:bg-white/50", "dark:hover:bg-slate-800/50"];
+    const activeClass = [
+        "bg-white",
+        "dark:bg-slate-800",
+        "text-emerald-600",
+        "shadow-sm",
+        "border",
+        "border-slate-100",
+        "dark:border-slate-700"
+    ];
+
+    // Inactive Class sudah termasuk border-transparent
+    const inactiveClass = [
+        "text-slate-400",
+        "hover:text-emerald-600",
+        "hover:bg-white/50",
+        "dark:hover:bg-slate-800/50",
+        "border-transparent"
+    ];
 
     if (tab === 'daily') {
         btnDaily.classList.add(...activeClass);

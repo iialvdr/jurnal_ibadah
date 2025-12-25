@@ -2,7 +2,7 @@
     
     <div class="fixed top-0 left-0 right-0 h-48 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
-    <div class="px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-2 flex justify-between items-center relative z-20">
+    <div class="px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 flex justify-between items-center relative z-20 md:px-8 md:pt-6 shrink-0">
         <button onclick="goBack()" class="w-10 h-10 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-sm border border-white/50 dark:border-slate-700 active:scale-95 transition hover:text-emerald-600 group">
             <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-0.5 transition"></i>
         </button>
@@ -12,210 +12,153 @@
         </button>
     </div>
 
-    <div class="flex-1 overflow-y-auto px-5 pb-10 space-y-4 scroll-smooth relative z-10 no-scrollbar">
+    <div class="flex-1 overflow-y-auto px-5 pb-8 space-y-4 scroll-smooth relative z-10 no-scrollbar md:px-8 md:pb-6 md:grid md:grid-cols-12 md:gap-6 md:space-y-0 md:h-full md:overflow-hidden">
         
-        <div class="relative w-full overflow-hidden rounded-[2rem] bg-white dark:bg-slate-900 p-6 shadow-xl shadow-slate-200/50 dark:shadow-black/20 border border-white/60 dark:border-slate-800">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-8 -mt-8"></div>
-            <div class="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -ml-6 -mb-6"></div>
+        <div class="md:col-span-4 lg:col-span-3 md:h-full">
+            <div class="relative w-full overflow-hidden rounded-[2rem] bg-white dark:bg-slate-900 p-6 shadow-xl shadow-slate-200/50 dark:shadow-black/20 border border-white/60 dark:border-slate-800 flex flex-col justify-center min-h-[250px] md:min-h-0 md:h-full">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-8 -mt-8"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -ml-6 -mb-6"></div>
 
-            <div class="relative z-10 flex flex-col items-center text-center">
-                <div class="relative mb-3 group">
-                    <div class="absolute -inset-1 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
-                    <img id="profilePhotoLarge" src="" referrerpolicy="no-referrer" class="relative w-20 h-20 rounded-full border-4 border-white dark:border-slate-800 shadow-md object-cover bg-slate-200">
-                    <div class="absolute bottom-0 right-0 bg-emerald-500 text-white p-1 rounded-full border-[3px] border-white dark:border-slate-800 shadow-sm">
-                        <i data-lucide="shield-check" class="w-3 h-3"></i>
+                <div class="relative z-10 flex flex-col items-center text-center">
+                    <div class="relative mb-4 group">
+                        <div class="absolute -inset-1 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
+                        <img id="profilePhotoLarge" src="" referrerpolicy="no-referrer" class="relative w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white dark:border-slate-800 shadow-md object-cover bg-slate-200">
+                        <div class="absolute bottom-0 right-0 bg-emerald-500 text-white p-1.5 rounded-full border-[3px] border-white dark:border-slate-800 shadow-sm">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i>
+                        </div>
                     </div>
-                </div>
-                <h2 id="profileNameLarge" class="text-xl font-black text-slate-800 dark:text-white tracking-tight leading-tight">...</h2>
-                <p id="profileEmail" class="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-1">...</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-3 gap-3">
-            <div class="bg-white dark:bg-slate-900 p-3 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center gap-1.5">
-                <i data-lucide="hourglass" class="w-5 h-5 text-blue-500"></i>
-                <div class="text-center">
-                    <span id="statDays" class="block text-sm font-black text-slate-800 dark:text-white leading-none">0</span>
-                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Hari</span>
-                </div>
-            </div>
-            <div class="bg-white dark:bg-slate-900 p-3 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center gap-1.5">
-                <i data-lucide="activity" class="w-5 h-5 text-emerald-500"></i>
-                <div class="text-center">
-                    <span id="statConsistency" class="block text-sm font-black text-slate-800 dark:text-white leading-none">0%</span>
-                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Konsisten</span>
-                </div>
-            </div>
-            <div class="bg-white dark:bg-slate-900 p-3 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center gap-1.5">
-                <i data-lucide="check-circle-2" class="w-5 h-5 text-amber-500"></i>
-                <div class="text-center">
-                    <span id="statToday" class="block text-sm font-black text-slate-800 dark:text-white leading-none">0/5</span>
-                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Hari Ini</span>
+                    <h2 id="profileNameLarge" class="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight leading-tight">...</h2>
+                    <p id="profileEmail" class="text-xs font-medium text-slate-400 dark:text-slate-500 mt-1">...</p>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 p-5 rounded-[1.8rem] border border-slate-100 dark:border-slate-800 shadow-sm">
-            <div class="flex justify-between items-start mb-4">
-                <div>
-                    <h3 class="font-bold text-slate-800 dark:text-white text-sm">Tren Ibadah</h3>
-                    <p class="text-[10px] text-slate-400">Grafik ketepatan sholat</p>
+        <div class="md:col-span-5 lg:col-span-6 flex flex-col gap-4 md:h-full">
+             <div class="grid grid-cols-3 gap-3 shrink-0">
+                <div class="bg-white dark:bg-slate-900 p-3 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center gap-1.5 hover:border-blue-200 dark:hover:border-blue-900 transition">
+                    <i data-lucide="hourglass" class="w-5 h-5 text-blue-500"></i>
+                    <div class="text-center">
+                        <span id="statDays" class="block text-sm font-black text-slate-800 dark:text-white leading-none">0</span>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Hari</span>
+                    </div>
                 </div>
-                <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
-                    <button onclick="loadChartData(7)" id="btn7Days" class="px-3 py-1 text-[10px] rounded-md font-bold transition shadow-sm bg-white dark:bg-slate-700 text-emerald-600">7H</button>
-                    <button onclick="loadChartData(14)" id="btn14Days" class="px-3 py-1 text-[10px] rounded-md font-bold transition text-slate-400 hover:text-emerald-600">14H</button>
+                <div class="bg-white dark:bg-slate-900 p-3 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center gap-1.5 hover:border-emerald-200 dark:hover:border-emerald-900 transition">
+                    <i data-lucide="activity" class="w-5 h-5 text-emerald-500"></i>
+                    <div class="text-center">
+                        <span id="statConsistency" class="block text-sm font-black text-slate-800 dark:text-white leading-none">0%</span>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Konsisten</span>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-3 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center gap-1.5 hover:border-amber-200 dark:hover:border-amber-900 transition">
+                    <i data-lucide="check-circle-2" class="w-5 h-5 text-amber-500"></i>
+                    <div class="text-center">
+                        <span id="statToday" class="block text-sm font-black text-slate-800 dark:text-white leading-none">0/5</span>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Hari Ini</span>
+                    </div>
                 </div>
             </div>
-            <div class="relative h-40 w-full">
-                <canvas id="activityChart"></canvas>
+
+            <div class="bg-white dark:bg-slate-900 p-5 rounded-[1.8rem] border border-slate-100 dark:border-slate-800 shadow-sm md:flex-1 flex flex-col min-h-[250px]">
+                <div class="flex justify-between items-start mb-4 shrink-0">
+                    <div>
+                        <h3 class="font-bold text-slate-800 dark:text-white text-sm">Tren Ibadah</h3>
+                        <p class="text-[10px] text-slate-400">Grafik ketepatan sholat</p>
+                    </div>
+                    <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
+                        <button onclick="loadChartData(7)" id="btn7Days" class="px-3 py-1 text-[10px] rounded-md font-bold transition shadow-sm bg-white dark:bg-slate-700 text-emerald-600">7H</button>
+                        <button onclick="loadChartData(14)" id="btn14Days" class="px-3 py-1 text-[10px] rounded-md font-bold transition text-slate-400 hover:text-emerald-600">14H</button>
+                    </div>
+                </div>
+                <div class="relative flex-1 w-full min-h-[150px]">
+                    <canvas id="activityChart"></canvas>
+                </div>
             </div>
         </div>
 
-        <div class="space-y-2.5">
-            <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 pt-2">Detail Akun</h3>
-            
-            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden divide-y divide-slate-50 dark:divide-slate-800">
-                <div class="p-4 flex items-center gap-4">
-                    <div class="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 flex items-center justify-center shrink-0">
-                        <i data-lucide="calendar" class="w-4 h-4"></i>
-                    </div>
-                    <div class="flex-1">
-                        <p class="text-[10px] text-slate-400 uppercase tracking-wide">Bergabung</p>
-                        <p id="joinDate" class="font-bold text-slate-800 dark:text-white text-xs">-</p>
-                    </div>
-                </div>
+        <div class="md:col-span-3 lg:col-span-3 flex flex-col gap-4 md:h-full">
+            <div class="space-y-2.5 md:flex-1">
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 pt-2 md:pt-0">Detail Akun</h3>
                 
-                <div class="p-4 flex items-center gap-4">
-                    <div class="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-600 flex items-center justify-center shrink-0">
-                        <i data-lucide="map-pin" class="w-4 h-4"></i>
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden divide-y divide-slate-50 dark:divide-slate-800">
+                    <div class="p-4 flex items-center gap-4">
+                        <div class="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-[10px] text-slate-400 uppercase tracking-wide">Bergabung</p>
+                            <p id="joinDate" class="font-bold text-slate-800 dark:text-white text-xs">-</p>
+                        </div>
                     </div>
-                    <div class="flex-1">
-                        <p class="text-[10px] text-slate-400 uppercase tracking-wide">Lokasi</p>
-                        <p id="lastLocation" class="font-bold text-slate-800 dark:text-white text-xs truncate max-w-[200px]">-</p>
+                    
+                    <div class="p-4 flex items-center gap-4">
+                        <div class="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-[10px] text-slate-400 uppercase tracking-wide">Lokasi</p>
+                            <p id="lastLocation" class="font-bold text-slate-800 dark:text-white text-xs truncate max-w-[150px]">-</p>
+                        </div>
                     </div>
+                </div>
+
+                <div class="space-y-2">
+                    <button onclick="vibrateSoft(); navigateTo('changelog')" class="w-full bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group active:scale-[0.98] transition hover:border-orange-200 dark:hover:border-orange-900">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center">
+                                <i data-lucide="history" class="w-4.5 h-4.5"></i>
+                            </div>
+                            <div class="text-left">
+                                <p class="font-bold text-slate-800 dark:text-white text-sm">Riwayat Update</p>
+                                <p class="text-[10px] text-slate-400">Log perubahan aplikasi</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300"></i>
+                    </button>
+
+                    <button onclick="vibrateSoft(); window.openCredits()" class="w-full bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group active:scale-[0.98] transition hover:border-emerald-200 dark:hover:border-emerald-900">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center">
+                                <i data-lucide="info" class="w-4.5 h-4.5"></i>
+                            </div>
+                            <div class="text-left">
+                                <p class="font-bold text-slate-800 dark:text-white text-sm">Tentang Aplikasi</p>
+                                <p class="text-[10px] text-slate-400">Versi & Credits</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300"></i>
+                    </button>
                 </div>
             </div>
 
-            <div class="space-y-2">
-                <button onclick="vibrateSoft(); navigateTo('changelog')" class="w-full bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group active:scale-[0.98] transition">
-                    <div class="flex items-center gap-3.5">
-                        <div class="w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center">
-                            <i data-lucide="history" class="w-4.5 h-4.5"></i>
-                        </div>
-                        <div class="text-left">
-                            <p class="font-bold text-slate-800 dark:text-white text-sm">Riwayat Update</p>
-                            <p class="text-[10px] text-slate-400">Log perubahan aplikasi</p>
-                        </div>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300"></i>
+            <div class="mt-auto pt-2 shrink-0">
+                <button id="logoutBtnProfile" class="w-full p-4 rounded-2xl font-bold border transition flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border-red-100 dark:border-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/30 active:scale-95 shadow-sm">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Keluar Aplikasi
                 </button>
-
-                <button onclick="vibrateSoft(); window.openCredits()" class="w-full bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group active:scale-[0.98] transition">
-                    <div class="flex items-center gap-3.5">
-                        <div class="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center">
-                            <i data-lucide="info" class="w-4.5 h-4.5"></i>
-                        </div>
-                        <div class="text-left">
-                            <p class="font-bold text-slate-800 dark:text-white text-sm">Tentang Aplikasi</p>
-                            <p class="text-[10px] text-slate-400">Versi & Credits</p>
-                        </div>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300"></i>
-                </button>
+                
+                <p class="text-center text-[10px] text-slate-400 pt-4 opacity-50">
+                    Jurnal Ibadah <span id="versionTextProfile">v2.0</span> • By Valdi
+                </p>
             </div>
-
-            <button id="logoutBtnProfile" class="w-full mt-4 p-4 rounded-2xl font-bold border transition flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border-red-100 dark:border-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/30 active:scale-95">
-                <i data-lucide="log-out" class="w-4 h-4"></i> Keluar Aplikasi
-            </button>
-            
-            <p class="text-center text-[10px] text-slate-400 pt-6 pb-2 opacity-50">
-                Jurnal Ibadah <span id="versionTextProfile">v2.0</span> • By Valdi
-            </p>
         </div>
     </div>
-
+    
     <div id="editProfileModal" class="absolute inset-0 z-[60] flex items-end sm:items-center justify-center invisible pointer-events-none">
         <div id="editProfileBackdrop" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm opacity-0 transition-opacity duration-500 ease-in-out" onclick="closeEditProfile()"></div>
-
-        <div id="editProfileContent" class="relative w-full sm:w-[90%] sm:max-w-xs bg-white dark:bg-slate-950 p-6 pb-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl border-t border-white/20 dark:border-slate-800 transform translate-y-full sm:translate-y-10 sm:scale-95 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform">
-            
+        <div id="editProfileContent" class="relative w-full sm:w-[90%] sm:max-w-xs bg-white dark:bg-slate-950 p-6 pb-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl border-t border-white/20 dark:border-slate-800 transform translate-y-full sm:translate-y-10 sm:scale-95 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform overflow-hidden pb-[env(safe-area-inset-bottom)]">
             <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-6"></div>
-
             <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h3 class="text-xl font-black text-slate-800 dark:text-white">Pengaturan</h3>
-                    <p class="text-xs text-slate-400">Sesuaikan preferensi kamu</p>
-                </div>
-                <button onclick="closeEditProfile()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
+                <div><h3 class="text-xl font-black text-slate-800 dark:text-white">Pengaturan</h3><p class="text-xs text-slate-400">Sesuaikan preferensi kamu</p></div>
+                <button onclick="closeEditProfile()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
-
             <div class="space-y-5">
-                <div class="group">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block ml-1 mb-2">Nama Tampilan</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <i data-lucide="user" class="w-4 h-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors"></i>
-                        </div>
-                        <input type="text" id="editNameInput" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl pl-11 pr-4 py-3.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition placeholder-slate-400" placeholder="Nama Kamu">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block ml-1 mb-2">Tampilan</label>
-                    <label class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer group hover:border-emerald-500/30 transition-colors">
-                        <div class="flex items-center gap-3.5">
-                            <div class="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-sm group-hover:scale-110 transition-transform">
-                                <i data-lucide="moon" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <span class="block text-sm font-bold text-slate-700 dark:text-slate-200">Dark Mode</span>
-                                <span class="text-[10px] text-slate-400">Mode gelap ramah mata</span>
-                            </div>
-                        </div>
-                        <div class="relative inline-flex items-center">
-                            <input type="checkbox" id="darkModeToggleProfile" class="sr-only peer">
-                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
-                        </div>
-                    </label>
-                </div>
-                
-                <button id="saveProfileBtn" class="w-full mt-2 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 transition-all active:scale-95 flex items-center justify-center gap-2">
-                    <i data-lucide="check" class="w-4 h-4"></i>
-                    Simpan Perubahan
-                </button>
+                <div class="group"><label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block ml-1 mb-2">Nama Tampilan</label><div class="relative"><div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><i data-lucide="user" class="w-4 h-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors"></i></div><input type="text" id="editNameInput" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl pl-11 pr-4 py-3.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition placeholder-slate-400" placeholder="Nama Kamu"></div></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block ml-1 mb-2">Tampilan</label><label class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer group hover:border-emerald-500/30 transition-colors"><div class="flex items-center gap-3.5"><div class="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-sm group-hover:scale-110 transition-transform"><i data-lucide="moon" class="w-5 h-5"></i></div><div><span class="block text-sm font-bold text-slate-700 dark:text-slate-200">Dark Mode</span><span class="text-[10px] text-slate-400">Mode gelap ramah mata</span></div></div><div class="relative inline-flex items-center"><input type="checkbox" id="darkModeToggleProfile" class="sr-only peer"><div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div></div></label></div>
+                <button id="saveProfileBtn" class="w-full mt-2 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 transition-all active:scale-95 flex items-center justify-center gap-2"><i data-lucide="check" class="w-4 h-4"></i> Simpan Perubahan</button>
             </div>
         </div>
     </div>
-
     <div id="logoutModal" class="absolute inset-0 z-[60] flex items-center justify-center invisible pointer-events-none">
         <div id="logoutBackdrop" class="absolute inset-0 bg-slate-900/60 backdrop-blur-md opacity-0 transition-opacity duration-500 ease-in-out"></div>
-
-        <div id="logoutModalContent" class="relative w-[80%] max-w-[280px] bg-white dark:bg-slate-950 p-6 rounded-[2.5rem] shadow-2xl border border-white/10 dark:border-slate-800 transform scale-90 opacity-0 transition-all duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] will-change-transform">
-            <div class="flex flex-col items-center text-center">
-                <div class="relative mb-5 group">
-                    <div class="absolute inset-0 bg-red-500/20 rounded-full blur-xl group-hover:bg-red-500/30 transition-all"></div>
-                    <div class="relative w-16 h-16 bg-red-50 dark:bg-red-500/10 text-red-500 rounded-full flex items-center justify-center border border-red-100 dark:border-red-500/20">
-                        <i data-lucide="log-out" class="w-7 h-7 ml-1"></i>
-                    </div>
-                </div>
-
-                <h3 class="text-lg font-black text-slate-800 dark:text-white mb-2">Ingin Keluar?</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed px-1">
-                    Kamu harus login ulang untuk mengakses data ibadahmu nanti.
-                </p>
-
-                <div class="flex flex-col gap-3 w-full">
-                    <button id="confirmLogoutBtn" class="w-full py-3.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-xs shadow-lg shadow-red-500/30 transition active:scale-95 flex items-center justify-center gap-2">
-                        Ya, Keluar Sekarang
-                    </button>
-                    <button id="cancelLogoutBtn" class="w-full py-3.5 rounded-xl bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold text-xs transition active:scale-95">
-                        Batalkan
-                    </button>
-                </div>
-            </div>
-        </div>
+        <div id="logoutModalContent" class="relative w-[80%] max-w-[280px] bg-white dark:bg-slate-950 p-6 rounded-[2.5rem] shadow-2xl border border-white/10 dark:border-slate-800 transform scale-90 opacity-0 transition-all duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] will-change-transform"><div class="flex flex-col items-center text-center"><div class="relative mb-5 group"><div class="absolute inset-0 bg-red-500/20 rounded-full blur-xl group-hover:bg-red-500/30 transition-all"></div><div class="relative w-16 h-16 bg-red-50 dark:bg-red-500/10 text-red-500 rounded-full flex items-center justify-center border border-red-100 dark:border-red-500/20"><i data-lucide="log-out" class="w-7 h-7 ml-1"></i></div></div><h3 class="text-lg font-black text-slate-800 dark:text-white mb-2">Ingin Keluar?</h3><p class="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed px-1">Kamu harus login ulang untuk mengakses data ibadahmu nanti.</p><div class="flex flex-col gap-3 w-full"><button id="confirmLogoutBtn" class="w-full py-3.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-xs shadow-lg shadow-red-500/30 transition active:scale-95 flex items-center justify-center gap-2">Ya, Keluar Sekarang</button><button id="cancelLogoutBtn" class="w-full py-3.5 rounded-xl bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold text-xs transition active:scale-95">Batalkan</button></div></div></div>
     </div>
-
 </div>

@@ -2,54 +2,62 @@
     
     <div class="fixed top-0 left-0 right-0 h-48 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
-    <div class="px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 shrink-0 relative z-30 flex justify-between items-center">
+    <div class="px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 shrink-0 relative z-30 flex justify-between items-center md:px-8 md:pt-6">
         <button onclick="vibrateSoft(); goBack()" class="w-10 h-10 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-sm border border-white/50 dark:border-slate-700 active:scale-95 transition hover:text-blue-600 group">
             <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-0.5 transition"></i>
         </button>
+        
         <h2 class="text-lg font-bold text-slate-800 dark:text-white tracking-tight">Tasbih Digital</h2>
-        <button onclick="vibrateSoft(); openDhikrMenu()" class="w-10 h-10 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-sm border border-white/50 dark:border-slate-700 active:scale-95 transition hover:text-emerald-600">
-            <i data-lucide="book-open" class="w-5 h-5"></i>
-        </button>
+        
+        <div class="w-10 flex justify-end">
+            <button onclick="vibrateSoft(); openDhikrMenu()" class="w-10 h-10 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-sm border border-white/50 dark:border-slate-700 active:scale-95 transition hover:text-emerald-600 md:hidden">
+                <i data-lucide="book-open" class="w-5 h-5"></i>
+            </button>
+        </div>
     </div>
 
-    <div class="flex-1 flex flex-col items-center justify-between py-4 px-6 relative overflow-y-auto no-scrollbar z-10">
+    <div class="flex-1 flex flex-col items-center justify-between py-4 px-6 relative overflow-y-auto no-scrollbar z-10 md:grid md:grid-cols-2 md:gap-10 md:px-12 md:content-center md:h-full">
         
-        <div class="bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm p-1.5 rounded-2xl flex w-full max-w-[280px] shadow-sm border border-white/40 dark:border-slate-800 shrink-0">
-            <button onclick="vibrateSoft(); setTasbihTarget(33)" id="btnTarget33" class="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800">33</button>
-            <button onclick="vibrateSoft(); setTasbihTarget(100)" id="btnTarget100" class="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800">100</button>
-            <button onclick="vibrateSoft(); setTasbihTarget(0)" id="btnTargetInf" class="flex-1 py-2.5 rounded-xl text-lg font-bold transition-all duration-300 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800 leading-none pb-1">∞</button>
-        </div>
-
-        <div id="dhikrDisplayArea" class="hidden w-full text-center space-y-3 animate-fade-in bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-5 rounded-[2rem] shadow-lg border border-white/50 dark:border-slate-800 mx-4 max-w-xs mt-4 shrink-0 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-2xl -mr-6 -mt-6"></div>
-            <h3 id="dhikrArabicDisplay" class="text-2xl font-bold font-serif text-slate-800 dark:text-white leading-loose relative z-10"></h3>
-            <p id="dhikrLatinDisplay" class="text-xs font-medium text-emerald-600 dark:text-emerald-400 italic tracking-wide relative z-10"></p>
-        </div>
-
-        <div class="flex-1 flex items-center justify-center w-full py-4 min-h-[280px]" style="touch-action: manipulation;">
+        <div class="flex-1 flex items-center justify-center w-full py-4 min-h-[280px] md:h-full" style="touch-action: manipulation;">
             <div onclick="countTasbih()" class="relative group cursor-pointer select-none tap-highlight-transparent active:scale-[0.97] transition-transform duration-150">
                 <div class="absolute inset-4 bg-emerald-500 rounded-full blur-3xl opacity-20 group-active:opacity-40 transition duration-300 animate-pulse"></div>
                 
-                <div class="relative w-64 h-64 rounded-full bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 shadow-[20px_20px_40px_rgba(0,0,0,0.05),-10px_-10px_30px_rgba(255,255,255,0.8)] dark:shadow-[10px_10px_30px_rgba(0,0,0,0.3),-10px_-10px_30px_rgba(255,255,255,0.05)] flex flex-col items-center justify-center border border-white/60 dark:border-slate-700/50">
+                <div class="relative w-64 h-64 md:w-80 md:h-80 rounded-full bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 shadow-[20px_20px_40px_rgba(0,0,0,0.05),-10px_-10px_30px_rgba(255,255,255,0.8)] dark:shadow-[10px_10px_30px_rgba(0,0,0,0.3),-10px_-10px_30px_rgba(255,255,255,0.05)] flex flex-col items-center justify-center border border-white/60 dark:border-slate-700/50">
                     
                     <div class="absolute inset-2 rounded-full border border-slate-200/50 dark:border-slate-700/50 pointer-events-none"></div>
                     
-                    <span id="tasbihCount" class="text-7xl font-black text-slate-800 dark:text-white tabular-nums tracking-tighter drop-shadow-sm scale-100 transition-transform select-none">0</span>
+                    <span id="tasbihCount" class="text-7xl md:text-8xl font-black text-slate-800 dark:text-white tabular-nums tracking-tighter drop-shadow-sm scale-100 transition-transform select-none">0</span>
                     
                     <div class="mt-4 px-3 py-1 rounded-full bg-slate-200/50 dark:bg-slate-800/50 border border-slate-300/50 dark:border-slate-700/50">
-                        <span id="tasbihTargetDisplay" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Target: 33</span>
+                        <span id="tasbihTargetDisplay" class="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Target: 33</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 w-full max-w-[280px] mx-auto mb-4 shrink-0">
-            <button onclick="vibrateSoft(); resetTasbih()" id="resetTasbihBtn" class="group flex items-center justify-center gap-2 p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 font-bold text-[10px] uppercase tracking-wider shadow-sm hover:text-red-500 hover:border-red-100 transition active:scale-95">
-                <i data-lucide="rotate-ccw" class="w-4 h-4 transition-transform duration-500 group-hover:-rotate-180"></i> Reset
-            </button>
-            <button onclick="vibrateSoft(); toggleVibro()" id="vibroBtn" class="flex items-center justify-center gap-2 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider shadow-sm transition active:scale-95">
-                <i data-lucide="vibrate" class="w-4 h-4"></i> <span id="vibroText">Getar On</span>
-            </button>
+        <div class="flex flex-col items-center gap-6 w-full max-w-[350px] mx-auto md:items-start md:justify-center">
+            
+            <div class="bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm p-1.5 rounded-2xl flex w-full shadow-sm border border-white/40 dark:border-slate-800 shrink-0">
+                <button onclick="vibrateSoft(); setTasbihTarget(33)" id="btnTarget33" class="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800">33</button>
+                <button onclick="vibrateSoft(); setTasbihTarget(100)" id="btnTarget100" class="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800">100</button>
+                <button onclick="vibrateSoft(); setTasbihTarget(0)" id="btnTargetInf" class="flex-1 py-2.5 rounded-xl text-lg font-bold transition-all duration-300 text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800 leading-none pb-1">∞</button>
+            </div>
+
+            <div id="dhikrDisplayArea" class="hidden w-full text-center space-y-3 animate-fade-in bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 rounded-[2rem] shadow-lg border border-white/50 dark:border-slate-800 relative overflow-hidden md:block">
+                <div class="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-2xl -mr-6 -mt-6"></div>
+                <h3 id="dhikrArabicDisplay" class="text-2xl font-bold font-serif text-slate-800 dark:text-white leading-loose relative z-10"></h3>
+                <p id="dhikrLatinDisplay" class="text-xs font-medium text-emerald-600 dark:text-emerald-400 italic tracking-wide relative z-10">Pilih bacaan dzikir...</p>
+                <button onclick="openDhikrMenu()" class="w-full mt-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-500 hover:text-emerald-600 transition hidden md:block">Ganti Bacaan</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 w-full shrink-0">
+                <button onclick="vibrateSoft(); resetTasbih()" id="resetTasbihBtn" class="group flex items-center justify-center gap-2 p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 font-bold text-[10px] uppercase tracking-wider shadow-sm hover:text-red-500 hover:border-red-100 transition active:scale-95">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4 transition-transform duration-500 group-hover:-rotate-180"></i> Reset
+                </button>
+                <button onclick="vibrateSoft(); toggleVibro()" id="vibroBtn" class="flex items-center justify-center gap-2 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider shadow-sm transition active:scale-95">
+                    <i data-lucide="vibrate" class="w-4 h-4"></i> <span id="vibroText">Getar On</span>
+                </button>
+            </div>
         </div>
     </div>
     
@@ -71,7 +79,7 @@
             </div>
             
             <div id="dhikrListContainer" class="flex-1 overflow-y-auto space-y-3 pb-8 pr-1 no-scrollbar">
-                </div>
+            </div>
         </div>
     </div>
 </div>

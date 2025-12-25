@@ -11,7 +11,8 @@ export function setupRouter() {
             const allInternalViews = [
                 'homeView', 'trackerView', 'profileView', 'tasbihView',
                 'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView',
-                'fastingView', 'creditsView', 'changelogView'
+                'fastingView', 'creditsView', 'changelogView',
+                'zakatView' // <-- Tambahan Fitur Zakat
             ];
 
             allInternalViews.forEach(id => {
@@ -39,7 +40,8 @@ export function setupRouter() {
             'asmaul-husna': 'asmaulHusnaView',
             'fasting': 'fastingView',
             'credits': 'creditsView',
-            'changelog': 'changelogView'
+            'changelog': 'changelogView',
+            'zakat': 'zakatView' // <-- Tambahan Fitur Zakat
         };
 
         const targetViewId = routes[path] || 'homeView';
@@ -49,7 +51,7 @@ export function setupRouter() {
     window.addEventListener('popstate', handleNavigation);
     window.addEventListener('load', handleNavigation);
 
-    // TAMBAHKAN INI: Jalankan navigasi sekarang juga saat setupRouter dipanggil
+    // Jalankan navigasi sekarang juga saat setupRouter dipanggil
     handleNavigation();
 
     const navigateTo = (path) => {
@@ -60,6 +62,7 @@ export function setupRouter() {
         setTimeout(() => { isExplicitNavigation = false; }, 100);
     };
 
+    // --- Global Navigation Functions ---
     window.navigateTo = navigateTo;
     window.goHome = () => navigateTo('home');
     window.openTracker = () => navigateTo('tracker');
@@ -71,6 +74,7 @@ export function setupRouter() {
     window.openAsma = () => navigateTo('asmaul-husna');
     window.openFasting = () => navigateTo('fasting');
     window.openCredits = () => navigateTo('credits');
+    window.openZakat = () => navigateTo('zakat'); // <-- Tambahan Fitur Zakat
 
     window.goBack = () => {
         if (window.history.length > 1) {
@@ -85,7 +89,8 @@ export function switchView(targetId) {
     const allViews = [
         'homeView', 'trackerView', 'profileView', 'tasbihView',
         'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView',
-        'fastingView', 'creditsView', 'changelogView'
+        'fastingView', 'creditsView', 'changelogView',
+        'zakatView' // <-- Tambahan Fitur Zakat
     ];
 
     const targetEl = document.getElementById(targetId);
@@ -98,6 +103,7 @@ export function switchView(targetId) {
         }));
     }
 
+    // Render Lucide Icons jika belum dirender
     if (window.lucide && targetEl.querySelectorAll('i[data-lucide]').length > 0) {
         if (!targetEl.hasAttribute('data-icons-rendered')) {
             try {
@@ -121,46 +127,7 @@ export function switchView(targetId) {
             }
         });
 
-        updateSidebarUI(targetId);
+        // Trigger event viewChanged
         window.dispatchEvent(new CustomEvent('viewChanged', { detail: { viewId: targetId } }));
     });
-}
-
-function updateSidebarUI(activeViewId) {
-    const map = {
-        'homeView': 'nav-home',
-        'trackerView': 'nav-tracker',
-        'tasbihView': 'nav-tasbih',
-        'qiblaView': 'nav-qibla',
-        'quranView': 'nav-quran',
-        'profileView': 'nav-profile',
-        'doaView': 'nav-doa',
-        'asmaulHusnaView': 'nav-asma',
-        'fastingView': 'nav-fasting',
-        'creditsView': 'nav-profile',
-        'changelogView': 'nav-profile'
-    };
-
-    const activeBtnId = map[activeViewId];
-    if (!activeBtnId) return;
-
-    const allBtns = document.querySelectorAll('.sidebar-btn');
-    allBtns.forEach(btn => {
-        btn.className = "sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 transition-all duration-200 text-sm font-medium text-slate-600 dark:text-slate-300 group";
-        const icon = btn.querySelector('i');
-        if (icon) icon.className = "w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition";
-    });
-
-    const activeBtn = document.getElementById(activeBtnId);
-    if (activeBtn) {
-        activeBtn.className = "sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-white dark:bg-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none text-sm font-bold text-emerald-600 dark:text-emerald-400 group ring-1 ring-white/50 dark:ring-slate-700";
-        const icon = activeBtn.querySelector('i');
-        let iconColorClass = "text-emerald-500";
-        if (activeBtnId === 'nav-tasbih') iconColorClass = "text-blue-500";
-        if (activeBtnId === 'nav-qibla') iconColorClass = "text-teal-500";
-        if (activeBtnId === 'nav-profile') iconColorClass = "text-amber-500";
-        if (activeBtnId === 'nav-doa') iconColorClass = "text-pink-500";
-        if (activeBtnId === 'nav-asma') iconColorClass = "text-indigo-500";
-        if (icon) icon.className = `w-5 h-5 ${iconColorClass}`;
-    }
 }

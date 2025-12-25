@@ -22,13 +22,38 @@ export function initQuran() {
     window.toggleBookmark = toggleBookmark;
     window.toggleTafsir = toggleTafsir;
 
-    if (allSurahs.length === 0) fetchSurahList();
+    // --- GENERATE SKELETON OTOMATIS ---
+    renderSkeleton();
+
+    if (allSurahs.length === 0) {
+        fetchSurahList();
+    } else {
+        renderSurahList(allSurahs);
+    }
 
     window.addEventListener('viewExit', (e) => {
         if (e.detail.viewId === 'quranView') {
             forceCloseSurahDetail();
         }
     });
+}
+
+function renderSkeleton() {
+    const container = document.getElementById('quranLoading');
+    if (!container) return;
+
+    // Template 1 Kartu Skeleton
+    const item = `
+    <div class="animate-pulse bg-white dark:bg-slate-900 p-3.5 md:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center gap-3.5 md:gap-5 md:min-h-[100px] shadow-sm">
+        <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-slate-200 dark:bg-slate-800 shrink-0"></div>
+        <div class="flex-1 space-y-2">
+            <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
+            <div class="h-2 bg-slate-200 dark:bg-slate-800 rounded w-16"></div>
+        </div>
+    </div>`;
+
+    // Ulangi 12 kali agar layar penuh
+    container.innerHTML = item.repeat(12);
 }
 
 function forceCloseSurahDetail() {
@@ -46,7 +71,8 @@ function forceCloseSurahDetail() {
 
 async function fetchSurahList() {
     const loader = document.getElementById('quranLoading');
-    if (loader && allSurahs.length === 0) loader.classList.remove('hidden');
+    // Gunakan hidden-force agar loader tampil
+    if (loader && allSurahs.length === 0) loader.classList.remove('hidden-force');
 
     try {
         if (state.currentUser && !lastReadData) await fetchLastRead();
@@ -54,7 +80,12 @@ async function fetchSurahList() {
         if (allSurahs.length > 0) {
             renderSurahList(allSurahs);
         } else {
-            const response = await fetch('https://equran.id/api/v2/surat');
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+            const response = await fetch('https://equran.id/api/v2/surat', { signal: controller.signal });
+            clearTimeout(timeoutId);
+
             const result = await response.json();
             if (result.code === 200) {
                 allSurahs = result.data;
@@ -63,8 +94,18 @@ async function fetchSurahList() {
         }
     } catch (error) {
         console.error("Gagal memuat daftar surat:", error);
+        const container = document.getElementById('surahListContainer');
+        if (container) {
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-10 text-center px-4">
+                    <p class="text-slate-500 text-sm mb-3">Gagal memuat daftar surat.</p>
+                    <button onclick="fetchSurahList()" class="px-4 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md hover:bg-emerald-600 transition">Coba Lagi</button>
+                </div>
+            `;
+        }
     } finally {
-        if (loader) loader.classList.add('hidden');
+        // Sembunyikan loader
+        if (loader) loader.classList.add('hidden-force');
     }
 }
 
@@ -91,20 +132,23 @@ function renderSurahList(data) {
         const safeNama = surah.namaLatin.replace(/'/g, "\\'");
 
         const div = document.createElement('div');
-        div.className = `item-surah group bg-white dark:bg-slate-900 p-3.5 rounded-2xl border ${borderClass} shadow-sm active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-between relative overflow-hidden hover:border-emerald-300 dark:hover:border-emerald-700`;
+        div.className = `item-surah group bg-white dark:bg-slate-900 p-3.5 md:py-5 md:px-5 rounded-2xl border ${borderClass} shadow-sm active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-between relative overflow-hidden hover:border-emerald-300 dark:hover:border-emerald-700 md:min-h-[90px]`;
+
         div.setAttribute('onclick', `openSurah(${surah.nomor}, null, '${safeNama}')`);
         div.setAttribute('data-search', `${surah.namaLatin.toLowerCase()} ${surah.arti.toLowerCase()} ${surah.nomor}`);
 
         div.innerHTML = `
-            <div class="flex items-center gap-3.5 relative z-10 w-full">
-                <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-bold text-sm flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800/50 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300 shadow-sm">${surah.nomor}</div>
+            <div class="flex items-center gap-3.5 md:gap-5 relative z-10 w-full">
+                <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-bold text-sm md:text-base flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800/50 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300 shadow-sm">${surah.nomor}</div>
+                
                 <div class="flex-1 min-w-0">
                     ${badge}
-                    <h4 class="font-bold text-slate-700 dark:text-white text-sm group-hover:text-emerald-600 transition-colors truncate">${surah.namaLatin}</h4>
-                    <p class="text-[10px] text-slate-400 font-medium">${surah.arti} • ${surah.jumlahAyat} Ayat</p>
+                    <h4 class="font-bold text-slate-700 dark:text-white text-sm md:text-base group-hover:text-emerald-600 transition-colors truncate">${surah.namaLatin}</h4>
+                    <p class="text-[10px] md:text-xs text-slate-400 font-medium">${surah.arti} • ${surah.jumlahAyat} Ayat</p>
                 </div>
+                
                 <div class="text-right pl-2 shrink-0">
-                    <span class="font-quran text-lg text-slate-300 dark:text-slate-700 group-hover:text-emerald-500/30 transition-colors">${surah.nama}</span>
+                    <span class="font-quran text-lg md:text-2xl text-slate-300 dark:text-slate-700 group-hover:text-emerald-500/30 transition-colors">${surah.nama}</span>
                 </div>
             </div>`;
 
@@ -131,28 +175,29 @@ function searchSurah(query) {
 function renderAyahSkeleton() {
     const container = document.getElementById('ayahsContent');
     if (!container) return;
-    let skeletonHtml = '';
-    for (let i = 0; i < 3; i++) {
-        skeletonHtml += `
-        <div class="bg-white dark:bg-slate-900 rounded-[1.8rem] p-5 shadow-sm border border-slate-200 dark:border-slate-800 animate-pulse">
-            <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-50 dark:border-slate-800">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-800"></div>
-                    <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800"></div>
-                </div>
+
+    // Skeleton untuk Detail Ayat (Manual String karena cuma 3)
+    let skeletonHtml = `
+    <div class="bg-white dark:bg-slate-900 rounded-[1.8rem] p-5 shadow-sm border border-slate-200 dark:border-slate-800 animate-pulse">
+        <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-50 dark:border-slate-800">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-800"></div>
                 <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800"></div>
             </div>
-            <div class="space-y-4 mb-6">
-                <div class="h-6 bg-slate-200 dark:bg-slate-800 rounded-lg w-3/4 ml-auto"></div>
-                <div class="h-6 bg-slate-200 dark:bg-slate-800 rounded-lg w-1/2 ml-auto"></div>
-            </div>
-            <div class="space-y-2">
-                <div class="h-2.5 bg-slate-200 dark:bg-slate-800 rounded w-full"></div>
-                <div class="h-2.5 bg-slate-200 dark:bg-slate-800 rounded w-2/3"></div>
-            </div>
-        </div>`;
-    }
-    container.innerHTML = skeletonHtml;
+            <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800"></div>
+        </div>
+        <div class="space-y-4 mb-6">
+            <div class="h-6 bg-slate-200 dark:bg-slate-800 rounded-lg w-3/4 ml-auto"></div>
+            <div class="h-6 bg-slate-200 dark:bg-slate-800 rounded-lg w-1/2 ml-auto"></div>
+        </div>
+        <div class="space-y-2">
+            <div class="h-2.5 bg-slate-200 dark:bg-slate-800 rounded w-full"></div>
+            <div class="h-2.5 bg-slate-200 dark:bg-slate-800 rounded w-2/3"></div>
+        </div>
+    </div>`;
+
+    // Ulangi 3 kali
+    container.innerHTML = skeletonHtml.repeat(3);
 }
 
 async function fetchTafsirData(nomorSurat) {
@@ -255,7 +300,6 @@ async function toggleTafsir(ayatId) {
     }
 }
 
-// UPDATE LOGIC DI SINI
 async function openSurah(nomor, targetAyah = null, surahName = null) {
     currentSurahNumber = nomor;
     currentTafsirData = null;
@@ -281,7 +325,12 @@ async function openSurah(nomor, targetAyah = null, surahName = null) {
     currentTafsirPromise = fetchTafsirData(nomor);
 
     try {
-        const response = await fetch(`https://equran.id/api/v2/surat/${nomor}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const response = await fetch(`https://equran.id/api/v2/surat/${nomor}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
         const result = await response.json();
 
         if (result.code === 200) {
@@ -294,18 +343,11 @@ async function openSurah(nomor, targetAyah = null, surahName = null) {
                 const prevBtn = navButtons.children[0];
                 const nextBtn = navButtons.children[1];
 
-                // LOGIKA BARU: Hilangkan tombol (hidden) bukan cuma disabled
-                if (nomor === 1) {
-                    prevBtn.classList.add('hidden');
-                } else {
-                    prevBtn.classList.remove('hidden');
-                }
+                if (nomor === 1) prevBtn.classList.add('hidden');
+                else prevBtn.classList.remove('hidden');
 
-                if (nomor === 114) {
-                    nextBtn.classList.add('hidden');
-                } else {
-                    nextBtn.classList.remove('hidden');
-                }
+                if (nomor === 114) nextBtn.classList.add('hidden');
+                else nextBtn.classList.remove('hidden');
             }
 
             if (targetAyah) {
@@ -318,10 +360,29 @@ async function openSurah(nomor, targetAyah = null, surahName = null) {
                     }
                 }, 600);
             }
+        } else {
+            throw new Error("Gagal mengambil data surat");
         }
     } catch (error) {
         console.error("Gagal buka surat:", error);
         if (title) title.innerText = "Error";
+
+        const container = document.getElementById('ayahsContent');
+        if (container) {
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-20 text-center px-6">
+                    <div class="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+                        <i data-lucide="wifi-off" class="w-8 h-8 text-red-400"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-800 dark:text-white mb-2">Gagal Memuat Surat</h3>
+                    <p class="text-slate-500 text-sm mb-6 max-w-[200px]">Terjadi kesalahan koneksi atau server sedang sibuk.</p>
+                    <button onclick="openSurah(${nomor}, ${targetAyah}, '${surahName}')" class="px-6 py-3 bg-emerald-500 text-white rounded-2xl font-bold shadow-lg shadow-emerald-500/30 active:scale-95 transition">
+                        Coba Lagi
+                    </button>
+                </div>
+            `;
+            if (window.lucide) lucide.createIcons({ root: container });
+        }
     }
 }
 
