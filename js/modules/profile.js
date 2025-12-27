@@ -1,5 +1,6 @@
-import { auth, db } from '../config.js';
-import { signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+// js/modules/profile.js
+import { auth, db, provider } from '../config.js';
+import { signOut, updateProfile, updatePassword, EmailAuthProvider, linkWithCredential, linkWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { state } from '../state.js';
 import { APP_VERSION } from '../version.js';
@@ -23,16 +24,39 @@ export function initProfile() {
         if (e.detail.viewId === 'profileView') {
             closeEditProfile();
             toggleLogoutModal(false);
+            resetPasswordChangeArea();
         }
     });
 }
 
-function updateProfileUI() {
+// Fungsi Notifikasi Custom UI
+function showUpdateStatus(message, isError = false) {
+    const statusDiv = document.getElementById('updateStatusMsg');
+    if (!statusDiv) return;
+    statusDiv.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-600', 'border-emerald-100', 'bg-rose-50', 'text-rose-600', 'border-rose-100');
+
+    if (isError) {
+        statusDiv.classList.add('bg-rose-50', 'text-rose-600', 'border-rose-100');
+    } else {
+        statusDiv.classList.add('bg-emerald-50', 'text-emerald-600', 'border-emerald-100');
+    }
+
+    statusDiv.querySelector('p').innerText = message;
+    statusDiv.classList.remove('hidden');
+    if (!isError) {
+        setTimeout(() => statusDiv.classList.add('hidden'), 3000);
+    }
+}
+
+async function updateProfileUI() {
     const footerVer = document.getElementById('versionTextProfile');
     if (footerVer) footerVer.innerText = APP_VERSION;
 
-    const user = state.currentUser;
+    const user = auth.currentUser;
     if (!user) return;
+
+    // Paksa refresh data user agar status provider akurat
+    try { await user.reload(); } catch (e) { console.error(e); }
 
     const nameEl = document.getElementById('profileNameLarge');
     const emailEl = document.getElementById('profileEmail');
@@ -55,150 +79,28 @@ function updateProfileUI() {
         if (dayEl) dayEl.innerText = `${diff}`;
     }
 
+    // DETEKSI PROVIDER SECARA AKURAT
+    const providers = user.providerData.map(p => p.providerId);
+    const hasPassword = providers.includes('password');
+    const hasGoogle = providers.includes('google.com');
+
+    // UI Password
+    const setupPwd = document.getElementById('passwordSetupArea');
+    const activePwd = document.getElementById('passwordActiveArea');
+    if (setupPwd && activePwd) {
+        setupPwd.classList.toggle('hidden', hasPassword);
+        activePwd.classList.toggle('hidden', !hasPassword);
+    }
+
+    // UI Google
+    const btnGoogle = document.getElementById('btnLinkGoogle');
+    const activeGoogle = document.getElementById('googleActiveArea');
+    if (btnGoogle && activeGoogle) {
+        btnGoogle.classList.toggle('hidden', hasGoogle);
+        activeGoogle.classList.toggle('hidden', !hasGoogle);
+    }
+
     setTimeout(() => loadChartData(7), 300);
-}
-
-function openEditProfile() {
-    const user = state.currentUser;
-    if (!user) return;
-    const modal = document.getElementById('editProfileModal');
-    const backdrop = document.getElementById('editProfileBackdrop');
-    const content = document.getElementById('editProfileContent');
-    const input = document.getElementById('editNameInput');
-    const dmToggle = document.getElementById('darkModeToggleProfile');
-
-    if (input) input.value = user.displayName || "";
-    if (dmToggle) dmToggle.checked = document.documentElement.classList.contains('dark');
-
-    if (modal && content && backdrop) {
-        modal.classList.remove('invisible', 'pointer-events-none');
-        requestAnimationFrame(() => {
-            backdrop.classList.add('opacity-100');
-            content.classList.remove('translate-y-full');
-        });
-    }
-}
-
-function closeEditProfile() {
-    const modal = document.getElementById('editProfileModal');
-    const backdrop = document.getElementById('editProfileBackdrop');
-    const content = document.getElementById('editProfileContent');
-    if (modal && content && backdrop) {
-        backdrop.classList.remove('opacity-100');
-        content.classList.add('translate-y-full');
-        setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 500);
-    }
-}
-
-function toggleLogoutModal(show) {
-    const modal = document.getElementById('logoutModal');
-    const backdrop = document.getElementById('logoutBackdrop');
-    const content = document.getElementById('logoutModalContent');
-    if (!modal) return;
-    if (show) {
-        modal.classList.remove('invisible', 'pointer-events-none');
-        requestAnimationFrame(() => {
-            backdrop.classList.add('opacity-100');
-            content.classList.remove('scale-90', 'opacity-0');
-        });
-    } else {
-        backdrop.classList.remove('opacity-100');
-        content.classList.add('scale-90', 'opacity-0');
-        setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 300);
-    }
-}
-
-function setupEditProfileListeners() {
-    const saveBtn = document.getElementById('saveProfileBtn');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', async () => {
-            const input = document.getElementById('editNameInput');
-            const newName = input.value.trim();
-            if (!newName) return;
-            const originalText = saveBtn.innerHTML;
-            saveBtn.innerHTML = "Menyimpan...";
-            saveBtn.disabled = true;
-            try {
-                if (auth.currentUser) {
-                    await updateProfile(auth.currentUser, { displayName: newName });
-                    state.currentUser.displayName = newName;
-                    updateProfileUI();
-                    // Update nama di home juga
-                    const homeName = document.getElementById('homeUserName');
-                    if (homeName) homeName.innerText = newName;
-                    closeEditProfile();
-                }
-            } catch (error) { console.error(error); }
-            finally { saveBtn.disabled = false; saveBtn.innerHTML = originalText; if (window.lucide) window.lucide.createIcons(); }
-        });
-    }
-    const dmToggle = document.getElementById('darkModeToggleProfile');
-    if (dmToggle) {
-        dmToggle.addEventListener('change', () => { if (window.toggleDarkMode) window.toggleDarkMode(); });
-    }
-}
-
-async function loadChartLibrary() {
-    if (isChartLibLoaded || typeof Chart !== 'undefined') return true;
-    return new Promise((resolve) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-        script.onload = () => { isChartLibLoaded = true; resolve(true); };
-        script.onerror = () => resolve(false);
-        document.head.appendChild(script);
-    });
-}
-
-function formatDateKey(date) {
-    const offset = date.getTimezoneOffset();
-    const localDate = new Date(date.getTime() - (offset * 60 * 1000));
-    return localDate.toISOString().split('T')[0];
-}
-
-async function loadChartData(days) {
-    if (!state.currentUser) return;
-    updateChartToggleUI(days);
-    await loadChartLibrary();
-
-    const today = new Date();
-    const tasks = [];
-
-    for (let i = days - 1; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(today.getDate() - i);
-        const dateKey = formatDateKey(d);
-        const label = d.toLocaleDateString('id-ID', { weekday: 'short' });
-
-        tasks.push(
-            getDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey))
-                .then(snap => ({ snap, label, isToday: i === 0 }))
-        );
-    }
-
-    try {
-        const results = await Promise.all(tasks);
-        const labels = [];
-        const dataPoints = [];
-        let totalCompletedInPeriod = 0;
-
-        results.forEach(({ snap, label, isToday }) => {
-            labels.push(label);
-            let count = 0;
-            if (snap.exists()) {
-                const data = snap.data();
-                ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'].forEach(p => { if (data[p]) count++; });
-            }
-            dataPoints.push(count);
-            totalCompletedInPeriod += count;
-            if (isToday) {
-                const statToday = document.getElementById('statToday');
-                if (statToday) statToday.innerText = `${count}/5`;
-            }
-        });
-
-        renderChart(labels, dataPoints);
-        calculateConsistency(totalCompletedInPeriod, days);
-    } catch (e) { console.error(e); }
 }
 
 function calculateConsistency(totalCompleted, days) {
@@ -206,79 +108,124 @@ function calculateConsistency(totalCompleted, days) {
     const maxPotential = days * dailyTarget;
     let percentage = Math.round((totalCompleted / maxPotential) * 100);
     if (percentage > 100) percentage = 100;
+
     const statEl = document.getElementById('statConsistency');
     if (statEl) {
         statEl.innerText = `${percentage}%`;
-        statEl.className = "block text-sm font-black leading-none";
+        statEl.classList.remove("text-emerald-500", "text-amber-500", "text-slate-800", "dark:text-white");
         if (percentage >= 80) statEl.classList.add("text-emerald-500");
         else if (percentage >= 50) statEl.classList.add("text-amber-500");
         else statEl.classList.add("text-slate-800", "dark:text-white");
     }
 }
 
-function updateChartToggleUI(days) {
-    const btn7 = document.getElementById('btn7Days');
-    const btn14 = document.getElementById('btn14Days');
-    const activeClass = ["bg-white", "dark:bg-slate-700", "text-emerald-600", "shadow-sm"];
-    const inactiveClass = ["text-slate-400", "hover:text-emerald-600"];
-    if (btn7 && btn14) {
-        btn7.classList.remove(...activeClass, ...inactiveClass);
-        btn14.classList.remove(...activeClass, ...inactiveClass);
-        if (days === 7) { btn7.classList.add(...activeClass); btn14.classList.add(...inactiveClass); }
-        else { btn7.classList.add(...inactiveClass); btn14.classList.add(...activeClass); }
+function resetPasswordChangeArea() {
+    const activePwd = document.getElementById('passwordActiveArea');
+    const changePwd = document.getElementById('passwordChangeArea');
+    if (activePwd && changePwd) {
+        activePwd.classList.remove('hidden');
+        changePwd.classList.add('hidden');
+        document.getElementById('changePasswordInput').value = "";
     }
 }
 
-function renderChart(labels, data) {
-    const ctx = document.getElementById('activityChart');
-    if (!ctx || typeof Chart === 'undefined') return;
-    if (activityChart) activityChart.destroy();
+function setupEditProfileListeners() {
+    // 1. Simpan Nama
+    const saveBtn = document.getElementById('saveProfileBtn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+            const input = document.getElementById('editNameInput');
+            const newName = input.value.trim();
+            if (!newName) return;
+            saveBtn.innerHTML = "Menyimpan...";
+            saveBtn.disabled = true;
+            try {
+                await updateProfile(auth.currentUser, { displayName: newName });
+                state.currentUser.displayName = newName;
+                updateProfileUI();
+                showUpdateStatus("Nama berhasil diperbarui!");
+                setTimeout(closeEditProfile, 1000);
+            } catch (error) { showUpdateStatus("Gagal memperbarui nama.", true); }
+            finally { saveBtn.disabled = false; saveBtn.innerHTML = "Simpan Perubahan"; if (window.lucide) window.lucide.createIcons(); }
+        });
+    }
 
-    activityChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Sholat Wajib',
-                data: data,
-                borderColor: '#10b981',
-                backgroundColor: (context) => {
-                    const ctx = context.chart.ctx;
-                    const gradient = ctx.createLinearGradient(0, 0, 0, 160);
-                    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
-                    gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
-                    return gradient;
-                },
-                borderWidth: 2,
-                pointBackgroundColor: '#ffffff',
-                pointBorderColor: '#10b981',
-                pointRadius: 3,
-                pointHoverRadius: 5,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: { enabled: true } },
-            scales: {
-                y: { beginAtZero: true, max: 5, display: false },
-                x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#94a3b8' } }
-            },
-            interaction: { intersect: false, mode: 'index' },
-        }
+    // 2. Aktifkan Password
+    const enableBtn = document.getElementById('enableEmailAuthBtn');
+    if (enableBtn) {
+        enableBtn.addEventListener('click', async () => {
+            const password = document.getElementById('linkPasswordInput').value;
+            const user = auth.currentUser;
+            if (!password || password.length < 6) return showUpdateStatus("Password minimal 6 karakter.", true);
+            enableBtn.innerText = "MEMPROSES...";
+            enableBtn.disabled = true;
+            try {
+                const credential = EmailAuthProvider.credential(user.email, password);
+                await linkWithCredential(user, credential);
+                showUpdateStatus("Akses Password Aktif!");
+                updateProfileUI();
+            } catch (error) { showUpdateStatus("Gagal mengaktifkan password.", true); }
+            finally { enableBtn.innerText = "Aktifkan Password"; enableBtn.disabled = false; }
+        });
+    }
+
+    // 3. Update Password & OTOMATIS LOGOUT
+    const btnUpdatePwd = document.getElementById('btnUpdatePassword');
+    if (btnUpdatePwd) {
+        btnUpdatePwd.addEventListener('click', async () => {
+            const newPwd = document.getElementById('changePasswordInput').value;
+            if (!newPwd || newPwd.length < 6) return showUpdateStatus("Minimal 6 karakter.", true);
+            btnUpdatePwd.innerText = "UPDATING...";
+            btnUpdatePwd.disabled = true;
+            try {
+                await updatePassword(auth.currentUser, newPwd);
+                showUpdateStatus("Berhasil! Keluar otomatis...");
+                setTimeout(async () => {
+                    await signOut(auth);
+                    window.location.reload();
+                }, 1500);
+            } catch (error) {
+                if (error.code === 'auth/requires-recent-login') {
+                    showUpdateStatus("Logout & login ulang dulu demi keamanan.", true);
+                } else { showUpdateStatus("Gagal update password.", true); }
+            } finally { btnUpdatePwd.innerText = "Update"; btnUpdatePwd.disabled = false; }
+        });
+    }
+
+    // 4. Sambungkan Google
+    const btnLinkGoogle = document.getElementById('btnLinkGoogle');
+    if (btnLinkGoogle) {
+        btnLinkGoogle.addEventListener('click', async () => {
+            btnLinkGoogle.innerText = "PROSES...";
+            btnLinkGoogle.disabled = true;
+            try {
+                await linkWithPopup(auth.currentUser, provider);
+                showUpdateStatus("Google Berhasil Terhubung!");
+                updateProfileUI();
+            } catch (error) { showUpdateStatus("Gagal menyambung Google.", true); }
+            finally { btnLinkGoogle.innerText = "Sambungkan Google"; btnLinkGoogle.disabled = false; }
+        });
+    }
+
+    const btnShowChange = document.getElementById('btnShowChangePassword');
+    if (btnShowChange) btnShowChange.addEventListener('click', () => {
+        document.getElementById('passwordActiveArea').classList.add('hidden');
+        document.getElementById('passwordChangeArea').classList.remove('hidden');
     });
+    const btnCancelChange = document.getElementById('btnCancelChange');
+    if (btnCancelChange) btnCancelChange.addEventListener('click', resetPasswordChangeArea);
+
+    const dmToggle = document.getElementById('darkModeToggleProfile');
+    if (dmToggle) dmToggle.addEventListener('change', () => { if (window.toggleDarkMode) window.toggleDarkMode(); });
 }
 
-function setupLogoutListeners() {
-    const logoutBtn = document.getElementById('logoutBtnProfile');
-    const cancelBtn = document.getElementById('cancelLogoutBtn');
-    const confirmBtn = document.getElementById('confirmLogoutBtn');
-    if (logoutBtn) logoutBtn.addEventListener('click', () => toggleLogoutModal(true));
-    if (cancelBtn) cancelBtn.addEventListener('click', () => toggleLogoutModal(false));
-    if (confirmBtn) confirmBtn.addEventListener('click', async () => {
-        toggleLogoutModal(false);
-        try { await signOut(auth); window.location.reload(); } catch (e) { console.error(e); }
-    });
-}
+// FUNGSI CHART & STATS LAMA (TETAP SAMA)
+async function loadChartLibrary() { if (isChartLibLoaded || typeof Chart !== 'undefined') return true; return new Promise((resolve) => { const script = document.createElement('script'); script.src = 'https://cdn.jsdelivr.net/npm/chart.js'; script.onload = () => { isChartLibLoaded = true; resolve(true); }; script.onerror = () => resolve(false); document.head.appendChild(script); }); }
+function formatDateKey(date) { const offset = date.getTimezoneOffset(); const localDate = new Date(date.getTime() - (offset * 60 * 1000)); return localDate.toISOString().split('T')[0]; }
+async function loadChartData(days) { if (!state.currentUser) return; updateChartToggleUI(days); await loadChartLibrary(); const today = new Date(); const tasks = []; for (let i = days - 1; i >= 0; i--) { const d = new Date(); d.setDate(today.getDate() - i); const dateKey = formatDateKey(d); const label = d.toLocaleDateString('id-ID', { weekday: 'short' }); tasks.push(getDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey)).then(snap => ({ snap, label, isToday: i === 0 }))); } try { const results = await Promise.all(tasks); const labels = []; const dataPoints = []; let totalCompletedInPeriod = 0; results.forEach(({ snap, label, isToday }) => { labels.push(label); let count = 0; if (snap.exists()) { const data = snap.data();['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'].forEach(p => { if (data[p]) count++; }); } dataPoints.push(count); totalCompletedInPeriod += count; if (isToday) { const statToday = document.getElementById('statToday'); if (statToday) statToday.innerText = `${count}/5`; } }); renderChart(labels, dataPoints); calculateConsistency(totalCompletedInPeriod, days); } catch (e) { console.error(e); } }
+function updateChartToggleUI(days) { const btn7 = document.getElementById('btn7Days'); const btn14 = document.getElementById('btn14Days'); const activeClass = ["bg-white", "dark:bg-slate-700", "text-emerald-600", "shadow-sm"]; const inactiveClass = ["text-slate-400", "hover:text-emerald-600"]; if (btn7 && btn14) { btn7.classList.remove(...activeClass, ...inactiveClass); btn14.classList.remove(...activeClass, ...inactiveClass); if (days === 7) { btn7.classList.add(...activeClass); btn14.classList.add(...inactiveClass); } else { btn7.classList.add(...inactiveClass); btn14.classList.add(...activeClass); } } }
+function renderChart(labels, data) { const ctx = document.getElementById('activityChart'); if (!ctx || typeof Chart === 'undefined') return; if (activityChart) activityChart.destroy(); activityChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Sholat Wajib', data: data, borderColor: '#10b981', backgroundColor: (context) => { const ctx = context.chart.ctx; const gradient = ctx.createLinearGradient(0, 0, 0, 160); gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)'); gradient.addColorStop(1, 'rgba(16, 185, 129, 0)'); return gradient; }, borderWidth: 2, pointBackgroundColor: '#ffffff', tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#94a3b8' } } } } }); }
+function setupLogoutListeners() { const logoutBtn = document.getElementById('logoutBtnProfile'); const cancelBtn = document.getElementById('cancelLogoutBtn'); const confirmBtn = document.getElementById('confirmLogoutBtn'); if (logoutBtn) logoutBtn.addEventListener('click', () => toggleLogoutModal(true)); if (cancelBtn) cancelBtn.addEventListener('click', () => toggleLogoutModal(false)); if (confirmBtn) confirmBtn.addEventListener('click', async () => { toggleLogoutModal(false); try { await signOut(auth); window.location.reload(); } catch (e) { console.error(e); } }); }
+function openEditProfile() { const user = state.currentUser; if (!user) return; const modal = document.getElementById('editProfileModal'); const content = document.getElementById('editProfileContent'); const input = document.getElementById('editNameInput'); const dmToggle = document.getElementById('darkModeToggleProfile'); if (input) input.value = user.displayName || ""; if (dmToggle) dmToggle.checked = document.documentElement.classList.contains('dark'); if (modal) { modal.classList.remove('invisible', 'pointer-events-none'); document.getElementById('editProfileBackdrop').classList.add('opacity-100'); content.classList.remove('translate-y-full'); } }
+function closeEditProfile() { const modal = document.getElementById('editProfileModal'); const content = document.getElementById('editProfileContent'); if (modal) { document.getElementById('editProfileBackdrop').classList.remove('opacity-100'); content.classList.add('translate-y-full'); setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 500); } }
+function toggleLogoutModal(show) { const modal = document.getElementById('logoutModal'); const content = document.getElementById('logoutModalContent'); if (!modal) return; if (show) { modal.classList.remove('invisible', 'pointer-events-none'); document.getElementById('logoutBackdrop').classList.add('opacity-100'); content.classList.remove('scale-90', 'opacity-0'); } else { document.getElementById('logoutBackdrop').classList.remove('opacity-100'); content.classList.add('scale-90', 'opacity-0'); setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 300); } }

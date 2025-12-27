@@ -1,51 +1,68 @@
-<div id="loginOverlay" class="absolute inset-0 z-[100] flex flex-col items-center justify-center p-5 transition-all duration-500 bg-slate-50 dark:bg-slate-950 overflow-hidden">
+<div id="loginOverlay" class="absolute inset-0 z-[100] flex flex-col items-center justify-center p-6 transition-all duration-500 bg-slate-50 dark:bg-slate-950 overflow-hidden">
     
     <div class="fixed top-0 left-0 right-0 h-full w-full pointer-events-none z-0">
         <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-full blur-[100px] animate-pulse"></div>
         <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-teal-500/10 rounded-full blur-[100px] animate-pulse" style="animation-delay: 2s;"></div>
     </div>
 
-    <div class="relative w-full max-w-[340px] md:max-w-[400px] group transition-all duration-500 z-10">
-        
+    <div class="relative w-full max-w-[320px] group transition-all duration-500 z-10">
         <div class="absolute -inset-1 bg-gradient-to-b from-emerald-500/20 to-teal-500/20 rounded-[2.5rem] blur-2xl opacity-50 group-hover:opacity-100 transition duration-1000"></div>
         
-        <div class="relative w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-white dark:border-slate-800 shadow-2xl rounded-[2.5rem] p-8 md:p-12 flex flex-col items-center text-center">
+        <div class="relative w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-white dark:border-slate-800 shadow-2xl rounded-[2.5rem] p-6 overflow-hidden">
             
-            <div class="inline-flex mb-6 text-[10px] font-black tracking-[0.2em] text-emerald-600 dark:text-emerald-400 uppercase py-1.5 px-4 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full border border-emerald-500/10">
-                Assalamu'alaikum
+            <div class="flex flex-col items-center text-center mb-6">
+                <img src="assets/logo.png" class="w-16 h-16 mb-4 rounded-[1.8rem] object-contain shadow-sm border border-white/50 dark:border-slate-700/50" alt="Logo">
+                <h1 class="text-xl font-black text-slate-800 dark:text-white tracking-tighter">Jurnal Ibadah</h1>
+            </div>
+
+            <div id="toggleContainer" class="relative w-full bg-slate-100 dark:bg-slate-800/50 p-1 rounded-2xl mb-6 flex items-center">
+                <div id="authGlider" class="absolute h-[calc(100%-8px)] w-[calc(50%-4px)] bg-white dark:bg-slate-700 rounded-xl shadow-md transition-all duration-300 ease-in-out translate-x-0"></div>
+                
+                <button onclick="toggleAuth(false)" class="relative z-10 flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-white transition-colors duration-300">Masuk</button>
+                <button onclick="toggleAuth(true)" class="relative z-10 flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors duration-300">Daftar</button>
+            </div>
+
+            <div id="authWindow" class="w-full overflow-hidden">
+                <div id="authTrack" class="flex w-[200%] transition-transform duration-300 ease-in-out translate-x-0">
+                    
+                    <div class="w-1/2 flex flex-col items-center px-1">
+                        <div class="w-full space-y-2.5">
+                            <input type="email" id="emailLogin" class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all" placeholder="EMAIL">
+                            <input type="password" id="passwordLogin" class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all" placeholder="PASSWORD">
+                            <button id="btnLoginAction" class="w-full py-3.5 rounded-xl bg-slate-800 dark:bg-slate-700 text-white font-black text-[10px] uppercase tracking-widest hover:bg-slate-900 transition active:scale-95 shadow-lg">Masuk Sekarang</button>
+                            <button id="forgotPasswordBtn" class="w-full text-[9px] font-black text-slate-400 hover:text-emerald-500 transition uppercase tracking-tighter text-center">Lupa Password?</button>
+                        </div>
+                    </div>
+
+                    <div class="w-1/2 flex flex-col items-center px-1">
+                        <div class="w-full space-y-2.5">
+                            <input type="email" id="emailSignup" class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all" placeholder="EMAIL BARU">
+                            <input type="password" id="passwordSignup" class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all" placeholder="BUAT PASSWORD">
+                            <button id="btnSignupAction" class="w-full py-3.5 rounded-xl bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 transition active:scale-95 shadow-lg">Buat Akun Baru</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="w-full mt-4">
+                <div class="flex items-center gap-3 my-3 opacity-20">
+                    <div class="h-[1px] flex-1 bg-slate-400"></div>
+                    <span class="text-[8px] font-black uppercase">Atau</span>
+                    <div class="h-[1px] flex-1 bg-slate-400"></div>
+                </div>
+                <button id="googleLoginBtn" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white font-black py-3.5 rounded-xl transition active:scale-95 flex items-center justify-center gap-2 group/btn">
+                    <div class="bg-slate-100 dark:bg-slate-700 p-1 rounded-full text-emerald-500 shadow-sm">
+                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/></svg>
+                    </div>
+                    <span class="text-[9px] font-black tracking-widest uppercase">Google Login</span>
+                </button>
             </div>
             
-            <div class="relative mb-6">
-                <div class="absolute inset-0 bg-emerald-500/20 blur-3xl rounded-full scale-150 opacity-50"></div>
-                <div class="relative w-20 h-20 md:w-24 md:h-24 bg-white dark:bg-slate-800 rounded-[1.8rem] shadow-xl border border-slate-100 dark:border-slate-700 flex items-center justify-center p-4">
-                    <img src="assets/logo.png" class="w-full h-full object-contain" alt="Logo">
-                </div>
-            </div>
-            
-            <h1 class="text-2xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tighter mb-2">Jurnal Ibadah</h1>
-            <p class="text-slate-500 dark:text-slate-400 text-xs md:text-sm font-medium mb-10 leading-relaxed max-w-[280px]">
-                Teman setia dalam perjalanan spiritualmu untuk mencatat dan menjaga istiqomah.
-            </p>
-            
-            <button id="googleLoginBtn" class="w-full relative overflow-hidden bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 px-6 rounded-2xl transition-all duration-300 shadow-xl shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-3 group/btn">
-                <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_2s_infinite]"></div>
-                
-                <div class="bg-white p-1.5 rounded-full text-emerald-500 shadow-sm">
-                     <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/></svg>
-                </div>
-                <span class="text-xs font-bold tracking-wide uppercase">Masuk dengan Google</span>
-            </button>
-            
-            <div class="mt-8 flex flex-col gap-3 w-full">
-                <p id="loginStatus" class="text-[10px] font-black text-emerald-500 animate-pulse hidden uppercase tracking-widest">Menghubungkan...</p>
-                <div id="errorMsg" class="hidden bg-rose-50 dark:bg-rose-900/20 p-3 rounded-xl border border-rose-100 dark:border-rose-800/50">
-                    <p class="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase">Error Message</p>
-                </div>
-                
-                <div class="flex items-center justify-center gap-2 text-[10px] font-bold text-slate-300 dark:text-slate-700 mt-2">
-                    <span id="versionTextLogin">v2.0</span>
-                    <span class="w-1 h-1 bg-slate-200 dark:bg-slate-800 rounded-full"></span>
-                    <span>Secure Login</span>
+            <div class="mt-5">
+                <p id="loginStatus" class="text-[9px] font-black text-emerald-500 animate-pulse hidden uppercase tracking-widest text-center">Memproses...</p>
+                <div id="errorMsg" class="hidden bg-rose-50 dark:bg-rose-950/30 p-3 rounded-xl border border-rose-100 dark:border-rose-900/50 text-center">
+                    <p class="text-[9px] font-bold text-rose-600 dark:text-rose-400 uppercase leading-relaxed"></p>
                 </div>
             </div>
 
