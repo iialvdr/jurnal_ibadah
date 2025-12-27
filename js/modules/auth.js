@@ -5,11 +5,45 @@ import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     sendPasswordResetEmail,
-    linkWithCredential
+    linkWithCredential,
+    linkWithPopup,
+    unlink
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { APP_VERSION } from '../version.js';
 
 let pendingGoogleCred = null;
+
+/**
+ * FUNGSI VALIDASI: Menyambungkan Google dengan syarat Email wajib sama.
+ * Jika email berbeda, sistem akan otomatis memutuskan sambungan (unlink).
+ */
+export async function handleLinkGoogle() {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Kamu harus login terlebih dahulu.");
+
+    try {
+        // 1. Lakukan proses linking via Popup
+        const result = await linkWithPopup(user, provider);
+
+        // 2. Ambil data email dari provider Google yang baru saja terhubung
+        const googleAccount = result.user.providerData.find(p => p.providerId === 'google.com');
+        const googleEmail = googleAccount ? googleAccount.email : null;
+
+        // 3. Validasi: Bandingkan dengan email utama akun
+        if (googleEmail && googleEmail.toLowerCase() !== user.email.toLowerCase()) {
+            // Jika berbeda, langsung putuskan sambungan (Unlink)
+            await unlink(user, 'google.com');
+            throw new Error(`Akses Ditolak! Email Google (${googleEmail}) tidak sama dengan email akun kamu (${user.email}).`);
+        }
+
+        return result.user;
+    } catch (error) {
+        if (error.code === 'auth/credential-already-in-use') {
+            throw new Error("Akun Google ini sudah terhubung dengan pengguna lain.");
+        }
+        throw error;
+    }
+}
 
 // Fungsi Slide Global (Smooth & Tanpa Bounce)
 window.toggleAuth = (isSignUp) => {
@@ -20,13 +54,9 @@ window.toggleAuth = (isSignUp) => {
     const buttons = container.querySelectorAll('button');
 
     if (track && glider) {
-        // Geser konten form
         track.style.transform = isSignUp ? 'translateX(-50%)' : 'translateX(0)';
-
-        // Geser glider tombol
         glider.style.transform = isSignUp ? 'translateX(calc(100% + 4px))' : 'translateX(0)';
 
-        // Update warna teks tombol
         buttons[0].classList.toggle('text-slate-400', isSignUp);
         buttons[0].classList.toggle('text-slate-800', !isSignUp);
         buttons[0].classList.toggle('dark:text-white', !isSignUp);
@@ -112,7 +142,6 @@ export function initAuth() {
         });
     }
 
-    // Helper Functions
     function showLoading(show) {
         if (status) status.classList.toggle('hidden', !show);
         if (errorBox) errorBox.classList.add('hidden');

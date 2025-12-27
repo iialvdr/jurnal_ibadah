@@ -1,9 +1,11 @@
 // js/modules/profile.js
 import { auth, db, provider } from '../config.js';
-import { signOut, updateProfile, updatePassword, EmailAuthProvider, linkWithCredential, linkWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { signOut, updateProfile, updatePassword, EmailAuthProvider, linkWithCredential } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { state } from '../state.js';
 import { APP_VERSION } from '../version.js';
+// Import fungsi satpam dari auth.js
+import { handleLinkGoogle } from './auth.js';
 
 let activityChart = null;
 let isChartLibLoaded = false;
@@ -184,16 +186,21 @@ function setupEditProfileListeners() {
         });
     }
 
+    // --- BAGIAN YANG DIPERBAIKI: Menggunakan handleLinkGoogle dari auth.js ---
     const btnLinkGoogle = document.getElementById('btnLinkGoogle');
     if (btnLinkGoogle) {
         btnLinkGoogle.addEventListener('click', async () => {
             btnLinkGoogle.innerText = "PROSES...";
             btnLinkGoogle.disabled = true;
             try {
-                await linkWithPopup(auth.currentUser, provider);
+                // Memanggil fungsi validasi di auth.js
+                await handleLinkGoogle();
                 showUpdateStatus("Google Berhasil Terhubung!");
                 updateProfileUI();
-            } catch (error) { showUpdateStatus("Gagal menyambung Google.", true); }
+            } catch (error) {
+                // Jika email tidak sama, pesan error dari throw Error di auth.js muncul di sini
+                showUpdateStatus(error.message, true);
+            }
             finally { btnLinkGoogle.innerText = "Sambungkan Google"; btnLinkGoogle.disabled = false; }
         });
     }
@@ -252,7 +259,6 @@ async function loadChartData(days) {
 
 function updateChartToggleUI(days) { const btn7 = document.getElementById('btn7Days'); const btn14 = document.getElementById('btn14Days'); const activeClass = ["bg-white", "dark:bg-slate-700", "text-emerald-600", "shadow-sm"]; const inactiveClass = ["text-slate-400", "hover:text-emerald-600"]; if (btn7 && btn14) { btn7.classList.remove(...activeClass, ...inactiveClass); btn14.classList.remove(...activeClass, ...inactiveClass); if (days === 7) { btn7.classList.add(...activeClass); btn14.classList.add(...inactiveClass); } else { btn7.classList.add(...inactiveClass); btn14.classList.add(...activeClass); } } }
 
-// --- BAGIAN YANG DIPERBAIKI: SKALA 0-5 DAN TITIK TIDAK KEPOTONG ---
 function renderChart(labels, data) {
     const ctx = document.getElementById('activityChart');
     if (!ctx || typeof Chart === 'undefined') return;
@@ -276,32 +282,17 @@ function renderChart(labels, data) {
                 pointBackgroundColor: '#ffffff',
                 pointRadius: 4,
                 tension: 0.4,
-                clip: false // Mencegah titik terpotong di tepi atas/bawah grafik
+                clip: false
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    top: 15,    // Ruang napas ekstra di atas canvas
-                    bottom: 5,
-                    left: 10,
-                    right: 10
-                }
-            },
+            layout: { padding: { top: 15, bottom: 5, left: 10, right: 10 } },
             plugins: { legend: { display: false } },
             scales: {
-                y: {
-                    min: 0,
-                    max: 5,
-                    ticks: { stepSize: 1 },
-                    display: false
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { font: { size: 9 }, color: '#94a3b8' }
-                }
+                y: { min: 0, max: 5, ticks: { stepSize: 1 }, display: false },
+                x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#94a3b8' } }
             }
         }
     });
