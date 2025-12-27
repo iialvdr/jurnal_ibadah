@@ -9,10 +9,8 @@ let activeBtn = null;
 let lastReadData = null;
 let lastScrollTop = 0;
 let currentTafsirData = null;
+let nextAudioPreload = null; // Untuk menyimpan buffer ayat berikutnya
 
-/**
- * HOISTING FIX: Fungsi pencarian di atas agar tidak ReferenceError
- */
 function searchSurah(query) {
     const lowerQ = query.toLowerCase();
     const items = document.querySelectorAll('.item-surah');
@@ -130,12 +128,17 @@ function renderSurahList(data) {
     const fragment = document.createDocumentFragment();
     data.forEach(surah => {
         const isLastRead = lastReadData && lastReadData.surah === surah.nomor;
+        const targetAyah = isLastRead ? lastReadData.ayat : 'null';
+
         const badge = isLastRead ? `<div class="mb-1 animate-fade-in"><span class="text-[9px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md font-bold border border-emerald-200 dark:border-emerald-800">Terakhir: Ayat ${lastReadData.ayat}</span></div>` : '';
         const borderClass = isLastRead ? 'border-emerald-500 ring-1 ring-emerald-500/20' : 'border-slate-200 dark:border-slate-800';
         const safeNama = surah.namaLatin.replace(/'/g, "\\'");
+
         const div = document.createElement('div');
         div.className = `item-surah group bg-white dark:bg-slate-900 p-3.5 md:py-5 md:px-5 rounded-2xl border ${borderClass} shadow-sm active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-between relative overflow-hidden hover:border-emerald-300 dark:hover:border-emerald-700 md:min-h-[90px]`;
-        div.setAttribute('onclick', `openSurah(${surah.nomor}, null, '${safeNama}')`);
+
+        div.setAttribute('onclick', `openSurah(${surah.nomor}, ${targetAyah}, '${safeNama}')`);
+
         div.setAttribute('data-search', `${surah.namaLatin.toLowerCase()} ${surah.arti.toLowerCase()} ${surah.nomor}`);
         div.innerHTML = `
             <div class="flex items-center gap-3.5 md:gap-5 relative z-10 w-full">
@@ -182,10 +185,13 @@ function renderAyahs(ayatList, surahName) {
                 <div class="flex items-center gap-2">
                     <div class="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 font-bold flex items-center justify-center text-xs border border-emerald-100 dark:border-emerald-800/30">${ayat.nomorAyat}</div>
                     <button onclick="vibrateSoft(); toggleBookmark(${currentSurahNumber}, ${ayat.nomorAyat}, '${safeSurahName}')" class="w-9 h-9 rounded-full flex items-center justify-center transition active:scale-90">
-                        <i data-lucide="bookmark" class="w-4 h-4 ${bookmarkIconClass} transition-colors" id="btn-bookmark-${ayat.nomorAyat}"></i>
+                        <i data-lucide="bookmark" class="ayah-bookmark-icon w-4 h-4 ${bookmarkIconClass} transition-colors" id="btn-bookmark-${ayat.nomorAyat}"></i>
                     </button>
                 </div>
-                <button onclick="playAudio('${audioUrl}', this)" class="play-audio-btn w-9 h-9 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-emerald-500 transition-all duration-300">
+                <button 
+                    data-audio-url="${audioUrl}"
+                    onclick="playAudio('${audioUrl}', this, ${ayat.nomorAyat})" 
+                    class="play-audio-btn w-9 h-9 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-emerald-500 transition-all duration-300">
                     <i data-lucide="play" class="w-3.5 h-3.5 fill-current ml-0.5"></i>
                 </button>
             </div>
@@ -228,7 +234,6 @@ async function openSurah(nomor, targetAyah = null, surahName = null) {
         searchContainer.style.pointerEvents = 'none';
     }
 
-    // Navigasi Tombol
     const prevBtn = document.getElementById('btnPrevSurah');
     const nextBtn = document.getElementById('btnNextSurah');
     if (prevBtn) prevBtn.style.display = (nomor === 1) ? 'none' : 'flex';
@@ -243,6 +248,19 @@ async function openSurah(nomor, targetAyah = null, surahName = null) {
             if (title) title.innerText = data.namaLatin;
             renderAyahs(data.ayat, data.namaLatin);
             if (navButtons) navButtons.classList.remove('translate-y-40');
+
+            if (targetAyah) {
+                setTimeout(() => {
+                    const el = document.getElementById(`ayah-${targetAyah}`);
+                    if (el && ayahContainer) {
+                        const offset = 120;
+                        ayahContainer.scrollTo({
+                            top: el.offsetTop - offset,
+                            behavior: 'smooth'
+                        });
+                    }
+                }, 600);
+            }
         }
     } catch (error) { console.error(error); }
 }
@@ -256,10 +274,10 @@ function handleQuranBack() {
     }
 }
 
-function playAudio(url, btnElement) {
-    const icon = btnElement.querySelector('i');
+function playAudio(url, btnElement, ayatNum) {
+    let icon = btnElement.querySelector('[data-lucide]');
+    if (!icon) return;
 
-    // Jika tombol yang sama diklik (Toggle Play/Pause)
     if (activeAudio && activeBtn === btnElement) {
         if (activeAudio.paused) {
             activeAudio.play();
@@ -268,38 +286,63 @@ function playAudio(url, btnElement) {
             activeAudio.pause();
             icon.setAttribute('data-lucide', 'play');
         }
-        lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
         return;
-    }
-
-    // Reset ikon tombol sebelumnya jika ada yang sedang berputar
-    if (activeBtn) {
-        const prevIcon = activeBtn.querySelector('i');
-        if (prevIcon) {
-            prevIcon.setAttribute('data-lucide', 'play');
-            lucide.createIcons();
-        }
     }
 
     stopCurrentAudio();
 
-    let audio = new Audio(url);
+    // Gunakan preloaded audio jika tersedia, jika tidak buat baru
+    let audio = nextAudioPreload && nextAudioPreload.src === url ? nextAudioPreload : new Audio(url);
+    audio.preload = "auto";
     activeAudio = audio;
     activeBtn = btnElement;
 
     audio.play();
     icon.setAttribute('data-lucide', 'pause');
-    lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
+
+    // --- PRELOAD AYAT BERIKUTNYA ---
+    const nextAyatNum = ayatNum + 1;
+    const nextBtn = document.querySelector(`#ayah-${nextAyatNum} .play-audio-btn`);
+    if (nextBtn) {
+        const nextUrl = nextBtn.getAttribute('data-audio-url');
+        nextAudioPreload = new Audio(nextUrl);
+        nextAudioPreload.preload = "auto";
+    }
 
     audio.onended = () => {
         stopCurrentAudio();
-        icon.setAttribute('data-lucide', 'play');
-        lucide.createIcons();
+
+        // --- SEAMLESS TRANSITION ---
+        if (nextBtn) {
+            const nextCard = document.getElementById(`ayah-${nextAyatNum}`);
+            const ayahContainer = document.getElementById('ayahListContainer');
+
+            // Panggil playAudio langsung tanpa delay
+            playAudio(nextBtn.getAttribute('data-audio-url'), nextBtn, nextAyatNum);
+
+            // Smooth Scroll presisi ke atas
+            if (nextCard && ayahContainer) {
+                const offset = 120;
+                ayahContainer.scrollTo({
+                    top: nextCard.offsetTop - offset,
+                    behavior: 'smooth'
+                });
+            }
+        }
     };
 }
 
 function stopCurrentAudio() {
     if (activeAudio) { activeAudio.pause(); activeAudio.currentTime = 0; }
+    if (activeBtn) {
+        const icon = activeBtn.querySelector('[data-lucide]');
+        if (icon) {
+            icon.setAttribute('data-lucide', 'play');
+            if (window.lucide) lucide.createIcons();
+        }
+    }
     activeAudio = null; activeBtn = null;
 }
 
@@ -313,7 +356,9 @@ function changeSurah(direction) {
 
 async function toggleBookmark(surahNum, ayatNum, surahName) {
     if (!state.currentUser) return;
+
     const isDeleting = lastReadData && lastReadData.surah === surahNum && lastReadData.ayat === ayatNum;
+
     if (isDeleting) {
         lastReadData = null;
         try { await deleteDoc(doc(db, "users", state.currentUser.uid, "quran", "last_read")); } catch (e) { }
@@ -321,7 +366,24 @@ async function toggleBookmark(surahNum, ayatNum, surahName) {
         lastReadData = { surah: surahNum, ayat: ayatNum, name: surahName, timestamp: new Date() };
         try { await setDoc(doc(db, "users", state.currentUser.uid, "quran", "last_read"), lastReadData); } catch (e) { }
     }
+
     renderSurahList(allSurahs);
+
+    const allAyahIcons = document.querySelectorAll('.ayah-bookmark-icon');
+    allAyahIcons.forEach(icon => {
+        icon.classList.remove('fill-emerald-500', 'text-emerald-500');
+        icon.classList.add('text-slate-300');
+    });
+
+    if (!isDeleting) {
+        const currentIcon = document.getElementById(`btn-bookmark-${ayatNum}`);
+        if (currentIcon) {
+            currentIcon.classList.add('fill-emerald-500', 'text-emerald-500');
+            currentIcon.classList.remove('text-slate-300');
+        }
+    }
+
+    if (window.lucide) lucide.createIcons();
 }
 
 async function toggleTafsir(ayatId) {
