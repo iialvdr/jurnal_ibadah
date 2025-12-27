@@ -29,7 +29,6 @@ export function initProfile() {
     });
 }
 
-// Fungsi Notifikasi Custom UI
 function showUpdateStatus(message, isError = false) {
     const statusDiv = document.getElementById('updateStatusMsg');
     if (!statusDiv) return;
@@ -55,7 +54,6 @@ async function updateProfileUI() {
     const user = auth.currentUser;
     if (!user) return;
 
-    // Paksa refresh data user agar status provider akurat
     try { await user.reload(); } catch (e) { console.error(e); }
 
     const nameEl = document.getElementById('profileNameLarge');
@@ -79,12 +77,10 @@ async function updateProfileUI() {
         if (dayEl) dayEl.innerText = `${diff}`;
     }
 
-    // DETEKSI PROVIDER SECARA AKURAT
     const providers = user.providerData.map(p => p.providerId);
     const hasPassword = providers.includes('password');
     const hasGoogle = providers.includes('google.com');
 
-    // UI Password
     const setupPwd = document.getElementById('passwordSetupArea');
     const activePwd = document.getElementById('passwordActiveArea');
     if (setupPwd && activePwd) {
@@ -92,7 +88,6 @@ async function updateProfileUI() {
         activePwd.classList.toggle('hidden', !hasPassword);
     }
 
-    // UI Google
     const btnGoogle = document.getElementById('btnLinkGoogle');
     const activeGoogle = document.getElementById('googleActiveArea');
     if (btnGoogle && activeGoogle) {
@@ -130,7 +125,6 @@ function resetPasswordChangeArea() {
 }
 
 function setupEditProfileListeners() {
-    // 1. Simpan Nama
     const saveBtn = document.getElementById('saveProfileBtn');
     if (saveBtn) {
         saveBtn.addEventListener('click', async () => {
@@ -150,7 +144,6 @@ function setupEditProfileListeners() {
         });
     }
 
-    // 2. Aktifkan Password
     const enableBtn = document.getElementById('enableEmailAuthBtn');
     if (enableBtn) {
         enableBtn.addEventListener('click', async () => {
@@ -169,7 +162,6 @@ function setupEditProfileListeners() {
         });
     }
 
-    // 3. Update Password & OTOMATIS LOGOUT
     const btnUpdatePwd = document.getElementById('btnUpdatePassword');
     if (btnUpdatePwd) {
         btnUpdatePwd.addEventListener('click', async () => {
@@ -192,7 +184,6 @@ function setupEditProfileListeners() {
         });
     }
 
-    // 4. Sambungkan Google
     const btnLinkGoogle = document.getElementById('btnLinkGoogle');
     if (btnLinkGoogle) {
         btnLinkGoogle.addEventListener('click', async () => {
@@ -219,12 +210,103 @@ function setupEditProfileListeners() {
     if (dmToggle) dmToggle.addEventListener('change', () => { if (window.toggleDarkMode) window.toggleDarkMode(); });
 }
 
-// FUNGSI CHART & STATS LAMA (TETAP SAMA)
 async function loadChartLibrary() { if (isChartLibLoaded || typeof Chart !== 'undefined') return true; return new Promise((resolve) => { const script = document.createElement('script'); script.src = 'https://cdn.jsdelivr.net/npm/chart.js'; script.onload = () => { isChartLibLoaded = true; resolve(true); }; script.onerror = () => resolve(false); document.head.appendChild(script); }); }
 function formatDateKey(date) { const offset = date.getTimezoneOffset(); const localDate = new Date(date.getTime() - (offset * 60 * 1000)); return localDate.toISOString().split('T')[0]; }
-async function loadChartData(days) { if (!state.currentUser) return; updateChartToggleUI(days); await loadChartLibrary(); const today = new Date(); const tasks = []; for (let i = days - 1; i >= 0; i--) { const d = new Date(); d.setDate(today.getDate() - i); const dateKey = formatDateKey(d); const label = d.toLocaleDateString('id-ID', { weekday: 'short' }); tasks.push(getDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey)).then(snap => ({ snap, label, isToday: i === 0 }))); } try { const results = await Promise.all(tasks); const labels = []; const dataPoints = []; let totalCompletedInPeriod = 0; results.forEach(({ snap, label, isToday }) => { labels.push(label); let count = 0; if (snap.exists()) { const data = snap.data();['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'].forEach(p => { if (data[p]) count++; }); } dataPoints.push(count); totalCompletedInPeriod += count; if (isToday) { const statToday = document.getElementById('statToday'); if (statToday) statToday.innerText = `${count}/5`; } }); renderChart(labels, dataPoints); calculateConsistency(totalCompletedInPeriod, days); } catch (e) { console.error(e); } }
+
+async function loadChartData(days) {
+    if (!state.currentUser) return;
+    updateChartToggleUI(days);
+    await loadChartLibrary();
+    const today = new Date();
+    const tasks = [];
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        const dateKey = formatDateKey(d);
+        const label = d.toLocaleDateString('id-ID', { weekday: 'short' });
+        tasks.push(getDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey)).then(snap => ({ snap, label, isToday: i === 0 })));
+    }
+    try {
+        const results = await Promise.all(tasks);
+        const labels = [];
+        const dataPoints = [];
+        let totalCompletedInPeriod = 0;
+        results.forEach(({ snap, label, isToday }) => {
+            labels.push(label);
+            let count = 0;
+            if (snap.exists()) {
+                const data = snap.data();
+                ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'].forEach(p => { if (data[p]) count++; });
+            }
+            dataPoints.push(count);
+            totalCompletedInPeriod += count;
+            if (isToday) {
+                const statToday = document.getElementById('statToday');
+                if (statToday) statToday.innerText = `${count}/5`;
+            }
+        });
+        renderChart(labels, dataPoints);
+        calculateConsistency(totalCompletedInPeriod, days);
+    } catch (e) { console.error(e); }
+}
+
 function updateChartToggleUI(days) { const btn7 = document.getElementById('btn7Days'); const btn14 = document.getElementById('btn14Days'); const activeClass = ["bg-white", "dark:bg-slate-700", "text-emerald-600", "shadow-sm"]; const inactiveClass = ["text-slate-400", "hover:text-emerald-600"]; if (btn7 && btn14) { btn7.classList.remove(...activeClass, ...inactiveClass); btn14.classList.remove(...activeClass, ...inactiveClass); if (days === 7) { btn7.classList.add(...activeClass); btn14.classList.add(...inactiveClass); } else { btn7.classList.add(...inactiveClass); btn14.classList.add(...activeClass); } } }
-function renderChart(labels, data) { const ctx = document.getElementById('activityChart'); if (!ctx || typeof Chart === 'undefined') return; if (activityChart) activityChart.destroy(); activityChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Sholat Wajib', data: data, borderColor: '#10b981', backgroundColor: (context) => { const ctx = context.chart.ctx; const gradient = ctx.createLinearGradient(0, 0, 0, 160); gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)'); gradient.addColorStop(1, 'rgba(16, 185, 129, 0)'); return gradient; }, borderWidth: 2, pointBackgroundColor: '#ffffff', tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#94a3b8' } } } } }); }
+
+// --- BAGIAN YANG DIPERBAIKI: SKALA 0-5 DAN TITIK TIDAK KEPOTONG ---
+function renderChart(labels, data) {
+    const ctx = document.getElementById('activityChart');
+    if (!ctx || typeof Chart === 'undefined') return;
+    if (activityChart) activityChart.destroy();
+    activityChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Sholat Wajib',
+                data: data,
+                borderColor: '#10b981',
+                backgroundColor: (context) => {
+                    const ctx = context.chart.ctx;
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 160);
+                    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
+                    gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                    return gradient;
+                },
+                borderWidth: 2,
+                pointBackgroundColor: '#ffffff',
+                pointRadius: 4,
+                tension: 0.4,
+                clip: false // Mencegah titik terpotong di tepi atas/bawah grafik
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 15,    // Ruang napas ekstra di atas canvas
+                    bottom: 5,
+                    left: 10,
+                    right: 10
+                }
+            },
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    min: 0,
+                    max: 5,
+                    ticks: { stepSize: 1 },
+                    display: false
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 9 }, color: '#94a3b8' }
+                }
+            }
+        }
+    });
+}
+
 function setupLogoutListeners() { const logoutBtn = document.getElementById('logoutBtnProfile'); const cancelBtn = document.getElementById('cancelLogoutBtn'); const confirmBtn = document.getElementById('confirmLogoutBtn'); if (logoutBtn) logoutBtn.addEventListener('click', () => toggleLogoutModal(true)); if (cancelBtn) cancelBtn.addEventListener('click', () => toggleLogoutModal(false)); if (confirmBtn) confirmBtn.addEventListener('click', async () => { toggleLogoutModal(false); try { await signOut(auth); window.location.reload(); } catch (e) { console.error(e); } }); }
 function openEditProfile() { const user = state.currentUser; if (!user) return; const modal = document.getElementById('editProfileModal'); const content = document.getElementById('editProfileContent'); const input = document.getElementById('editNameInput'); const dmToggle = document.getElementById('darkModeToggleProfile'); if (input) input.value = user.displayName || ""; if (dmToggle) dmToggle.checked = document.documentElement.classList.contains('dark'); if (modal) { modal.classList.remove('invisible', 'pointer-events-none'); document.getElementById('editProfileBackdrop').classList.add('opacity-100'); content.classList.remove('translate-y-full'); } }
 function closeEditProfile() { const modal = document.getElementById('editProfileModal'); const content = document.getElementById('editProfileContent'); if (modal) { document.getElementById('editProfileBackdrop').classList.remove('opacity-100'); content.classList.add('translate-y-full'); setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 500); } }
