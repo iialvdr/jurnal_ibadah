@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Jurnal Ibadah</title>
     
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
-    <link rel="shortcut icon" href="assets/favicon/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+    <link rel="shortcut icon" href="/assets/favicon/favicon.ico">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -32,44 +32,38 @@
     <script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ffffff">
-    <link rel="stylesheet" href="css/style.css?v=7">
+    <link rel="stylesheet" href="/css/style.css?v=7">
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 block h-[100dvh] text-slate-800 dark:text-slate-200 transition-colors duration-300 overflow-hidden relative selection:bg-emerald-500 selection:text-white">
 
     <div id="splashScreen" class="fixed inset-0 z-[100] bg-white dark:bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="relative flex items-center justify-center">
             <div class="absolute w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full animate-ping opacity-75"></div>
-            <img src="assets/favicon/apple-touch-icon.png" class="w-10 h-10 rounded-lg object-cover shadow-lg relative z-10" alt="Logo">
+            <img src="/assets/favicon/apple-touch-icon.png" class="w-10 h-10 rounded-lg object-cover shadow-lg relative z-10" alt="Logo">
         </div>
         <p class="mt-6 text-[10px] font-bold text-slate-400 dark:text-slate-600 tracking-[0.3em] uppercase">Memuat...</p>
     </div>
 
     <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div class="absolute inset-0 z-[1] opacity-[0.04] dark:opacity-[0.06]" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22 opacity=%221%22/%3E%3C/svg%3E');"></div>
-        
         <div class="blob w-[60vh] h-[60vh] bg-emerald-400/20 dark:bg-emerald-600/10 rounded-full -top-20 -left-20 mix-blend-multiply dark:mix-blend-normal"></div>
-        <div class="blob w-[50vh] h-[50vh] bg-blue-400/20 dark:bg-blue-600/10 rounded-full top-1/2 -right-20 animation-delay-2000 mix-blend-multiply dark:mix-blend-normal"></div>
-        <div class="blob w-[40vh] h-[40vh] bg-purple-400/20 dark:bg-purple-600/10 rounded-full -bottom-20 left-1/2 animation-delay-4000 mix-blend-multiply dark:mix-blend-normal"></div>
+        <div class="blob w-[50vh] h-[50vh] bg-blue-400/20 dark:bg-blue-600/10 rounded-full top-1/2 -right-20 mix-blend-multiply dark:mix-blend-normal"></div>
+        <div class="blob w-[40vh] h-[40vh] bg-purple-400/20 dark:bg-purple-600/10 rounded-full -bottom-20 left-1/2 mix-blend-multiply dark:mix-blend-normal"></div>
     </div>
 
     <div class="relative z-10 w-full h-full md:max-w-[95%] xl:max-w-[1400px] md:mx-auto md:h-[95vh] md:mt-[2.5vh] md:rounded-3xl md:border md:border-white/50 md:dark:border-slate-800 md:shadow-2xl md:backdrop-blur-2xl bg-white/40 dark:bg-slate-900/40 overflow-hidden flex flex-col transition-all duration-500">
-        
-        <div class="hidden-force"></div>
-
-        <div class="flex-1 relative h-full overflow-hidden flex flex-col" id="appContainer">
-            </div>
+        <div class="flex-1 relative h-full overflow-hidden flex flex-col" id="appContainer"></div>
     </div>
 
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => { 
-                navigator.serviceWorker.register('./sw.js', { type: 'module' }).catch(console.error); 
+                navigator.serviceWorker.register('/sw.js', { type: 'module' }).catch(console.error); 
             });
         }
     </script>
-    
-    <script type="module" src="js/app.js"></script>
+    <script type="module" src="/js/app.js"></script>
 </body>
 </html>

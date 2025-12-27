@@ -17,26 +17,26 @@ import { initAsmaulHusna } from './modules/asmaul_husna.js';
 import { initFasting } from './modules/fasting.js';
 import { initCredits } from './modules/credits.js';
 import { initChangelog } from './modules/changelog.js';
-import { initZakat } from './modules/zakat.js'; // <-- MODULE BARU
+import { initZakat } from './modules/zakat.js';
 
 window.vibrateSoft = () => { if (navigator.vibrate) navigator.vibrate(10); };
 window.vibrateSuccess = () => { if (navigator.vibrate) navigator.vibrate([10, 30, 10]); };
 
-// Daftar View HTML
+// Tambahkan tanda / di awal setiap path view
 const VIEWS = [
-    'views/login.html',
-    'views/home.html',
-    'views/profile.html',
-    'views/tasbih.html',
-    'views/qibla.html',
-    'views/tracker.html',
-    'views/quran.html',
-    'views/doa.html',
-    'views/asmaul_husna.html',
-    'views/fasting.html',
-    'views/credits.html',
-    'views/changelog.html',
-    'views/zakat.html' // <-- VIEW BARU
+    '/views/login.html',
+    '/views/home.html',
+    '/views/profile.html',
+    '/views/tasbih.html',
+    '/views/qibla.html',
+    '/views/tracker.html',
+    '/views/quran.html',
+    '/views/doa.html',
+    '/views/asmaul_husna.html',
+    '/views/fasting.html',
+    '/views/credits.html',
+    '/views/changelog.html',
+    '/views/zakat.html'
 ];
 
 async function loadAllViews() {
@@ -87,7 +87,7 @@ function initializeApp() {
     initProfile();
     initCredits();
     initChangelog();
-    initZakat(); // <-- INIT BARU
+    initZakat();
 
     onAuthStateChanged(auth, (user) => {
         const splash = document.getElementById('splashScreen');
@@ -103,6 +103,7 @@ function initializeApp() {
             setupRouter();
         } else {
             setCurrentUser(null);
+            // Gunakan path absolut untuk routing
             if (window.location.pathname !== '/' && window.location.pathname !== '/home') {
                 window.history.replaceState(null, null, '/');
             }

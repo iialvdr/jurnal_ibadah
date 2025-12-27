@@ -1,4 +1,4 @@
-// js/modules/qibla.js
+/* jurnal_ibadah/js/modules/qibla.js */
 
 const KAABA_COORDS = { lat: 21.422487, lng: 39.826206 };
 
@@ -28,32 +28,28 @@ export function initQibla() {
 }
 
 function calculateQibla(lat, lng) {
-    const PI = Math.PI;
-    const lat1 = lat * (PI / 180);
-    const lng1 = lng * (PI / 180);
-    const lat2 = KAABA_COORDS.lat * (PI / 180);
-    const lng2 = KAABA_COORDS.lng * (PI / 180);
+    const lat1 = lat * (Math.PI / 180);
+    const lng1 = lng * (Math.PI / 180);
+    const lat2 = KAABA_COORDS.lat * (Math.PI / 180);
+    const lng2 = KAABA_COORDS.lng * (Math.PI / 180);
 
     const y = Math.sin(lng2 - lng1) * Math.cos(lat2);
     const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lng2 - lng1);
 
-    let qiblaAngle = (Math.atan2(y, x) * 180 / PI + 360) % 360;
-    calculatedQiblaAngle = qiblaAngle;
+    calculatedQiblaAngle = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
 
     const degreeEl = document.getElementById('qiblaDegree');
-    if (degreeEl) degreeEl.innerText = `${Math.round(qiblaAngle)}°`;
+    if (degreeEl) degreeEl.innerText = `${Math.round(calculatedQiblaAngle)}°`;
 
     const pointer = document.getElementById('qiblaPointer');
-    if (pointer) {
-        pointer.style.transform = `rotate(${qiblaAngle}deg)`;
-    }
+    if (pointer) pointer.style.transform = `rotate(${calculatedQiblaAngle}deg)`;
 }
 
 function calculateDistance(lat1, lon1) {
     const R = 6371;
-    const dLat = deg2rad(KAABA_COORDS.lat - lat1);
-    const dLon = deg2rad(KAABA_COORDS.lng - lon1);
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(KAABA_COORDS.lat)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const dLat = (KAABA_COORDS.lat - lat1) * (Math.PI / 180);
+    const dLon = (KAABA_COORDS.lng - lon1) * (Math.PI / 180);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * (Math.PI / 180)) * Math.cos(KAABA_COORDS.lat * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const d = Math.round(R * c);
 
@@ -61,17 +57,13 @@ function calculateDistance(lat1, lon1) {
     if (distEl) distEl.innerText = `${d.toLocaleString('id-ID')} km`;
 }
 
-function deg2rad(deg) { return deg * (Math.PI / 180); }
-
 async function requestCompassPermission() {
     try {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             const response = await DeviceOrientationEvent.requestPermission();
             if (response === 'granted') {
-                document.getElementById('compassPermissionBtn').classList.add('hidden');
+                document.getElementById('compassPermissionBtn')?.classList.add('hidden');
                 startCompass();
-            } else {
-                alert('Izin kompas ditolak.');
             }
         } else {
             startCompass();
@@ -81,7 +73,6 @@ async function requestCompassPermission() {
 
 function startCompass() {
     if (isCompassActive) return;
-
     firstReading = true;
     isCompassActive = true;
     isAligned = false;
@@ -90,10 +81,7 @@ function startCompass() {
         window.addEventListener('deviceorientationabsolute', handleSensorData, true);
     } else if (window.DeviceOrientationEvent) {
         window.addEventListener('deviceorientation', handleSensorData, true);
-    } else {
-        alert("Sensor kompas tidak terdeteksi.");
     }
-
     updateCompassUI();
 }
 
@@ -105,50 +93,30 @@ function stopCompass() {
 }
 
 function handleSensorData(event) {
-    let heading = null;
-    if (event.webkitCompassHeading) {
-        heading = event.webkitCompassHeading;
-    } else if (event.alpha) {
-        heading = 360 - event.alpha;
-    }
-
-    if (heading !== null) {
-        rawHeading = heading;
-    }
+    rawHeading = event.webkitCompassHeading || (360 - event.alpha) || 0;
 }
 
 function lerpAngle(start, end, amount) {
-    let difference = Math.abs(end - start);
-    if (difference > 180) {
+    let diff = Math.abs(end - start);
+    if (diff > 180) {
         if (end > start) start += 360;
         else end += 360;
     }
-    let value = (start + ((end - start) * amount));
-    return (value % 360 + 360) % 360;
+    return (start + (end - start) * amount) % 360;
 }
 
 function updateCompassUI() {
     if (!isCompassActive) return;
+    if (firstReading) { currentSmoothHeading = rawHeading; firstReading = false; }
+    else { currentSmoothHeading = lerpAngle(currentSmoothHeading, rawHeading, 0.15); }
 
-    if (rawHeading !== null) {
-        if (firstReading) {
-            currentSmoothHeading = rawHeading;
-            firstReading = false;
-        } else {
-            currentSmoothHeading = lerpAngle(currentSmoothHeading, rawHeading, 0.15);
-        }
+    const textEl = document.getElementById('compassHeading');
+    if (textEl) textEl.innerText = `${Math.round(currentSmoothHeading)}°`;
 
-        const textEl = document.getElementById('compassHeading');
-        if (textEl) textEl.innerText = `${Math.round(currentSmoothHeading)}°`;
+    const disc = document.getElementById('compassDisc');
+    if (disc) disc.style.transform = `rotate(${-currentSmoothHeading}deg)`;
 
-        const disc = document.getElementById('compassDisc');
-        if (disc) {
-            disc.style.transform = `rotate(${-currentSmoothHeading}deg)`;
-        }
-
-        checkQiblaAlignment(currentSmoothHeading);
-    }
-
+    checkQiblaAlignment(currentSmoothHeading);
     animationFrameId = requestAnimationFrame(updateCompassUI);
 }
 
@@ -157,60 +125,29 @@ function checkQiblaAlignment(heading) {
     if (diff > 180) diff = 360 - diff;
 
     const TOLERANCE = 3;
-
     const disc = document.getElementById('compassDisc');
     const indicator = document.getElementById('qiblaSuccessIndicator');
     const glow = document.getElementById('kaabaGlow');
-    const pointerLine = document.getElementById('pointerLine');
     const iconContainer = document.getElementById('kaabaIconContainer');
 
     if (diff <= TOLERANCE) {
         if (!isAligned) {
             isAligned = true;
-            if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
-
-            if (disc) {
-                disc.style.borderColor = '#10b981';
-                disc.style.boxShadow = '0 0 50px rgba(16, 185, 129, 0.4)';
-            }
-            if (indicator) {
-                indicator.classList.remove('opacity-0', 'scale-90', '-translate-y-4');
-                indicator.classList.add('opacity-100', 'scale-100', 'translate-y-0');
-            }
-            if (glow) glow.classList.add('animate-pulse', 'opacity-60');
-
-            // Fix posisi dan tambah class animasi
-            if (iconContainer) {
-                iconContainer.style.transform = "translateX(-50%) scale(1.25)";
-                iconContainer.classList.add('qibla-active-pulse');
-            }
-
-            if (pointerLine) {
-                pointerLine.classList.add('qibla-line-active');
-            }
+            if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
+            disc?.classList.add('border-emerald-500', 'shadow-[0_0_50px_rgba(16,185,129,0.4)]');
+            indicator?.classList.replace('opacity-0', 'opacity-100');
+            indicator?.classList.replace('-translate-y-4', 'translate-y-0');
+            glow?.classList.add('opacity-80', 'animate-pulse');
+            if (iconContainer) iconContainer.style.transform = "translateX(-50%) scale(1.15)";
         }
     } else {
         if (isAligned) {
             isAligned = false;
-
-            if (disc) {
-                disc.style.borderColor = '';
-                disc.style.boxShadow = '';
-            }
-            if (indicator) {
-                indicator.classList.add('opacity-0', 'scale-90', '-translate-y-4');
-                indicator.classList.remove('opacity-100', 'scale-100', 'translate-y-0');
-            }
-            if (glow) glow.classList.remove('animate-pulse', 'opacity-60');
-
-            if (iconContainer) {
-                iconContainer.style.transform = "translateX(-50%) scale(1)";
-                iconContainer.classList.remove('qibla-active-pulse');
-            }
-
-            if (pointerLine) {
-                pointerLine.classList.remove('qibla-line-active');
-            }
+            disc?.classList.remove('border-emerald-500', 'shadow-[0_0_50px_rgba(16,185,129,0.4)]');
+            indicator?.classList.replace('opacity-100', 'opacity-0');
+            indicator?.classList.replace('translate-y-0', '-translate-y-4');
+            glow?.classList.remove('opacity-80', 'animate-pulse');
+            if (iconContainer) iconContainer.style.transform = "translateX(-50%) scale(1)";
         }
     }
 }

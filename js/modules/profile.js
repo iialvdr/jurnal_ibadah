@@ -1,8 +1,8 @@
 import { auth, db } from '../config.js';
 import { signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { state } from '../state.js';
-import { APP_VERSION } from '../version.js'; // Import Versi
+import { APP_VERSION } from '../version.js';
 
 let activityChart = null;
 let isChartLibLoaded = false;
@@ -28,7 +28,6 @@ export function initProfile() {
 }
 
 function updateProfileUI() {
-    // [BARU] Update versi di footer Profil
     const footerVer = document.getElementById('versionTextProfile');
     if (footerVer) footerVer.innerText = APP_VERSION;
 
@@ -41,7 +40,7 @@ function updateProfileUI() {
     if (emailEl) emailEl.innerText = user.email;
 
     const locEl = document.getElementById('lastLocation');
-    if (locEl) locEl.innerText = state.lastCity || "Lokasi Tidak Dikenal";
+    if (locEl) locEl.innerText = state.lastCity || "Lokasi Anda";
 
     const img = document.getElementById('profilePhotoLarge');
     if (img) img.src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=10b981&color=fff&size=128`;
@@ -59,14 +58,9 @@ function updateProfileUI() {
     setTimeout(() => loadChartData(7), 300);
 }
 
-// ... (Sisa fungsi lainnya: openEditProfile, closeEditProfile, toggleLogoutModal dll tetap sama) ...
-// (Pastikan sisa kode di file ini tetap ada seperti sebelumnya)
-
-// --- [ANIMATION LOGIC PERBAIKAN] ---
 function openEditProfile() {
     const user = state.currentUser;
     if (!user) return;
-
     const modal = document.getElementById('editProfileModal');
     const backdrop = document.getElementById('editProfileBackdrop');
     const content = document.getElementById('editProfileContent');
@@ -74,21 +68,13 @@ function openEditProfile() {
     const dmToggle = document.getElementById('darkModeToggleProfile');
 
     if (input) input.value = user.displayName || "";
-    if (dmToggle) {
-        const isDark = document.documentElement.classList.contains('dark');
-        dmToggle.checked = isDark;
-    }
+    if (dmToggle) dmToggle.checked = document.documentElement.classList.contains('dark');
 
     if (modal && content && backdrop) {
         modal.classList.remove('invisible', 'pointer-events-none');
-
-        // Double RAF for smoother entry
         requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                backdrop.classList.remove('opacity-0');
-                content.classList.remove('translate-y-full', 'sm:translate-y-10', 'sm:scale-95');
-                content.classList.add('translate-y-0', 'sm:scale-100');
-            });
+            backdrop.classList.add('opacity-100');
+            content.classList.remove('translate-y-full');
         });
     }
 }
@@ -97,16 +83,10 @@ function closeEditProfile() {
     const modal = document.getElementById('editProfileModal');
     const backdrop = document.getElementById('editProfileBackdrop');
     const content = document.getElementById('editProfileContent');
-
     if (modal && content && backdrop) {
-        backdrop.classList.add('opacity-0');
-
-        content.classList.remove('translate-y-0', 'sm:scale-100');
-        content.classList.add('translate-y-full', 'sm:translate-y-10', 'sm:scale-95');
-
-        setTimeout(() => {
-            modal.classList.add('invisible', 'pointer-events-none');
-        }, 500); // Samakan dengan duration di CSS (500ms)
+        backdrop.classList.remove('opacity-100');
+        content.classList.add('translate-y-full');
+        setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 500);
     }
 }
 
@@ -115,25 +95,18 @@ function toggleLogoutModal(show) {
     const backdrop = document.getElementById('logoutBackdrop');
     const content = document.getElementById('logoutModalContent');
     if (!modal) return;
-
     if (show) {
         modal.classList.remove('invisible', 'pointer-events-none');
         requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                backdrop.classList.remove('opacity-0');
-                content.classList.remove('scale-90', 'opacity-0');
-                content.classList.add('scale-100', 'opacity-100');
-            });
+            backdrop.classList.add('opacity-100');
+            content.classList.remove('scale-90', 'opacity-0');
         });
     } else {
-        backdrop.classList.add('opacity-0');
-        content.classList.remove('scale-100', 'opacity-100');
+        backdrop.classList.remove('opacity-100');
         content.classList.add('scale-90', 'opacity-0');
-        setTimeout(() => { modal.classList.add('invisible', 'pointer-events-none'); }, 300);
+        setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 300);
     }
 }
-
-// ------------------------------------
 
 function setupEditProfileListeners() {
     const saveBtn = document.getElementById('saveProfileBtn');
@@ -141,41 +114,27 @@ function setupEditProfileListeners() {
         saveBtn.addEventListener('click', async () => {
             const input = document.getElementById('editNameInput');
             const newName = input.value.trim();
-
-            if (!newName) return alert("Nama tidak boleh kosong!");
-
-            const originalHTML = saveBtn.innerHTML;
-            saveBtn.innerHTML = `<i class="animate-spin" data-lucide="loader-2"></i> Menyimpan...`;
+            if (!newName) return;
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = "Menyimpan...";
             saveBtn.disabled = true;
-
             try {
                 if (auth.currentUser) {
                     await updateProfile(auth.currentUser, { displayName: newName });
                     state.currentUser.displayName = newName;
-
                     updateProfileUI();
-
+                    // Update nama di home juga
                     const homeName = document.getElementById('homeUserName');
                     if (homeName) homeName.innerText = newName;
-
                     closeEditProfile();
                 }
-            } catch (error) {
-                console.error("Gagal update:", error);
-                alert("Gagal menyimpan perubahan.");
-            } finally {
-                saveBtn.innerHTML = originalHTML;
-                saveBtn.disabled = false;
-                if (window.lucide) window.lucide.createIcons();
-            }
+            } catch (error) { console.error(error); }
+            finally { saveBtn.disabled = false; saveBtn.innerHTML = originalText; if (window.lucide) window.lucide.createIcons(); }
         });
     }
-
     const dmToggle = document.getElementById('darkModeToggleProfile');
     if (dmToggle) {
-        dmToggle.addEventListener('change', () => {
-            if (window.toggleDarkMode) window.toggleDarkMode();
-        });
+        dmToggle.addEventListener('change', () => { if (window.toggleDarkMode) window.toggleDarkMode(); });
     }
 }
 
@@ -185,7 +144,7 @@ async function loadChartLibrary() {
         const script = document.createElement('script');
         script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
         script.onload = () => { isChartLibLoaded = true; resolve(true); };
-        script.onerror = () => { console.error("Gagal load Chart.js"); resolve(false); };
+        script.onerror = () => resolve(false);
         document.head.appendChild(script);
     });
 }
@@ -208,7 +167,7 @@ async function loadChartData(days) {
         const d = new Date();
         d.setDate(today.getDate() - i);
         const dateKey = formatDateKey(d);
-        const label = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+        const label = d.toLocaleDateString('id-ID', { weekday: 'short' });
 
         tasks.push(
             getDoc(doc(db, "users", state.currentUser.uid, "daily_records", dateKey))
@@ -231,7 +190,6 @@ async function loadChartData(days) {
             }
             dataPoints.push(count);
             totalCompletedInPeriod += count;
-
             if (isToday) {
                 const statToday = document.getElementById('statToday');
                 if (statToday) statToday.innerText = `${count}/5`;
@@ -240,8 +198,7 @@ async function loadChartData(days) {
 
         renderChart(labels, dataPoints);
         calculateConsistency(totalCompletedInPeriod, days);
-
-    } catch (e) { console.error("Error chart:", e); }
+    } catch (e) { console.error(e); }
 }
 
 function calculateConsistency(totalCompleted, days) {
@@ -253,7 +210,6 @@ function calculateConsistency(totalCompleted, days) {
     if (statEl) {
         statEl.innerText = `${percentage}%`;
         statEl.className = "block text-sm font-black leading-none";
-
         if (percentage >= 80) statEl.classList.add("text-emerald-500");
         else if (percentage >= 50) statEl.classList.add("text-amber-500");
         else statEl.classList.add("text-slate-800", "dark:text-white");
@@ -265,26 +221,18 @@ function updateChartToggleUI(days) {
     const btn14 = document.getElementById('btn14Days');
     const activeClass = ["bg-white", "dark:bg-slate-700", "text-emerald-600", "shadow-sm"];
     const inactiveClass = ["text-slate-400", "hover:text-emerald-600"];
-
     if (btn7 && btn14) {
         btn7.classList.remove(...activeClass, ...inactiveClass);
         btn14.classList.remove(...activeClass, ...inactiveClass);
-
-        if (days === 7) {
-            btn7.classList.add(...activeClass);
-            btn14.classList.add(...inactiveClass);
-        } else {
-            btn7.classList.add(...inactiveClass);
-            btn14.classList.add(...activeClass);
-        }
+        if (days === 7) { btn7.classList.add(...activeClass); btn14.classList.add(...inactiveClass); }
+        else { btn7.classList.add(...inactiveClass); btn14.classList.add(...activeClass); }
     }
 }
 
 function renderChart(labels, data) {
     const ctx = document.getElementById('activityChart');
-    if (!ctx) return;
+    if (!ctx || typeof Chart === 'undefined') return;
     if (activityChart) activityChart.destroy();
-    if (typeof Chart === 'undefined') return;
 
     activityChart = new Chart(ctx, {
         type: 'line',
@@ -327,11 +275,10 @@ function setupLogoutListeners() {
     const logoutBtn = document.getElementById('logoutBtnProfile');
     const cancelBtn = document.getElementById('cancelLogoutBtn');
     const confirmBtn = document.getElementById('confirmLogoutBtn');
-
     if (logoutBtn) logoutBtn.addEventListener('click', () => toggleLogoutModal(true));
     if (cancelBtn) cancelBtn.addEventListener('click', () => toggleLogoutModal(false));
     if (confirmBtn) confirmBtn.addEventListener('click', async () => {
         toggleLogoutModal(false);
-        try { await signOut(auth); window.location.reload(); } catch (e) { console.error("Logout error", e); }
+        try { await signOut(auth); window.location.reload(); } catch (e) { console.error(e); }
     });
 }

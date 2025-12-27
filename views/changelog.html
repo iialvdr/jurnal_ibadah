@@ -1,37 +1,40 @@
-<div id="changelogView" class="hidden-force flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-hidden bg-slate-100 dark:bg-slate-950">
+<div id="changelogView" class="hidden-force flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
     
-    <div class="fixed top-0 left-0 right-0 h-48 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
+    <div class="fixed top-0 left-0 right-0 h-80 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
-    <div class="px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 flex justify-between items-center relative shrink-0 z-30">
-        <button onclick="goBack()" class="w-10 h-10 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-sm border border-white/50 dark:border-slate-700 active:scale-95 transition hover:text-emerald-600 group">
-            <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-0.5 transition"></i>
-        </button>
-        <h2 class="text-lg font-bold text-slate-800 dark:text-white tracking-tight">Riwayat Update</h2>
-        <div class="w-10"></div> 
+    <div class="sticky top-0 z-[100] px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
+        <div class="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+            <button onclick="vibrateSoft(); goBack()" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
+                <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-0.5 transition"></i>
+            </button>
+            <h2 class="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2">Riwayat Update</h2>
+            <div class="w-10"></div> 
+        </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto px-5 pt-4 pb-10 scroll-smooth no-scrollbar relative z-10">
+    <div class="relative z-10 px-5 pt-4 pb-12 w-full max-w-7xl mx-auto">
         
         <div id="changelogLoading" class="space-y-8 ml-3 border-l-2 border-slate-200 dark:border-slate-800 pl-8 relative">
-            <div class="space-y-3">
+            <div class="space-y-4">
                 <div class="absolute -left-[1.4rem] w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-slate-100 dark:border-slate-950 animate-pulse"></div>
-                <div class="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-                <div class="h-32 w-full bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 animate-pulse"></div>
+                <div class="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse"></div>
+                <div class="h-32 w-full bg-white/50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-200 dark:border-slate-800 animate-pulse"></div>
             </div>
-            <div class="space-y-3">
+            <div class="space-y-4">
                 <div class="absolute -left-[1.4rem] w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-slate-100 dark:border-slate-950 animate-pulse"></div>
-                <div class="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-                <div class="h-32 w-full bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 animate-pulse"></div>
+                <div class="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse"></div>
+                <div class="h-32 w-full bg-white/50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-200 dark:border-slate-800 animate-pulse"></div>
             </div>
         </div>
 
-        <div class="hidden relative border-l-2 border-emerald-500/20 dark:border-emerald-500/10 ml-3 space-y-8 pb-10" id="changelogList"></div>
-
-        <div id="changelogEmpty" class="hidden flex-col items-center justify-center pt-20 text-slate-400">
-            <div class="w-16 h-16 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                <i data-lucide="git-branch" class="w-8 h-8 opacity-50"></i>
+        <div class="hidden relative border-l-2 border-emerald-500/20 dark:border-emerald-500/10 ml-3 space-y-10 pb-10" id="changelogList">
             </div>
-            <p class="text-xs font-bold uppercase tracking-wider" id="changelogMsg">Memuat data...</p>
+
+        <div id="changelogEmpty" class="hidden flex flex-col items-center justify-center pt-20 text-slate-400">
+            <div class="w-20 h-20 bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center mb-6">
+                <i data-lucide="git-branch" class="w-10 h-10 opacity-30"></i>
+            </div>
+            <p class="text-[10px] font-black uppercase tracking-[0.2em]" id="changelogMsg">Memuat data...</p>
         </div>
     </div>
 </div>

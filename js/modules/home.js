@@ -3,6 +3,8 @@ import { db } from '../config.js';
 import { doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { switchView } from '../router.js';
 import { APP_VERSION } from '../version.js';
+// Import dari date-utils
+import { getHijriDate } from '../utils/date-utils.js';
 
 let isDarkMode = false;
 let countdownInterval = null;
@@ -115,8 +117,9 @@ function loadFastingWidget() {
     let showWidget = false;
     let widgetLabel = "Hari Ini";
 
+    // Menggunakan getHijriDate dari date-utils
     if (!isPastMaghrib) {
-        const h = calculateHijri(now, -1);
+        const h = getHijriDate(now);
         const isSenin = currentDay === 1;
         const isKamis = currentDay === 4;
         const isAyyamulBidh = [13, 14, 15].includes(h.day);
@@ -128,7 +131,7 @@ function loadFastingWidget() {
         const tomorrow = new Date(now);
         tomorrow.setDate(tomorrow.getDate() + 1);
         const nextDay = tomorrow.getDay();
-        const hTom = calculateHijri(tomorrow, -1);
+        const hTom = getHijriDate(tomorrow);
 
         const isTomSenin = nextDay === 1;
         const isTomKamis = nextDay === 4;
@@ -239,7 +242,6 @@ function loadHomeRecords() {
     }
 }
 
-// === FUNGSI UTAMA (READ-ONLY TAPI TETAP BERWARNA SAAT HOVER) ===
 function renderTodayPrayers() {
     const container = document.getElementById('todayPrayerGrid');
     if (!container) return;
@@ -247,41 +249,26 @@ function renderTodayPrayers() {
     const wajibPrayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
     let html = '';
 
-    wajibPrayers.forEach(name => {
+    wajibPrayers.forEach((name) => {
         const time = state.prayerTimes[name] || '--:--';
         const isDone = state.todayRecords && state.todayRecords[name] === true;
-        let cardStyle, textNameStyle, textTimeStyle, checkIconStyle;
+
+        let cardStyle, textNameStyle, textTimeStyle;
 
         if (isDone) {
-            // === SUDAH DICEKLIS ===
-            // 1. Base: Hijau Solid (!bg-emerald-500)
-            // 2. Hover: Hijau Tua Solid (!bg-emerald-600) <-- EFEK HOVER TETAP ADA
-            cardStyle = "!bg-emerald-500 hover:!bg-emerald-600 !border-emerald-500 shadow-md ring-1 ring-emerald-400 transition-colors duration-200 group";
-
-            textNameStyle = "!text-white font-bold";
-            textTimeStyle = "!text-white";
-
-            // Icon Check
-            checkIconStyle = '<div class="bg-white rounded-full p-1 animate-[zoomIn_0.2s_ease-out] shadow-sm"><i data-lucide="check" class="w-3 h-3 text-emerald-600 font-bold"></i></div>';
+            cardStyle = "bg-emerald-500 border-emerald-500 text-white shadow-sm";
+            textNameStyle = "text-emerald-50 font-bold";
+            textTimeStyle = "text-white";
         } else {
-            // === BELUM DICEKLIS ===
-            // 1. Desktop Hover: Hijau Muda Solid (!bg-emerald-50) <-- EFEK HOVER TETAP ADA
-            // 2. Dark Hover: Hijau Tua Solid (!bg-emerald-950)
-            cardStyle = "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 md:border-emerald-300 md:dark:border-slate-700 hover:!bg-emerald-50 dark:hover:!bg-emerald-950 hover:!border-emerald-500 dark:hover:!border-emerald-500 shadow-sm transition-colors duration-200 group";
-
-            textNameStyle = "text-slate-500 dark:text-slate-400 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 font-bold";
-            textTimeStyle = "text-slate-800 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-slate-100";
-
-            // Lingkaran Kosong
-            checkIconStyle = '<div class="w-5 h-5 rounded-full bg-slate-50 border-2 border-slate-300 dark:border-slate-600 dark:bg-slate-800 group-hover:border-emerald-500 group-hover:bg-white transition-colors"></div>';
+            cardStyle = "bg-white dark:bg-slate-800 border-slate-50 dark:border-slate-700 shadow-sm";
+            textNameStyle = "text-slate-400 dark:text-slate-500 font-bold";
+            textTimeStyle = "text-slate-800 dark:text-white";
         }
 
-        // PERUBAHAN: Hapus "onclick" dan ganti "cursor-pointer" jadi "cursor-default"
         html += `
-            <div class="flex flex-col items-center justify-center py-3 px-1 rounded-2xl border ${cardStyle} cursor-default select-none">
-                <span class="text-[9px] font-bold uppercase tracking-widest ${textNameStyle} mb-1">${name}</span>
-                <span class="text-xs font-black font-mono ${textTimeStyle}">${time}</span>
-                <div class="mt-2 group-hover:scale-110 transition-transform">${checkIconStyle}</div>
+            <div class="flex flex-col items-center justify-center py-2 px-0.5 rounded-2xl border ${cardStyle} transition-all duration-300">
+                <span class="text-[8.5px] md:text-[11px] leading-none tracking-tighter ${textNameStyle}">${name}</span>
+                <span class="text-[11px] md:text-sm font-black font-mono ${textTimeStyle} mt-1">${time}</span>
             </div>`;
     });
 
@@ -290,15 +277,12 @@ function renderTodayPrayers() {
 }
 
 function refreshLocation() {
-    const btn = document.getElementById('locationBtn');
     const text = document.getElementById('homeLocationText');
     const icon = document.getElementById('locIcon');
 
     if (text) text.innerText = "Mencari...";
-    if (btn) btn.classList.add('animate-pulse');
     if (icon) {
         icon.classList.add('animate-spin');
-        icon.classList.remove('drop-shadow-md');
         icon.setAttribute('data-lucide', 'loader-2');
     }
     if (window.lucide) lucide.createIcons();
@@ -329,12 +313,9 @@ function getLocation(isManualRefresh = false) {
 }
 
 function resetLocationButton() {
-    const btn = document.getElementById('locationBtn');
     const icon = document.getElementById('locIcon');
-    if (btn) btn.classList.remove('animate-pulse');
     if (icon) {
         icon.classList.remove('animate-spin');
-        icon.classList.add('drop-shadow-md');
         icon.setAttribute('data-lucide', 'map-pin');
     }
     if (window.lucide) lucide.createIcons();
@@ -365,7 +346,6 @@ async function fetchCityName(lat, lng) {
 
 async function fetchJadwal(lat, lng) {
     if (typeof adhan === 'undefined') {
-        console.error("Library Adhan.js belum siap, mencoba lagi...");
         setTimeout(() => fetchJadwal(lat, lng), 500);
         return;
     }
@@ -389,56 +369,12 @@ async function fetchJadwal(lat, lng) {
     };
     setPrayerTimes(newTimes);
     const hEl = document.getElementById('hijriDisplay');
-    if (hEl) hEl.innerText = getHijriDate(date, -1);
+    // Menggunakan getHijriDate dari date-utils
+    if (hEl) hEl.innerText = getHijriDate(date).full;
     updateNextPrayer();
     renderTodayPrayers();
     loadFastingWidget();
     window.dispatchEvent(new Event('prayerTimesUpdated'));
-}
-
-export function calculateHijri(date, adjustment = 0) {
-    let d = new Date(date);
-    d.setDate(d.getDate() + adjustment);
-    let day = d.getDate();
-    let month = d.getMonth();
-    let year = d.getFullYear();
-    let m = month + 1;
-    let y = year;
-    if (m < 3) { y -= 1; m += 12; }
-    let a = Math.floor(y / 100);
-    let b = 2 - a + Math.floor(a / 4);
-    if (y < 1583) b = 0;
-    if (y == 1582) { if (m > 10) b = -10; if (m == 10) { b = 0; if (day > 4) b = -10; } }
-    let jd = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + day + b - 1524;
-    let b0 = 0;
-    if (jd > 2299160) { let a = Math.floor((jd - 1867216.25) / 36524.25); b0 = 1 + a - Math.floor(a / 4); }
-    let bb = jd + b0 + 1524;
-    let cc = Math.floor((bb - 122.1) / 365.25);
-    let dd = Math.floor(365.25 * cc);
-    let ee = Math.floor((bb - dd) / 30.6001);
-    day = (bb - dd) - Math.floor(30.6001 * ee);
-    month = ee - 1;
-    if (ee > 13) { cc += 1; month = ee - 13; }
-    year = cc - 4716;
-    let iyear = 10631.0 / 30.0;
-    let epochastro = 1948084;
-    let shift1 = 8.01 / 60.0;
-    let z = jd - epochastro;
-    let cyc = Math.floor(z / 10631.0);
-    z = z - 10631.0 * cyc;
-    let j = Math.floor((z - shift1) / iyear);
-    let iy = 30 * cyc + j;
-    z = z - Math.floor(j * iyear + shift1);
-    let im = Math.floor((z + 28.5001) / 29.5);
-    if (im == 13) im = 12;
-    let id = z - Math.floor(29.5001 * im - 29);
-    return { day: id, month: im - 1, year: iy };
-}
-
-function getHijriDate(date, adjustment = 0) {
-    const h = calculateHijri(date, adjustment);
-    const iMonthNames = ["Muharram", "Safar", "Rabiul Awal", "Rabiul Akhir", "Jumadil Awal", "Jumadil Akhir", "Rajab", "Sya'ban", "Ramadhan", "Syawal", "Dzulkaidah", "Dzulhijjah"];
-    return `${h.day} ${iMonthNames[h.month]} ${h.year} H`;
 }
 
 function updateNextPrayer() {
@@ -500,14 +436,8 @@ function initTheme() {
 
 function applyTheme() {
     const html = document.documentElement;
-    const btns = document.querySelectorAll('button[onclick="toggleDarkMode()"]');
-    if (isDarkMode) {
-        html.classList.add('dark');
-        btns.forEach(btn => btn.innerHTML = `<i data-lucide="sun" class="w-4 h-4 text-yellow-300"></i>`);
-    } else {
-        html.classList.remove('dark');
-        btns.forEach(btn => btn.innerHTML = `<i data-lucide="moon" class="w-4 h-4 text-slate-600"></i>`);
-    }
+    if (isDarkMode) html.classList.add('dark');
+    else html.classList.remove('dark');
     if (window.lucide) lucide.createIcons();
 }
 
@@ -517,8 +447,7 @@ async function toggleDarkMode() {
     localStorage.setItem('valdi_theme', themeStr);
     applyTheme();
     if (state.currentUser) {
-        try {
-            await setDoc(doc(db, "users", state.currentUser.uid, "settings", "preferences"), { theme: themeStr }, { merge: true });
-        } catch (e) { console.error(e); }
+        try { await setDoc(doc(db, "users", state.currentUser.uid, "settings", "preferences"), { theme: themeStr }, { merge: true }); }
+        catch (e) { console.error(e); }
     }
 }

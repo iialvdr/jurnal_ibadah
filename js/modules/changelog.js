@@ -58,12 +58,14 @@ async function fetchChangelogs() {
             const contentDisplay = isLatest ? '' : 'hidden';
             const chevronRotation = isLatest ? 'rotate-180' : '';
 
-            // Icon Styling
-            const iconBg = isLatest ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 ring-4 ring-emerald-50 dark:ring-emerald-900/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 ring-4 ring-slate-50 dark:ring-slate-900';
+            // Icon Styling senada dengan tema Emerald
+            const iconBg = isLatest
+                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/40 ring-4 ring-emerald-50 dark:ring-emerald-900/20'
+                : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700 ring-4 ring-slate-100 dark:ring-slate-950';
             const icon = isLatest ? 'sparkles' : 'git-commit';
 
             // Badge Styling
-            const badgeHtml = data.badge ? `<span class="px-2.5 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-black uppercase tracking-widest ml-2 border border-emerald-200 dark:border-emerald-800">${data.badge}</span>` : '';
+            const badgeHtml = data.badge ? `<span class="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-black uppercase tracking-widest ml-3 border border-emerald-500/20">${data.badge}</span>` : '';
 
             let itemsArray = [];
             if (Array.isArray(data.items)) {
@@ -73,35 +75,36 @@ async function fetchChangelogs() {
             }
 
             const listItems = itemsArray.map(item =>
-                `<li class="text-sm text-slate-600 dark:text-slate-300 mb-2 flex items-start group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors">
-                    <span class="mr-3 mt-2 w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
-                    <span class="leading-relaxed">${item}</span>
+                `<li class="text-sm text-slate-600 dark:text-slate-400 mb-3 flex items-start group">
+                    <span class="mr-3 mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                    <span class="leading-relaxed font-medium group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">${item}</span>
                 </li>`
             ).join('');
 
             html += `
             <div class="relative pl-8 animate-slideUp" style="animation-delay: ${index * 100}ms">
-                <div class="absolute -left-[1.4rem] top-0 w-10 h-10 rounded-full ${iconBg} flex items-center justify-center z-10 transition-transform duration-300 group-hover:scale-110">
+                <div class="absolute -left-[1.4rem] top-0 w-10 h-10 rounded-full ${iconBg} flex items-center justify-center z-10 transition-transform duration-300">
                     <i data-lucide="${icon}" class="w-4 h-4"></i>
                 </div>
 
-                <div onclick="toggleChangelog(${index})" class="bg-white dark:bg-slate-900 p-5 rounded-[1.8rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all cursor-pointer group active:scale-[0.99]">
+                <div onclick="toggleChangelog(${index})" class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer group active:scale-[0.99] overflow-hidden relative">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/[0.02] rounded-full blur-3xl -mr-16 -mt-16"></div>
                     
-                    <div class="flex flex-wrap justify-between items-center gap-2 mb-1">
+                    <div class="flex flex-wrap justify-between items-center gap-3 mb-2 relative z-10">
                         <div class="flex items-center">
-                            <h3 class="text-lg font-black text-slate-800 dark:text-white tracking-tight">${data.version}</h3>
+                            <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">${data.version}</h3>
                             ${badgeHtml}
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">${date}</span>
-                            <div class="w-6 h-6 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-emerald-500 transition-colors">
-                                <i id="cl-chevron-${index}" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300 ${chevronRotation}"></i>
+                        <div class="flex items-center gap-3">
+                            <span class="text-[10px] font-black text-slate-400 bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-full uppercase tracking-wider border border-slate-100 dark:border-slate-700">${date}</span>
+                            <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-emerald-500 transition-all">
+                                <i id="cl-chevron-${index}" data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-500 ${chevronRotation}"></i>
                             </div>
                         </div>
                     </div>
 
-                    <div id="cl-body-${index}" class="${contentDisplay} mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                        <ul class="">${listItems}</ul>
+                    <div id="cl-body-${index}" class="${contentDisplay} mt-5 pt-5 border-t border-slate-50 dark:border-slate-800 relative z-10">
+                        <ul class="space-y-1">${listItems}</ul>
                     </div>
                 </div>
             </div>`;
@@ -117,7 +120,7 @@ async function fetchChangelogs() {
         isChangelogLoaded = true;
 
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Gagal memuat changelog:", error);
         loading.classList.add('hidden');
         empty.classList.remove('hidden');
         msg.innerText = "Gagal memuat data.";
