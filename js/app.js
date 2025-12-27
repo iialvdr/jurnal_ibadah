@@ -22,6 +22,26 @@ import { initZakat } from './modules/zakat.js';
 window.vibrateSoft = () => { if (navigator.vibrate) navigator.vibrate(10); };
 window.vibrateSuccess = () => { if (navigator.vibrate) navigator.vibrate([10, 30, 10]); };
 
+/**
+ * Fungsi baru untuk sinkronisasi warna Status Bar sistem
+ */
+function updateStatusBarColor() {
+    const isDark = document.documentElement.classList.contains('dark');
+    const color = isDark ? '#020617' : '#f8fafc'; // Mengikuti bg-slate-950 dan bg-slate-50
+
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]:not([media])');
+    if (!metaThemeColor) {
+        metaThemeColor = document.createElement('meta');
+        metaThemeColor.name = "theme-color";
+        document.head.appendChild(metaThemeColor);
+    }
+    metaThemeColor.setAttribute('content', color);
+}
+
+// Pantau perubahan class 'dark' pada tag HTML
+const themeObserver = new MutationObserver(() => updateStatusBarColor());
+themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
 // Tambahkan tanda / di awal setiap path view
 const VIEWS = [
     '/views/login.html',
@@ -103,7 +123,6 @@ function initializeApp() {
             setupRouter();
         } else {
             setCurrentUser(null);
-            // Gunakan path absolut untuk routing
             if (window.location.pathname !== '/' && window.location.pathname !== '/home') {
                 window.history.replaceState(null, null, '/');
             }
@@ -126,6 +145,9 @@ function initializeApp() {
                 setTimeout(() => splash.classList.add('hidden-force'), 300);
             }, 500);
         }
+
+        // Panggil sekali saat start
+        updateStatusBarColor();
     });
 }
 

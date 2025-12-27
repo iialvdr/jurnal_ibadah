@@ -15,23 +15,17 @@ let pendingGoogleCred = null;
 
 /**
  * FUNGSI VALIDASI: Menyambungkan Google dengan syarat Email wajib sama.
- * Jika email berbeda, sistem akan otomatis memutuskan sambungan (unlink).
  */
 export async function handleLinkGoogle() {
     const user = auth.currentUser;
     if (!user) throw new Error("Kamu harus login terlebih dahulu.");
 
     try {
-        // 1. Lakukan proses linking via Popup
         const result = await linkWithPopup(user, provider);
-
-        // 2. Ambil data email dari provider Google yang baru saja terhubung
         const googleAccount = result.user.providerData.find(p => p.providerId === 'google.com');
         const googleEmail = googleAccount ? googleAccount.email : null;
 
-        // 3. Validasi: Bandingkan dengan email utama akun
         if (googleEmail && googleEmail.toLowerCase() !== user.email.toLowerCase()) {
-            // Jika berbeda, langsung putuskan sambungan (Unlink)
             await unlink(user, 'google.com');
             throw new Error(`Akses Ditolak! Email Google (${googleEmail}) tidak sama dengan email akun kamu (${user.email}).`);
         }
@@ -45,7 +39,7 @@ export async function handleLinkGoogle() {
     }
 }
 
-// Fungsi Slide Global (Smooth & Tanpa Bounce)
+// PERBAIKAN: Fungsi Slide Presisi
 window.toggleAuth = (isSignUp) => {
     const track = document.getElementById('authTrack');
     const glider = document.getElementById('authGlider');
@@ -54,9 +48,13 @@ window.toggleAuth = (isSignUp) => {
     const buttons = container.querySelectorAll('button');
 
     if (track && glider) {
+        // Geser konten form
         track.style.transform = isSignUp ? 'translateX(-50%)' : 'translateX(0)';
-        glider.style.transform = isSignUp ? 'translateX(calc(100% + 4px))' : 'translateX(0)';
 
+        // Geser indikator (Glider) tepat 100% dari lebarnya
+        glider.style.transform = isSignUp ? 'translateX(100%)' : 'translateX(0)';
+
+        // Update warna teks tombol
         buttons[0].classList.toggle('text-slate-400', isSignUp);
         buttons[0].classList.toggle('text-slate-800', !isSignUp);
         buttons[0].classList.toggle('dark:text-white', !isSignUp);
@@ -123,7 +121,7 @@ export function initAuth() {
                 if (error.code === 'auth/account-exists-with-different-credential') {
                     pendingGoogleCred = error.credential;
                     toggleAuth(false);
-                    showError("Email sudah ada via Password. Loginlah via Email untuk sinkronisasi.");
+                    showError("Email sudah terdaftar. Loginlah via Email untuk sinkronisasi.");
                 }
             } finally { showLoading(false); }
         });
