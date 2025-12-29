@@ -80,23 +80,25 @@
         </div>
 
         <div class="mt-4 md:mt-6">
-    <div class="bento-card bg-white dark:bg-slate-900 p-5 md:p-8 rounded-[1.8rem] md:rounded-[2.5rem] border border-white dark:border-slate-800 shadow-sm flex flex-col min-h-[280px] md:min-h-[400px]">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-5 md:mb-10">
-            <div>
-                <h3 class="font-bold text-slate-800 dark:text-white text-sm md:text-lg">Tren Ibadah</h3>
-                <p class="text-[8px] md:text-[10px] text-slate-400 uppercase tracking-[0.2em] mt-0.5">Grafik ketepatan sholat wajib</p>
-            </div>
-            <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-full sm:w-auto shadow-inner border border-slate-200 dark:border-slate-700">
-                <button onclick="vibrateSoft(); loadChartData(7)" id="btn7Days" class="flex-1 sm:flex-none px-4 py-1.5 text-[8px] md:text-[10px] rounded-lg font-black uppercase tracking-widest transition-all">7 Hari</button>
-                <button onclick="vibrateSoft(); loadChartData(14)" id="btn14Days" class="flex-1 sm:flex-none px-4 py-1.5 text-[8px] md:text-[10px] rounded-lg font-black uppercase tracking-widest transition-all">14 Hari</button>
+            <div class="bento-card bg-white dark:bg-slate-900 p-5 md:p-8 rounded-[1.8rem] md:rounded-[2.5rem] border border-white dark:border-slate-800 shadow-sm flex flex-col min-h-[280px] md:min-h-[400px]">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-5 md:mb-10">
+                    <div>
+                        <h3 class="font-bold text-slate-800 dark:text-white text-sm md:text-lg">Tren Ibadah</h3>
+                        <p class="text-[8px] md:text-[10px] text-slate-400 uppercase tracking-[0.2em] mt-0.5">Grafik ketepatan sholat wajib</p>
+                    </div>
+                    
+                    <div class="relative flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-full sm:w-56 shadow-inner border border-slate-200 dark:border-slate-700">
+                        <div id="chartTabIndicator" class="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-white dark:bg-slate-700 rounded-lg shadow-sm border border-slate-200/50 dark:border-slate-600 transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] z-0"></div>
+                        <button onclick="vibrateSoft(); loadChartData(7)" id="btn7Days" class="relative z-10 flex-1 px-4 py-1.5 text-[8px] md:text-[10px] rounded-lg font-black uppercase tracking-widest transition-colors duration-300 text-emerald-600 whitespace-nowrap">7 Hari</button>
+                        <button onclick="vibrateSoft(); loadChartData(14)" id="btn14Days" class="relative z-10 flex-1 px-4 py-1.5 text-[8px] md:text-[10px] rounded-lg font-bold uppercase tracking-widest transition-colors duration-300 text-slate-400 whitespace-nowrap">14 Hari</button>
+                    </div>
+                    </div>
+                
+                <div class="relative flex-1 w-full min-h-[160px]">
+                    <canvas id="activityChart"></canvas>
+                </div>
             </div>
         </div>
-        
-        <div class="relative flex-1 w-full min-h-[160px]">
-            <canvas id="activityChart"></canvas>
-        </div>
-    </div>
-</div>
 
         <div class="mt-4 md:mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
             <button onclick="vibrateSoft(); navigateTo('changelog')" class="bento-card bg-white dark:bg-slate-900 p-4 md:p-6 rounded-[1.2rem] md:rounded-[2rem] border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group transition hover:border-emerald-500/20">

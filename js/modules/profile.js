@@ -8,6 +8,7 @@ import { handleLinkGoogle } from './auth.js';
 
 let activityChart = null;
 let isChartLibLoaded = false;
+let currentConsistencyVal = 0; // Menyimpan nilai terakhir untuk animasi angka
 
 export function initProfile() {
     window.loadChartData = loadChartData;
@@ -63,8 +64,6 @@ async function updateProfileUI() {
 
     if (!user) return;
 
-    // KITA HAPUS baris 'await user.reload()' agar tidak menunggu server
-
     // 1. Tampilkan Data Teks Langsung
     const nameEl = document.getElementById('profileNameLarge');
     const emailEl = document.getElementById('profileEmail');
@@ -74,7 +73,7 @@ async function updateProfileUI() {
     const locEl = document.getElementById('lastLocation');
     if (locEl) locEl.innerText = state.lastCity || "Lokasi Anda";
 
-    // 2. Tampilkan Foto Langsung (Browser akan pakai cache karena URL sama dengan Home)
+    // 2. Tampilkan Foto Langsung
     const img = document.getElementById('profilePhotoLarge');
     if (img) {
         const photoUrl = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'User')}&background=10b981&color=fff&size=128`;
@@ -93,7 +92,6 @@ async function updateProfileUI() {
     }
 
     // 4. Update Status Akun (Password/Google)
-    // Cek providerData dengan aman
     const providerData = user.providerData || [];
     const providers = providerData.map(p => p.providerId);
 
@@ -118,6 +116,27 @@ async function updateProfileUI() {
     setTimeout(() => loadChartData(7), 100);
 }
 
+// FUNGSI BARU: Animasi angka (Counting Effect)
+function animateValue(obj, start, end, duration) {
+    if (start === end) return;
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+
+        // Easing function (easeOutExpo) agar melambat di akhir
+        const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+
+        const current = Math.floor(easeProgress * (end - start) + start);
+        obj.innerText = `${current}%`;
+
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+    window.requestAnimationFrame(step);
+}
+
 function calculateConsistency(totalCompleted, days) {
     const dailyTarget = 5;
     const maxPotential = days * dailyTarget;
@@ -126,7 +145,13 @@ function calculateConsistency(totalCompleted, days) {
 
     const statEl = document.getElementById('statConsistency');
     if (statEl) {
-        statEl.innerText = `${percentage}%`;
+        // Jalankan animasi angka dari nilai sebelumnya ke nilai baru
+        animateValue(statEl, currentConsistencyVal, percentage, 1000);
+
+        // Simpan nilai sekarang untuk animasi berikutnya
+        currentConsistencyVal = percentage;
+
+        // Update warna (tetap dilakukan agar konsisten)
         statEl.classList.remove("text-emerald-500", "text-amber-500", "text-slate-800", "dark:text-white");
         if (percentage >= 80) statEl.classList.add("text-emerald-500");
         else if (percentage >= 50) statEl.classList.add("text-amber-500");
@@ -237,7 +262,10 @@ function formatDateKey(date) { const offset = date.getTimezoneOffset(); const lo
 
 async function loadChartData(days) {
     if (!state.currentUser) return;
+
+    // Update UI Toggle (pindah pill)
     updateChartToggleUI(days);
+
     await loadChartLibrary();
     const today = new Date();
     const tasks = [];
@@ -267,50 +295,97 @@ async function loadChartData(days) {
                 if (statToday) statToday.innerText = `${count}/5`;
             }
         });
+
+        // Render grafik dengan data baru
         renderChart(labels, dataPoints);
+
+        // Hitung dan animasikan konsistensi
         calculateConsistency(totalCompletedInPeriod, days);
     } catch (e) { console.error(e); }
 }
 
-function updateChartToggleUI(days) { const btn7 = document.getElementById('btn7Days'); const btn14 = document.getElementById('btn14Days'); const activeClass = ["bg-white", "dark:bg-slate-700", "text-emerald-600", "shadow-sm"]; const inactiveClass = ["text-slate-400", "hover:text-emerald-600"]; if (btn7 && btn14) { btn7.classList.remove(...activeClass, ...inactiveClass); btn14.classList.remove(...activeClass, ...inactiveClass); if (days === 7) { btn7.classList.add(...activeClass); btn14.classList.add(...inactiveClass); } else { btn7.classList.add(...inactiveClass); btn14.classList.add(...activeClass); } } }
+function updateChartToggleUI(days) {
+    const indicator = document.getElementById('chartTabIndicator');
+    const btn7 = document.getElementById('btn7Days');
+    const btn14 = document.getElementById('btn14Days');
 
+    if (!indicator || !btn7 || !btn14) return;
+
+    const is7Days = days === 7;
+
+    // Slide indicator (Animasi CSS)
+    indicator.style.transform = is7Days ? 'translateX(0)' : 'translateX(100%)';
+
+    // Update Text Classes
+    const activeClass = ["text-emerald-600", "dark:text-emerald-400", "font-black"];
+    const inactiveClass = ["text-slate-400", "font-bold"];
+
+    // Reset basics
+    btn7.classList.remove(...activeClass, ...inactiveClass);
+    btn14.classList.remove(...activeClass, ...inactiveClass);
+
+    if (is7Days) {
+        btn7.classList.add(...activeClass);
+        btn14.classList.add(...inactiveClass);
+    } else {
+        btn14.classList.add(...activeClass);
+        btn7.classList.add(...inactiveClass);
+    }
+}
+
+// UPDATE: Render Chart dengan .update() untuk animasi halus
 function renderChart(labels, data) {
     const ctx = document.getElementById('activityChart');
     if (!ctx || typeof Chart === 'undefined') return;
-    if (activityChart) activityChart.destroy();
-    activityChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Sholat Wajib',
-                data: data,
-                borderColor: '#10b981',
-                backgroundColor: (context) => {
-                    const ctx = context.chart.ctx;
-                    const gradient = ctx.createLinearGradient(0, 0, 0, 160);
-                    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
-                    gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
-                    return gradient;
+
+    // Jika grafik sudah ada, kita update isinya saja (animasi morphing)
+    if (activityChart) {
+        activityChart.data.labels = labels;
+        activityChart.data.datasets[0].data = data;
+        activityChart.update({
+            duration: 800, // Durasi animasi update
+            easing: 'easeOutQuart'
+        });
+    } else {
+        // Jika belum ada, buat baru
+        activityChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Sholat Wajib',
+                    data: data,
+                    borderColor: '#10b981',
+                    backgroundColor: (context) => {
+                        const ctx = context.chart.ctx;
+                        const gradient = ctx.createLinearGradient(0, 0, 0, 160);
+                        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
+                        gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                        return gradient;
+                    },
+                    borderWidth: 2,
+                    pointBackgroundColor: '#ffffff',
+                    pointRadius: 4,
+                    tension: 0.4, // Kurva halus
+                    clip: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart' // Easing halus saat pertama load
                 },
-                borderWidth: 2,
-                pointBackgroundColor: '#ffffff',
-                pointRadius: 4,
-                tension: 0.4,
-                clip: false
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 15, bottom: 5, left: 10, right: 10 } },
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { min: 0, max: 5, ticks: { stepSize: 1 }, display: false },
-                x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#94a3b8' } }
+                layout: { padding: { top: 15, bottom: 5, left: 10, right: 10 } },
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { min: 0, max: 5, ticks: { stepSize: 1 }, display: false },
+                    x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#94a3b8' } }
+                }
             }
-        }
-    });
+        });
+    }
 }
 
 function setupLogoutListeners() { const logoutBtn = document.getElementById('logoutBtnProfile'); const cancelBtn = document.getElementById('cancelLogoutBtn'); const confirmBtn = document.getElementById('confirmLogoutBtn'); if (logoutBtn) logoutBtn.addEventListener('click', () => toggleLogoutModal(true)); if (cancelBtn) cancelBtn.addEventListener('click', () => toggleLogoutModal(false)); if (confirmBtn) confirmBtn.addEventListener('click', async () => { toggleLogoutModal(false); try { await signOut(auth); window.location.reload(); } catch (e) { console.error(e); } }); }
