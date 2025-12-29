@@ -14,7 +14,7 @@ import { APP_VERSION } from '../version.js';
 let pendingGoogleCred = null;
 let toastTimeout = null;
 
-// --- FUNGSI HELPER UI (Ditaruh di luar agar bisa diakses global) ---
+// --- FUNGSI HELPER UI ---
 
 function showLoading(isLoading) {
     const status = document.getElementById('loginStatus');
@@ -29,16 +29,35 @@ function hideError() {
     }
 }
 
-function showError(msg) {
+/**
+ * Fungsi Toast yang mendukung tipe 'error' (merah) dan 'success' (hijau)
+ */
+function showToast(msg, type = 'error') {
     const toast = document.getElementById('floatingToast');
     const msgText = document.getElementById('toastMessage');
+    const toastInner = toast ? toast.querySelector('div') : null;
+    const toastHeader = toast ? toast.querySelector('h4') : null;
 
-    if (toast && msgText) {
+    if (toast && msgText && toastInner) {
         msgText.innerText = msg;
+        
+        // Atur warna dan header berdasarkan tipe
+        if (type === 'success') {
+            // Hijau untuk sukses
+            toastInner.classList.remove('bg-rose-500/90', 'dark:bg-rose-600/90');
+            toastInner.classList.add('bg-emerald-500/90', 'dark:bg-emerald-600/90');
+            if (toastHeader) toastHeader.innerText = "BERHASIL";
+            if (window.vibrateSuccess) window.vibrateSuccess();
+        } else {
+            // Merah untuk error (default)
+            toastInner.classList.remove('bg-emerald-500/90', 'dark:bg-emerald-600/90');
+            toastInner.classList.add('bg-rose-500/90', 'dark:bg-rose-600/90');
+            if (toastHeader) toastHeader.innerText = "PERHATIAN";
+            if (window.vibrateSoft) window.vibrateSoft();
+        }
+
         toast.classList.remove('opacity-0', '-translate-y-10');
         toast.classList.add('opacity-100', 'translate-y-0');
-
-        if (window.vibrateSoft) window.vibrateSoft();
 
         if (toastTimeout) clearTimeout(toastTimeout);
         toastTimeout = setTimeout(() => {
@@ -83,14 +102,11 @@ function handleAuthError(error) {
             msg = error.message || "Gagal memproses permintaan.";
     }
 
-    showError(msg);
+    showToast(msg, 'error'); // Menggunakan fungsi toast baru
 }
 
 // --- FUNGSI UTAMA ---
 
-/**
- * Validasi Link Google
- */
 export async function handleLinkGoogle() {
     const user = auth.currentUser;
     if (!user) throw new Error("Kamu harus login terlebih dahulu.");
@@ -114,13 +130,11 @@ export async function handleLinkGoogle() {
     }
 }
 
-// Fungsi Slide Tab (Masuk / Daftar)
 window.toggleAuth = (isSignUp) => {
     const track = document.getElementById('authTrack');
     const glider = document.getElementById('authGlider');
     const container = document.getElementById('toggleContainer');
 
-    // Sekarang hideError() sudah bisa dipanggil karena ada di scope global module
     hideError();
 
     if (!container) return;
@@ -148,11 +162,11 @@ export function initAuth() {
 
     const validateInput = (email, password) => {
         if (!email) {
-            showError("Email tidak boleh kosong.");
+            showToast("Email tidak boleh kosong.", 'error');
             return false;
         }
         if (!password) {
-            showError("Password tidak boleh kosong.");
+            showToast("Password tidak boleh kosong.", 'error');
             return false;
         }
         return true;
@@ -216,7 +230,7 @@ export function initAuth() {
                 if (error.code === 'auth/account-exists-with-different-credential') {
                     pendingGoogleCred = error.credential;
                     toggleAuth(false);
-                    showError("Email sudah terdaftar. Loginlah via Email untuk sinkronisasi.");
+                    showToast("Email sudah terdaftar. Loginlah via Email untuk sinkronisasi.", 'error');
                 } else {
                     handleAuthError(error);
                 }
@@ -226,13 +240,13 @@ export function initAuth() {
         });
     }
 
-    // 4. FORGOT PASSWORD
+    // 4. FORGOT PASSWORD (UPDATE: Menggunakan Toast)
     const forgotBtn = document.getElementById('forgotPasswordBtn');
     if (forgotBtn) {
         forgotBtn.addEventListener('click', async () => {
             const email = document.getElementById('emailLogin').value.trim();
             if (!email) {
-                showError("Masukkan email login Anda terlebih dahulu.");
+                showToast("Masukkan email login Anda terlebih dahulu.", 'error');
                 return;
             }
 
@@ -240,7 +254,8 @@ export function initAuth() {
             showLoading(true);
             try {
                 await sendPasswordResetEmail(auth, email);
-                alert("Email reset password telah dikirim! Cek inbox/spam.");
+                // Mengganti alert dengan toast sukses
+                showToast("Email reset password telah dikirim! Cek inbox atau folder spam Anda.", 'success');
             } catch (e) {
                 handleAuthError(e);
             } finally {
