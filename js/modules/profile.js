@@ -1,4 +1,3 @@
-// js/modules/profile.js
 import { auth, db, provider } from '../config.js';
 import { signOut, updateProfile, updatePassword, EmailAuthProvider, linkWithCredential } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -49,26 +48,40 @@ function showUpdateStatus(message, isError = false) {
     }
 }
 
+// --- BAGIAN UTAMA YANG DIOPTIMALKAN (INSTANT LOAD) ---
 async function updateProfileUI() {
     const footerVer = document.getElementById('versionTextProfile');
     if (footerVer) footerVer.innerText = APP_VERSION;
 
-    const user = auth.currentUser;
+    // Menggunakan state.currentUser agar instan (sudah ada di memori)
+    let user = state.currentUser;
+
+    // Fallback ke auth.currentUser jika state belum siap (jarang terjadi)
+    if (!user && auth.currentUser) {
+        user = auth.currentUser;
+    }
+
     if (!user) return;
 
-    try { await user.reload(); } catch (e) { console.error(e); }
+    // KITA HAPUS baris 'await user.reload()' agar tidak menunggu server
 
+    // 1. Tampilkan Data Teks Langsung
     const nameEl = document.getElementById('profileNameLarge');
     const emailEl = document.getElementById('profileEmail');
-    if (nameEl) nameEl.innerText = user.displayName;
-    if (emailEl) emailEl.innerText = user.email;
+    if (nameEl) nameEl.innerText = user.displayName || "Hamba Allah";
+    if (emailEl) emailEl.innerText = user.email || "";
 
     const locEl = document.getElementById('lastLocation');
     if (locEl) locEl.innerText = state.lastCity || "Lokasi Anda";
 
+    // 2. Tampilkan Foto Langsung (Browser akan pakai cache karena URL sama dengan Home)
     const img = document.getElementById('profilePhotoLarge');
-    if (img) img.src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=10b981&color=fff&size=128`;
+    if (img) {
+        const photoUrl = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'User')}&background=10b981&color=fff&size=128`;
+        img.src = photoUrl;
+    }
 
+    // 3. Metadata User
     if (user.metadata) {
         const joinDate = new Date(user.metadata.creationTime);
         const joinEl = document.getElementById('joinDate');
@@ -79,7 +92,11 @@ async function updateProfileUI() {
         if (dayEl) dayEl.innerText = `${diff}`;
     }
 
-    const providers = user.providerData.map(p => p.providerId);
+    // 4. Update Status Akun (Password/Google)
+    // Cek providerData dengan aman
+    const providerData = user.providerData || [];
+    const providers = providerData.map(p => p.providerId);
+
     const hasPassword = providers.includes('password');
     const hasGoogle = providers.includes('google.com');
 
@@ -97,7 +114,8 @@ async function updateProfileUI() {
         activeGoogle.classList.toggle('hidden', !hasGoogle);
     }
 
-    setTimeout(() => loadChartData(7), 300);
+    // Load grafik belakangan (non-blocking) agar UI utama muncul duluan
+    setTimeout(() => loadChartData(7), 100);
 }
 
 function calculateConsistency(totalCompleted, days) {
@@ -186,19 +204,16 @@ function setupEditProfileListeners() {
         });
     }
 
-    // --- BAGIAN YANG DIPERBAIKI: Menggunakan handleLinkGoogle dari auth.js ---
     const btnLinkGoogle = document.getElementById('btnLinkGoogle');
     if (btnLinkGoogle) {
         btnLinkGoogle.addEventListener('click', async () => {
             btnLinkGoogle.innerText = "PROSES...";
             btnLinkGoogle.disabled = true;
             try {
-                // Memanggil fungsi validasi di auth.js
                 await handleLinkGoogle();
                 showUpdateStatus("Google Berhasil Terhubung!");
                 updateProfileUI();
             } catch (error) {
-                // Jika email tidak sama, pesan error dari throw Error di auth.js muncul di sini
                 showUpdateStatus(error.message, true);
             }
             finally { btnLinkGoogle.innerText = "Sambungkan Google"; btnLinkGoogle.disabled = false; }
