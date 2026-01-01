@@ -8,7 +8,7 @@
     -webkit-user-drag: none;
     touch-action: manipulation; 
     outline: none !important;
-    /* Transisi sangat halus untuk pergerakan dan warna */
+    /* Transisi halus untuk pergerakan dan warna */
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -82,37 +82,61 @@ body {
     box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.2);
 }
 
-/* Efek saat Ditekan (Mobile) & Hover (Desktop) */
-.bento-card:hover, .bento-card:active {
+/* Efek Hover/Active HANYA untuk elemen interaktif (memiliki onclick, button, atau link) */
+.bento-card[onclick]:hover, 
+.bento-card[onclick]:active,
+button.bento-card:hover,
+button.bento-card:active,
+a.bento-card:hover,
+a.bento-card:active {
     transform: translateY(-2px);
     box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.08);
 }
 
-.dark .bento-card:hover, .dark .bento-card:active {
+.dark .bento-card[onclick]:hover, 
+.dark .bento-card[onclick]:active,
+.dark button.bento-card:hover,
+.dark button.bento-card:active,
+.dark a.bento-card:hover,
+.dark a.bento-card:active {
     box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.3);
 }
 
-/* Warna Border saat Hover/Active mengikuti warna Ikon */
-.hover-emerald:hover, .hover-emerald:active { border-color: #10b981 !important; }
-.hover-purple:hover, .hover-purple:active { border-color: #a855f7 !important; }
-.hover-blue:hover, .hover-blue:active { border-color: #3b82f6 !important; }
-.hover-teal:hover, .hover-teal:active { border-color: #14b8a6 !important; }
-.hover-amber:hover, .hover-amber:active { border-color: #f59e0b !important; }
-.hover-rose:hover, .hover-rose:active { border-color: #f43f5e !important; }
-.hover-indigo:hover, .hover-indigo:active { border-color: #6366f1 !important; }
+/* Warna Border saat Hover mengikuti warna Ikon (Hanya untuk yang interaktif) */
+.hover-emerald[onclick]:hover, .hover-emerald[onclick]:active { border-color: #10b981 !important; }
+.hover-purple[onclick]:hover, .hover-purple[onclick]:active { border-color: #a855f7 !important; }
+.hover-blue[onclick]:hover, .hover-blue[onclick]:active { border-color: #3b82f6 !important; }
+.hover-teal[onclick]:hover, .hover-teal[onclick]:active { border-color: #14b8a6 !important; }
+.hover-amber[onclick]:hover, .hover-amber[onclick]:active { border-color: #f59e0b !important; }
+.hover-rose[onclick]:hover, .hover-rose[onclick]:active { border-color: #f43f5e !important; }
+.hover-indigo[onclick]:hover, .hover-indigo[onclick]:active { border-color: #6366f1 !important; }
 
-/* Animasi icon tipis saat interaksi */
-.bento-card:hover i, .bento-card:active i {
+/* Animasi icon tipis (Hanya untuk yang interaktif) */
+.bento-card[onclick]:hover i, 
+.bento-card[onclick]:active i,
+button.bento-card:hover i,
+a.bento-card:hover i {
     transform: scale(1.05);
 }
 
-/* Row Sholat halus */
-#todayPrayerGrid > div:hover, #todayPrayerGrid > div:active {
+/* KHUSUS LIST DOA: Tetap nonaktifkan scale icon agar tidak terpotong */
+.item-doa:hover i, .item-doa:active i {
+    transform: none !important;
+}
+
+/* Row Sholat halus (Hanya aktif jika ada interaksi/clickable) */
+#todayPrayerGrid > div[onclick]:hover, 
+#todayPrayerGrid > div[onclick]:active {
     background-color: rgba(16, 185, 129, 0.05) !important;
     transform: translateX(2px);
 }
 
-.bento-card:active { transform: scale(0.98) translateY(0px); }
+/* Animasi tekan/klik */
+.bento-card[onclick]:active,
+button.bento-card:active,
+a.bento-card:active { 
+    transform: scale(0.98) translateY(0px); 
+}
 
 .no-bounce:active {
     transform: none !important;

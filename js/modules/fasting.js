@@ -1,4 +1,5 @@
 import { getHijriDate } from '../utils/date-utils.js';
+import { state } from '../state.js';
 
 const FASTING_MAP = {
     "Puasa Ramadhan": "ramadhan",
@@ -20,24 +21,49 @@ export function initFasting() {
 }
 
 function updateFastingStatus() {
-    const today = new Date();
-    const hijriToday = getHijriDate(today);
-    const masehiToday = today.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    const now = new Date();
+    let displayDate = new Date(now);
+    let isBesok = false;
+
+    // Cek apakah sudah lewat Maghrib hari ini berdasarkan data prayerTimes di state
+    if (state.prayerTimes && state.prayerTimes.Maghrib && state.prayerTimes.Maghrib !== '--:--') {
+        const [h, m] = state.prayerTimes.Maghrib.split(':').map(Number);
+        const maghribDate = new Date(now);
+        maghribDate.setHours(h, m, 0, 0);
+
+        if (now >= maghribDate) {
+            isBesok = true;
+            displayDate.setDate(displayDate.getDate() + 1);
+        }
+    }
+
+    const hijri = getHijriDate(displayDate);
+    // Perubahan di sini: month menggunakan 'short' agar bulan Masehi tampil singkat
+    const masehi = displayDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    // Update Label Header di UI (Status Hari Ini vs Status Besok)
+    const statusHeader = document.querySelector('#fastingContent h3.text-\\[11px\\]');
+    if (statusHeader) {
+        statusHeader.innerText = isBesok ? 'Status Besok' : 'Status Hari Ini';
+    }
 
     const hijriEl = document.getElementById('fastingHijriDate');
-    if (hijriEl) hijriEl.innerText = hijriToday.full;
+    if (hijriEl) hijriEl.innerText = hijri.full;
 
-    renderTodayFasting(today, hijriToday, masehiToday);
-    renderUpcomingFasting(today);
+    renderTodayFasting(displayDate, hijri, masehi, isBesok);
+    renderUpcomingFasting(now); 
 }
 
-function renderTodayFasting(today, hijri, masehi) {
+function renderTodayFasting(date, hijri, masehi, isBesok = false) {
     const container = document.getElementById('fastingPageTodayContainer');
     if (!container) return;
-    const fastingType = checkFastingType(today, hijri);
-    const niatKey = FASTING_MAP[fastingType] || '';
 
+    const fastingType = checkFastingType(date, hijri);
+    const niatKey = FASTING_MAP[fastingType] || '';
     const isWajib = fastingType === "Puasa Ramadhan";
+    
+    const labelDate = isBesok ? "Besok" : "Hari Ini";
+    const statusType = isWajib ? 'Wajib' : 'Sunnah';
 
     if (fastingType) {
         container.innerHTML = `
@@ -48,7 +74,7 @@ function renderTodayFasting(today, hijri, masehi) {
                         <i data-lucide="${isWajib ? 'sun' : 'utensils-crossed'}" class="w-7 h-7"></i>
                     </div>
                     <div>
-                        <p class="text-[10px] font-bold text-white/80 uppercase tracking-wider mb-0.5">Hari Ini ${isWajib ? 'Wajib' : 'Sunnah'}</p>
+                        <p class="text-[10px] font-bold text-white/80 uppercase tracking-wider mb-0.5">${labelDate} ${statusType}</p>
                         <h4 class="text-lg md:text-xl font-black leading-tight">${fastingType}</h4>
                         <p class="text-xs text-white/70 font-medium">${hijri.full} • ${masehi}</p>
                     </div>
@@ -62,7 +88,7 @@ function renderTodayFasting(today, hijri, masehi) {
                         <i data-lucide="calendar" class="w-7 h-7 text-slate-400"></i>
                     </div>
                     <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Hari Ini</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">${labelDate}</p>
                         <h4 class="text-lg md:text-xl font-black text-slate-800 dark:text-white leading-tight">Tidak Ada Jadwal Puasa</h4>
                         <p class="text-xs text-slate-400 font-medium">${hijri.full} • ${masehi}</p>
                     </div>
@@ -76,10 +102,12 @@ function renderUpcomingFasting(startDate) {
     const container = document.getElementById('upcomingFastingList');
     if (!container) return;
     let html = '';
+    
     for (let i = 1; i <= 30; i++) {
         const nextDate = new Date(startDate);
         nextDate.setDate(startDate.getDate() + i);
         const nextHijri = getHijriDate(nextDate);
+        // List mendatang juga menggunakan format bulan singkat
         const masehiDateFull = nextDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
         const masehiDay = nextDate.getDate();

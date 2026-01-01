@@ -3,15 +3,19 @@ let currentDetailIndex = 0;
 let lastScrollTop = 0;
 
 /**
- * PINDAHKAN FUNGSI KE ATAS AGAR TERDEFINISI SEBELUM DIGUNAKAN
- * Memperbaiki error ReferenceError
+ * Fungsi Pencarian - Diperbarui agar bisa mencari berdasarkan nama Latin dan Arti
  */
 function searchAsma(query) {
     const lowerQ = query.toLowerCase();
     const items = document.querySelectorAll('#asmaList .item-asma');
     items.forEach(item => {
-        const text = item.querySelector('.text-asma-latin')?.textContent.toLowerCase() || "";
-        item.classList.toggle('hidden', !text.includes(lowerQ));
+        // Mengambil teks dari nama latin dan arti
+        const latin = item.querySelector('.text-asma-latin')?.textContent.toLowerCase() || "";
+        const arti = item.querySelector('.text-asma-indo')?.textContent.toLowerCase() || "";
+        
+        // Menampilkan item jika query ditemukan di salah satunya
+        const isMatch = latin.includes(lowerQ) || arti.includes(lowerQ);
+        item.classList.toggle('hidden', !isMatch);
     });
 }
 
@@ -23,7 +27,6 @@ export function initAsmaulHusna() {
 
     renderSkeleton();
 
-    // Logika Smart Hide Search Bar (Header Tetap, SearchBar Ngumpet -250px)
     const view = document.getElementById('asmaulHusnaView');
     const searchContainer = document.getElementById('asmaSearchContainer');
 
@@ -31,15 +34,28 @@ export function initAsmaulHusna() {
         view.addEventListener('scroll', () => {
             let st = view.scrollTop;
             if (st > lastScrollTop && st > 150) {
-                // Sembunyikan halus ke atas di balik header
                 searchContainer.style.transform = 'translateY(-250px)';
             } else if (st < lastScrollTop) {
-                // Munculkan kembali
                 searchContainer.style.transform = 'translateY(0)';
             }
             lastScrollTop = st <= 0 ? 0 : st;
         }, { passive: true });
     }
+
+    // Navigasi Keyboard (Panah Kanan/Kiri & Escape)
+    window.addEventListener('keydown', (e) => {
+        const modal = document.getElementById('asmaDetailModal');
+        // Hanya jalan jika modal sedang tampil (tidak ada class 'invisible')
+        if (modal && !modal.classList.contains('invisible')) {
+            if (e.key === 'ArrowRight') {
+                changeAsma(1);
+            } else if (e.key === 'ArrowLeft') {
+                changeAsma(-1);
+            } else if (e.key === 'Escape') {
+                closeAsmaDetail();
+            }
+        }
+    });
 
     window.addEventListener('viewChanged', (e) => {
         const searchWrapper = document.getElementById('asmaSearchWrapper');
@@ -75,7 +91,7 @@ function renderSkeleton() {
 async function fetchAsmaList() {
     const container = document.getElementById('asmaList');
     try {
-        const response = await fetch('https://raw.githubusercontent.com/mikqi/dzikir-counter/master/www/asmaul-husna.json');
+        const response = await fetch('./assets/data/asmaul-husna.json'); 
         const result = await response.json();
         allAsma = result.map(item => ({
             urutan: item.urutan,
@@ -86,7 +102,7 @@ async function fetchAsmaList() {
         renderAsmaList(allAsma);
     } catch (error) {
         console.error("Fetch Asmaul Husna error:", error);
-        if (container) container.innerHTML = `<div class="col-span-full py-20 text-center opacity-50"><p class="text-sm font-bold">Gagal memuat data</p></div>`;
+        if (container) container.innerHTML = `<div class="col-span-full py-20 text-center opacity-50"><p class="text-sm font-bold">Gagal memuat data lokal</p></div>`;
     }
 }
 
@@ -106,7 +122,7 @@ function renderAsmaList(data) {
             </div>
             <div class="flex-1 min-w-0">
                 <h4 class="font-bold text-slate-800 dark:text-white text-base group-hover:text-emerald-600 transition-colors truncate text-asma-latin">${item.latin}</h4>
-                <p class="text-[10px] text-slate-400 font-medium truncate tracking-wide">${item.indo}</p>
+                <p class="text-[10px] text-slate-400 font-medium truncate tracking-wide text-asma-indo">${item.indo}</p>
             </div>
             <div class="text-right pl-2 shrink-0">
                 <span class="font-quran text-2xl text-slate-300 dark:text-slate-700 group-hover:text-emerald-500/40 transition-colors duration-500">${item.arab}</span>

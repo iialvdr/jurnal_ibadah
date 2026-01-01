@@ -5,16 +5,15 @@ let isFiltersLoaded = false;
 let activeDropdown = null;
 let lastScrollTop = 0;
 
-/**
- * PINDAHKAN FUNGSI KE ATAS AGAR TERDEFINISI SEBELUM DIGUNAKAN
- */
 function searchDoa(query) {
     const lowerQ = query.toLowerCase();
     const items = document.querySelectorAll('#doaListContainer .item-doa');
-    if (!items) return;
+    if (!items || items.length === 0) return;
 
     items.forEach(item => {
-        const text = item.querySelector('.text-doa')?.textContent.toLowerCase() || "";
+        if (!item) return;
+        const textEl = item.querySelector('.text-doa');
+        const text = textEl ? textEl.textContent.toLowerCase() : "";
         item.classList.toggle('hidden', !text.includes(lowerQ));
     });
 }
@@ -28,7 +27,6 @@ export function initDoa() {
 
     renderSkeleton();
 
-    // Logika Smart Hide Search Bar (Header Tetap, SearchBar Ngumpet)
     const view = document.getElementById('doaView');
     const searchContainer = document.getElementById('doaSearchContainer');
 
@@ -45,12 +43,10 @@ export function initDoa() {
     }
 
     window.addEventListener('viewChanged', (e) => {
-        const searchWrapper = document.getElementById('doaSearchWrapper');
         if (e.detail.viewId === 'doaView') {
             if (allDoa.length === 0) fetchDoaList();
-            if (searchWrapper) {
-                searchWrapper.style.transform = "translate3d(0,0,0)";
-            }
+            const searchWrapper = document.getElementById('doaSearchWrapper');
+            if (searchWrapper) searchWrapper.style.transform = "translate3d(0,0,0)";
         } else {
             closeAllDropdowns();
         }
@@ -115,10 +111,10 @@ function closeAllDropdowns() {
     ['grup', 'tag'].forEach(type => {
         const list = document.getElementById(type === 'grup' ? 'listGrup' : 'listTag');
         const icon = document.getElementById(type === 'grup' ? 'iconGrup' : 'iconTag');
-        if (list && !list.classList.contains('hidden')) {
+        if (list && list.classList.contains('opacity-100')) {
             list.classList.add('opacity-0', 'scale-95');
             list.classList.remove('opacity-100', 'scale-100');
-            setTimeout(() => list.classList.add('hidden'), 200);
+            setTimeout(() => { if (list) list.classList.add('hidden'); }, 200);
         }
         if (icon) icon.classList.remove('rotate-180');
     });
@@ -164,7 +160,6 @@ async function fetchDoaList(grup = '', tag = '') {
         renderDoaList(data);
     } catch (error) {
         console.error(error);
-        if (container) container.innerHTML = `<div class="py-20 text-center opacity-50"><p class="text-sm font-bold">Gagal memuat data</p></div>`;
     } finally {
         if (loader) loader.classList.add('hidden-force');
         if (container) container.classList.remove('hidden');
@@ -211,12 +206,12 @@ function renderDoaList(data) {
         html += `
         <div onclick="vibrateSoft(); openDoaDetail('${doa.id}', '${safeNama}')" class="bento-card group bg-white dark:bg-slate-900 p-5 rounded-[1.8rem] border border-white dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 cursor-pointer active:scale-[0.98] flex items-center justify-between item-doa">
             <div class="flex items-center gap-5 overflow-hidden">
-                <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800/50 group-hover:scale-110 transition-transform duration-500">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800/50 transition-transform duration-500">
                     <i data-lucide="book-heart" class="w-6 h-6"></i>
                 </div>
                 <div class="flex-1 min-w-0">
                     ${badge}
-                    <h4 class="font-bold text-slate-700 dark:text-white text-sm group-hover:text-emerald-600 transition-colors truncate text-doa">${doa.nama}</h4>
+                    <h4 class="font-bold text-slate-700 dark:text-white text-sm group-hover:text-emerald-600 transition-colors line-clamp-2 text-doa leading-snug">${doa.nama}</h4>
                 </div>
             </div>
             <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all shrink-0 ml-3"></i>
@@ -230,7 +225,9 @@ async function openDoaDetail(id, title) {
     const modal = document.getElementById('doaDetailModal');
     const backdrop = document.getElementById('doaBackdrop');
     const content = document.getElementById('doaDetailContent');
-    if (document.getElementById('modalDoaTitle')) document.getElementById('modalDoaTitle').innerText = title;
+    const titleEl = document.getElementById('modalDoaTitle');
+    
+    if (titleEl) titleEl.innerText = title;
 
     if (modal && content && backdrop) {
         modal.classList.remove('invisible', 'pointer-events-none');
@@ -249,9 +246,13 @@ async function openDoaDetail(id, title) {
 }
 
 function updateDetailContent(data) {
-    document.getElementById('modalDoaArab').innerText = data.ar || data.arab || "-";
-    document.getElementById('modalDoaLatin').innerText = data.tr || data.latin || "-";
-    document.getElementById('modalDoaIndo').innerText = data.idn || data.arti || data.terjemahan || "-";
+    const arabEl = document.getElementById('modalDoaArab');
+    const latinEl = document.getElementById('modalDoaLatin');
+    const indoEl = document.getElementById('modalDoaIndo');
+
+    if (arabEl) arabEl.innerText = data.ar || data.arab || "-";
+    if (latinEl) latinEl.innerText = data.tr || data.latin || "-";
+    if (indoEl) indoEl.innerText = data.idn || data.arti || data.terjemahan || "-";
 
     const riwayat = data.riwayat || data.tentang || data.sumber || "";
     const sourceEl = document.getElementById('modalDoaSource');
@@ -275,6 +276,6 @@ function closeDoaDetail() {
         backdrop.classList.remove('opacity-100');
         content.classList.add('translate-y-full');
         content.classList.remove('translate-y-0');
-        setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 500);
+        setTimeout(() => { if (modal) modal.classList.add('invisible', 'pointer-events-none'); }, 500);
     }
 }
