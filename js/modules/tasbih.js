@@ -19,13 +19,14 @@ export function initTasbih() {
     window.closeDhikrMenu = closeDhikrMenu;
     window.selectDhikr = selectDhikr;
     window.removeDhikr = removeDhikr;
+    window.isTasbihVibroEnabled = isVibroEnabled;
 
     updateDisplay();
     renderDhikrList();
 }
 
 function countTasbih() {
-    if (typeof vibrateSoft === 'function') vibrateSoft();
+    if (isVibroEnabled && typeof vibrateSoft === 'function') vibrateSoft();
     count++;
 
     const countEl = document.getElementById('tasbihCount');
@@ -55,7 +56,7 @@ function countTasbih() {
 }
 
 function setTasbihTarget(newTarget, index) {
-    if (typeof vibrateSoft === 'function') vibrateSoft();
+    if (isVibroEnabled && typeof vibrateSoft === 'function') vibrateSoft();
     target = newTarget;
 
     const indicator = document.getElementById('targetIndicator');
@@ -90,7 +91,7 @@ function updateDisplay() {
 }
 
 function openDhikrMenu() {
-    if (typeof vibrateSoft === 'function') vibrateSoft();
+    if (isVibroEnabled && typeof vibrateSoft === 'function') vibrateSoft();
     const modal = document.getElementById('dhikrMenuModal');
     if (!modal) return;
     modal.classList.remove('invisible', 'pointer-events-none');
@@ -111,7 +112,6 @@ function closeDhikrMenu() {
 function selectDhikr(id) {
     const dhikr = DHIKR_LIST.find(d => d.id === id);
     if (dhikr) {
-        // Set target dan index indikator (0 untuk 33, 1 untuk 100)
         setTasbihTarget(dhikr.target, dhikr.target === 33 ? 0 : 1);
         count = 0;
 
@@ -128,7 +128,7 @@ function selectDhikr(id) {
 }
 
 function removeDhikr() {
-    if (typeof vibrateSoft === 'function') vibrateSoft();
+    if (isVibroEnabled && typeof vibrateSoft === 'function') vibrateSoft();
     count = 0;
     document.getElementById('dhikrPlaceholder').classList.remove('hidden');
     document.getElementById('dhikrTextContent').classList.add('hidden');
@@ -139,7 +139,7 @@ function removeDhikr() {
 }
 
 function resetTasbih() {
-    if (typeof vibrateSoft === 'function') vibrateSoft();
+    if (isVibroEnabled && typeof vibrateSoft === 'function') vibrateSoft();
     count = 0;
     updateDisplay();
 }
@@ -147,6 +147,7 @@ function resetTasbih() {
 function toggleVibro() {
     if (typeof vibrateSoft === 'function') vibrateSoft();
     isVibroEnabled = !isVibroEnabled;
+    window.isTasbihVibroEnabled = isVibroEnabled;
     const btn = document.getElementById('vibroBtn');
     const text = document.getElementById('vibroText');
     if (isVibroEnabled) {
@@ -166,7 +167,7 @@ function renderDhikrList() {
     const container = document.getElementById('dhikrListContainer');
     if (!container) return;
     container.innerHTML = DHIKR_LIST.map(dhikr => `
-        <div onclick="vibrateSoft(); selectDhikr('${dhikr.id}')" class="bg-slate-50 dark:bg-slate-800/40 p-6 rounded-[2rem] border border-transparent hover:border-emerald-500/30 transition-all cursor-pointer group active:scale-[0.98] shadow-sm">
+        <div onclick="if(window.isTasbihVibroEnabled && typeof vibrateSoft === 'function') vibrateSoft(); selectDhikr('${dhikr.id}')" class="bg-slate-50 dark:bg-slate-800/40 p-6 rounded-[2rem] border border-transparent hover:border-emerald-500/30 transition-all cursor-pointer group active:scale-[0.98] shadow-sm">
             <div class="flex justify-between items-center mb-3">
                 <span class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full">Target: ${dhikr.target}</span>
                 <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform"></i>

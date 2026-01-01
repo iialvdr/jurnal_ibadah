@@ -144,23 +144,28 @@ function loadFastingWidget() {
 
     if (showWidget) {
         container.innerHTML = `
-            <div onclick="vibrateSoft(); openFasting()" class="cursor-pointer bento-card bg-white dark:bg-slate-900 p-4 rounded-[2rem] flex items-center justify-between border border-slate-200 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500 transition-all group shadow-sm">
+            <div onclick="vibrateSoft(); openFasting()" class="cursor-pointer bento-card hover-amber bg-white dark:bg-slate-900 p-4 rounded-[2rem] flex items-center justify-between border border-slate-200 dark:border-slate-800 transition-all group shadow-sm">
                 <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                    <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-sm">
                         <i data-lucide="utensils-crossed" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h4 class="font-bold text-slate-800 dark:text-white text-sm uppercase tracking-wide group-hover:text-emerald-600 transition-colors">${widgetLabel}</h4>
+                        <h4 class="font-bold text-slate-800 dark:text-white text-sm uppercase tracking-wide">${widgetLabel}</h4>
                         <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">${fastingTitle} - ${fastingDesc}</p>
                     </div>
                 </div>
-                <div class="bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-colors">
-                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Sunnah</span>
+                <div class="bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
+                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Sunnah</span>
                 </div>
             </div>
         `;
         container.classList.remove('hidden');
-        if (window.lucide) lucide.createIcons({ root: container });
+        // Proteksi render icon
+        if (window.lucide && container) {
+            try {
+                lucide.createIcons({ root: container });
+            } catch (e) { }
+        }
     } else {
         container.classList.add('hidden');
     }
@@ -434,11 +439,20 @@ function initTheme() {
     applyTheme();
 }
 
+// Tambahkan proteksi pada applyTheme
 function applyTheme() {
     const html = document.documentElement;
+    if (!html) return; // Proteksi awal
+    
     if (isDarkMode) html.classList.add('dark');
     else html.classList.remove('dark');
-    if (window.lucide) lucide.createIcons();
+    
+    // Perbaikan: Panggil lucide hanya jika elemen sudah siap di DOM
+    if (window.lucide) {
+        try {
+            lucide.createIcons(); 
+        } catch (e) { console.warn("Lucide belum siap di applyTheme"); }
+    }
 }
 
 async function toggleDarkMode() {

@@ -14,10 +14,12 @@
 
     <div class="relative z-10 w-full mx-auto">
         
-        <div id="quranSearchContainer" class="sticky top-[85px] z-40 px-5 pb-4 transition-transform duration-500 ease-in-out will-change-transform md:px-8 max-w-7xl mx-auto">
-            <div class="bento-card bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-[2rem] flex items-center px-5 py-4 border border-white dark:border-slate-800 shadow-sm group focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all duration-300">
-                <i data-lucide="search" class="w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors"></i>
-                <input type="text" id="quranSearchInput" onkeyup="searchSurah(this.value)" placeholder="Cari surat atau arti..." class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 ml-4 outline-none">
+        <div id="quranSearchContainer" class="sticky top-[85px] z-40 px-5 pt-2 pb-4 transition-transform duration-500 ease-in-out will-change-transform md:px-8 max-w-7xl mx-auto">
+            <div id="quranSearchWrapper" class="relative group" style="will-change: transform;">
+                <div class="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-[1.8rem] border border-white dark:border-slate-800 flex items-center px-5 py-4 transition-all duration-300 group-focus-within:ring-4 group-focus-within:ring-emerald-500/10 shadow-sm">
+                    <i data-lucide="search" class="w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors"></i>
+                    <input type="text" id="quranSearchInput" onkeyup="searchSurah(this.value)" placeholder="Cari surat atau arti..." class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 ml-4 outline-none">
+                </div>
             </div>
         </div>
         
