@@ -12,7 +12,7 @@ export function setupRouter() {
                 'homeView', 'trackerView', 'profileView', 'tasbihView',
                 'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView',
                 'fastingView', 'creditsView', 'changelogView',
-                'zakatView' // <-- Tambahan Fitur Zakat
+                'zakatView', 'faqView' // <-- Tambahan faqView
             ];
 
             allInternalViews.forEach(id => {
@@ -41,7 +41,8 @@ export function setupRouter() {
             'fasting': 'fastingView',
             'credits': 'creditsView',
             'changelog': 'changelogView',
-            'zakat': 'zakatView' // <-- Tambahan Fitur Zakat
+            'zakat': 'zakatView',
+            'faq': 'faqView' // <-- Tambahan route faq
         };
 
         const targetViewId = routes[path] || 'homeView';
@@ -51,7 +52,6 @@ export function setupRouter() {
     window.addEventListener('popstate', handleNavigation);
     window.addEventListener('load', handleNavigation);
 
-    // Jalankan navigasi sekarang juga saat setupRouter dipanggil
     handleNavigation();
 
     const navigateTo = (path) => {
@@ -74,7 +74,8 @@ export function setupRouter() {
     window.openAsma = () => navigateTo('asmaul-husna');
     window.openFasting = () => navigateTo('fasting');
     window.openCredits = () => navigateTo('credits');
-    window.openZakat = () => navigateTo('zakat'); // <-- Tambahan Fitur Zakat
+    window.openZakat = () => navigateTo('zakat');
+    window.openFaq = () => navigateTo('faq'); // <-- Fungsi buka FAQ
 
     window.goBack = () => {
         if (window.history.length > 1) {
@@ -90,7 +91,7 @@ export function switchView(targetId) {
         'homeView', 'trackerView', 'profileView', 'tasbihView',
         'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView',
         'fastingView', 'creditsView', 'changelogView',
-        'zakatView' // <-- Tambahan Fitur Zakat
+        'zakatView', 'faqView' // <-- Tambahan faqView
     ];
 
     const targetEl = document.getElementById(targetId);
@@ -103,7 +104,6 @@ export function switchView(targetId) {
         }));
     }
 
-    // Render Lucide Icons jika belum dirender
     if (window.lucide && targetEl.querySelectorAll('i[data-lucide]').length > 0) {
         if (!targetEl.hasAttribute('data-icons-rendered')) {
             try {
@@ -127,7 +127,6 @@ export function switchView(targetId) {
             }
         });
 
-        // Trigger event viewChanged
         window.dispatchEvent(new CustomEvent('viewChanged', { detail: { viewId: targetId } }));
     });
 }

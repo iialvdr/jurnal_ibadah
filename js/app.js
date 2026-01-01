@@ -56,7 +56,8 @@ const VIEWS = [
     '/views/fasting.html',
     '/views/credits.html',
     '/views/changelog.html',
-    '/views/zakat.html'
+    '/views/zakat.html',
+    '/views/faq.html'
 ];
 
 async function loadAllViews() {
