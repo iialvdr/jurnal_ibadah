@@ -25,12 +25,10 @@ function updateFastingStatus() {
     let displayDate = new Date(now);
     let isBesok = false;
 
-    // Cek apakah sudah lewat Maghrib hari ini berdasarkan data prayerTimes di state
     if (state.prayerTimes && state.prayerTimes.Maghrib && state.prayerTimes.Maghrib !== '--:--') {
         const [h, m] = state.prayerTimes.Maghrib.split(':').map(Number);
         const maghribDate = new Date(now);
         maghribDate.setHours(h, m, 0, 0);
-
         if (now >= maghribDate) {
             isBesok = true;
             displayDate.setDate(displayDate.getDate() + 1);
@@ -38,18 +36,10 @@ function updateFastingStatus() {
     }
 
     const hijri = getHijriDate(displayDate);
-    // Perubahan di sini: month menggunakan 'short' agar bulan Masehi tampil singkat
-    const masehi = displayDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-
-    // Update Label Header di UI (Status Hari Ini vs Status Besok)
-    const statusHeader = document.querySelector('#fastingContent h3.text-\\[11px\\]');
-    if (statusHeader) {
-        statusHeader.innerText = isBesok ? 'Status Besok' : 'Status Hari Ini';
-    }
-
     const hijriEl = document.getElementById('fastingHijriDate');
     if (hijriEl) hijriEl.innerText = hijri.full;
 
+    const masehi = displayDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
     renderTodayFasting(displayDate, hijri, masehi, isBesok);
     renderUpcomingFasting(now); 
 }
@@ -58,39 +48,43 @@ function renderTodayFasting(date, hijri, masehi, isBesok = false) {
     const container = document.getElementById('fastingPageTodayContainer');
     if (!container) return;
 
-    const fastingType = checkFastingType(date, hijri);
-    const niatKey = FASTING_MAP[fastingType] || '';
-    const isWajib = fastingType === "Puasa Ramadhan";
+    const type = checkFastingType(date, hijri);
+    const labelDate = isBesok ? "BESOK" : "HARI INI";
     
-    const labelDate = isBesok ? "Besok" : "Hari Ini";
-    const statusType = isWajib ? 'Wajib' : 'Sunnah';
+    if (type) {
+        const niatKey = FASTING_MAP[type] || '';
+        const isWajib = type === "Puasa Ramadhan";
+        let fastingDesc = isBesok 
+            ? "Siapkan niat untuk berpuasa esok hari ya." 
+            : "Semangat menjalankan ibadah puasa, Valdi!";
 
-    if (fastingType) {
         container.innerHTML = `
-            <div onclick="vibrateSoft(); openNiatModal('${niatKey}')" class="bento-card ${isWajib ? 'bg-amber-600' : 'bg-emerald-600'} rounded-[2rem] p-6 text-white shadow-lg relative overflow-hidden animate-fade-in cursor-pointer active:scale-95 transition-transform w-full">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                <div class="relative z-10 flex items-center gap-5">
-                    <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20">
-                        <i data-lucide="${isWajib ? 'sun' : 'utensils-crossed'}" class="w-7 h-7"></i>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-bold text-white/80 uppercase tracking-wider mb-0.5">${labelDate} ${statusType}</p>
-                        <h4 class="text-lg md:text-xl font-black leading-tight">${fastingType}</h4>
-                        <p class="text-xs text-white/70 font-medium">${hijri.full} • ${masehi}</p>
-                    </div>
+            <div onclick="vibrateSoft(); openNiatModal('${niatKey}')" class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] flex items-center gap-4 border border-amber-100 dark:border-amber-900/40 shadow-sm relative overflow-hidden group cursor-pointer active:scale-95 transition-all w-full">
+                <div class="absolute -right-4 -top-4 w-20 h-20 bg-amber-500/5 rounded-full blur-3xl"></div>
+                <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-800/30">
+                    <i data-lucide="${isWajib ? 'sun' : 'utensils-crossed'}" class="w-6 h-6"></i>
                 </div>
+                <div class="flex-1 relative z-10">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[9px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest bg-amber-500/10 px-2 py-0.5 rounded-full">${labelDate}</span>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">${isWajib ? 'Wajib' : 'Sunnah'}</span>
+                    </div>
+                    <h4 class="text-base font-black text-slate-800 dark:text-white leading-tight">${type}</h4>
+                    <p class="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-1">${hijri.full} • ${fastingDesc}</p>
+                </div>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-amber-500 transition-colors"></i>
             </div>`;
     } else {
         container.innerHTML = `
-            <div class="bento-card bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-white dark:border-slate-800 shadow-sm animate-fade-in w-full">
-                <div class="flex items-center gap-5">
-                    <div class="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700/50">
-                        <i data-lucide="calendar" class="w-7 h-7 text-slate-400"></i>
+            <div class="bento-card bg-white dark:bg-slate-900 rounded-[2.5rem] p-5 border border-white dark:border-slate-800 shadow-sm w-full">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700/50">
+                        <i data-lucide="calendar" class="w-6 h-6 text-slate-400"></i>
                     </div>
                     <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">${labelDate}</p>
-                        <h4 class="text-lg md:text-xl font-black text-slate-800 dark:text-white leading-tight">Tidak Ada Jadwal Puasa</h4>
-                        <p class="text-xs text-slate-400 font-medium">${hijri.full} • ${masehi}</p>
+                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full mb-1 inline-block">${labelDate}</span>
+                        <h4 class="text-base font-black text-slate-800 dark:text-white leading-tight">Tidak Ada Jadwal</h4>
+                        <p class="text-[10px] font-medium text-slate-400 mt-1">Gunakan hari ini untuk ibadah lainnya, Valdi!</p>
                     </div>
                 </div>
             </div>`;
@@ -107,33 +101,29 @@ function renderUpcomingFasting(startDate) {
         const nextDate = new Date(startDate);
         nextDate.setDate(startDate.getDate() + i);
         const nextHijri = getHijriDate(nextDate);
-        // List mendatang juga menggunakan format bulan singkat
-        const masehiDateFull = nextDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-
         const masehiDay = nextDate.getDate();
         const masehiMonthShort = nextDate.toLocaleDateString('id-ID', { month: 'short' });
-
         const type = checkFastingType(nextDate, nextHijri);
 
         if (type) {
             const niatKey = FASTING_MAP[type] || '';
             html += `
-            <div onclick="vibrateSoft(); openNiatModal('${niatKey}')" class="bento-card bg-white dark:bg-slate-900 p-4 rounded-3xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group hover:border-emerald-500/30 transition-all cursor-pointer active:scale-[0.98]">
-                <div class="flex items-center gap-4">
-                    <div class="flex flex-col items-center justify-center w-11 h-11 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/30 shrink-0">
-                        <span class="text-[7px] font-bold text-slate-400 uppercase leading-none mb-0.5 text-center">${masehiMonthShort}</span>
-                        <span class="text-sm font-black text-slate-700 dark:text-emerald-500 leading-none">${masehiDay}</span>
+            <div onclick="vibrateSoft(); openNiatModal('${niatKey}')" class="bento-card bg-white dark:bg-slate-900 p-4 rounded-[1.8rem] border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group cursor-pointer active:scale-[0.98] transition-all hover:border-emerald-500/30">
+                <div class="flex items-center gap-3">
+                    <div class="flex flex-col items-center justify-center w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/30 shrink-0">
+                        <span class="text-[6px] font-bold text-slate-400 uppercase leading-none mb-0.5">${masehiMonthShort}</span>
+                        <span class="text-xs font-black text-slate-700 dark:text-emerald-500 leading-none">${masehiDay}</span>
                     </div>
                     <div>
-                        <h5 class="font-bold text-slate-800 dark:text-white text-[13px] leading-tight group-hover:text-emerald-600 transition-colors">${type}</h5>
-                        <p class="text-[9px] text-slate-400 font-medium mt-0.5">${nextHijri.full} | ${masehiDateFull}</p>
+                        <h5 class="font-bold text-slate-800 dark:text-white text-[12px] leading-tight group-hover:text-emerald-600 transition-colors">${type}</h5>
+                        <p class="text-[9px] text-slate-400 font-medium mt-0.5">${nextHijri.full}</p>
                     </div>
                 </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300"></i>
+                <i data-lucide="chevron-right" class="w-3 h-3 text-slate-300"></i>
             </div>`;
         }
     }
-    container.innerHTML = html || '<p class="col-span-full py-10 text-center text-xs text-slate-400 font-medium">Belum ada jadwal puasa sunnah terdekat.</p>';
+    container.innerHTML = html || '<p class="col-span-full py-10 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">Belum ada jadwal terdekat</p>';
     if (window.lucide) lucide.createIcons({ root: container });
 }
 
@@ -171,25 +161,20 @@ function openNiatModal(types) {
         const data = NIAT_DATA[t.trim()];
         if (data) {
             const isWajib = data.judul === "Puasa Ramadhan";
-            const badgeText = isWajib ? 'Wajib' : 'Sunnah';
-            const badgeClass = isWajib
-                ? "text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/30"
-                : "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/30";
-
             html += `
-            <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm space-y-4">
+            <div class="bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm space-y-4">
                 <div class="flex items-center justify-between mb-2">
-                    <h4 class="text-sm font-bold text-slate-800 dark:text-white">${data.judul}</h4>
-                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-lg border ${badgeClass}">${badgeText}</span>
+                    <h4 class="text-sm font-black text-slate-800 dark:text-white">${data.judul}</h4>
+                    <span class="text-[9px] font-black px-2 py-0.5 rounded-lg border ${isWajib ? 'text-amber-600 border-amber-100' : 'text-emerald-600 border-emerald-100'}">${isWajib ? 'Wajib' : 'Sunnah'}</span>
                 </div>
-                <div class="text-right"><p class="font-quran text-2xl text-slate-800 dark:text-white leading-loose" dir="rtl">${data.arab}</p></div>
-                <div class="space-y-2">
-                    <p class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Latin</p>
-                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 italic leading-relaxed">"${data.latin}"</p>
+                <div class="text-right"><p class="font-quran text-xl text-slate-800 dark:text-white leading-loose" dir="rtl">${data.arab}</p></div>
+                <div class="space-y-1">
+                    <p class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Latin</p>
+                    <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 italic leading-relaxed">"${data.latin}"</p>
                 </div>
-                <div class="pt-4 border-t border-slate-50 dark:border-slate-800">
-                    <p class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Artinya</p>
-                    <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">${data.arti}</p>
+                <div class="pt-3 border-t border-slate-50 dark:border-slate-800">
+                    <p class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Artinya</p>
+                    <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">${data.arti}</p>
                 </div>
             </div>`;
         }

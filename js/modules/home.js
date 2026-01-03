@@ -3,7 +3,6 @@ import { db } from '../config.js';
 import { doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { switchView } from '../router.js';
 import { APP_VERSION } from '../version.js';
-// Import dari date-utils
 import { getHijriDate } from '../utils/date-utils.js';
 
 let isDarkMode = false;
@@ -69,9 +68,7 @@ function loadCachedLocation() {
     const cachedCity = localStorage.getItem('last_city_name');
     const cachedLat = localStorage.getItem('last_lat');
     const cachedLng = localStorage.getItem('last_lng');
-
     if (cachedCity) setLastCity(cachedCity);
-
     if (cachedLat && cachedLng) {
         window.lastLat = parseFloat(cachedLat);
         window.lastLng = parseFloat(cachedLng);
@@ -90,8 +87,6 @@ export async function syncThemeWithCloud() {
                 isDarkMode = data.theme === 'dark';
                 localStorage.setItem('valdi_theme', data.theme);
                 applyTheme();
-                const toggle = document.getElementById('darkModeToggleProfile');
-                if (toggle) toggle.checked = isDarkMode;
             }
         }
     } catch (e) { console.error("Gagal sinkronisasi tema:", e); }
@@ -114,58 +109,63 @@ function loadFastingWidget() {
 
     let fastingTitle = "";
     let fastingDesc = "";
-    let showWidget = false;
-    let widgetLabel = "Hari Ini";
+    let widgetLabel = ""; 
 
-    // Menggunakan getHijriDate dari date-utils
+    const hToday = getHijriDate(now);
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const hTom = getHijriDate(tomorrow);
+
     if (!isPastMaghrib) {
-        const h = getHijriDate(now);
         const isSenin = currentDay === 1;
         const isKamis = currentDay === 4;
-        const isAyyamulBidh = [13, 14, 15].includes(h.day);
+        const isAyyamulBidh = [13, 14, 15].includes(hToday.day);
 
-        if (isSenin) { fastingTitle = "Puasa Senin"; fastingDesc = "Sunnah Senin-Kamis"; showWidget = true; }
-        else if (isKamis) { fastingTitle = "Puasa Kamis"; fastingDesc = "Sunnah Senin-Kamis"; showWidget = true; }
-        else if (isAyyamulBidh) { fastingTitle = "Ayyamul Bidh"; fastingDesc = `Tanggal ${h.day} Hijriyah`; showWidget = true; }
+        if (isSenin || isKamis || isAyyamulBidh) {
+            widgetLabel = "HARI INI";
+            if (isSenin) fastingTitle = "Puasa Sunnah Senin";
+            else if (isKamis) fastingTitle = "Puasa Sunnah Kamis";
+            else if (isAyyamulBidh) fastingTitle = "Puasa Ayyamul Bidh";
+            fastingDesc = "Selamat menjalankan ibadah puasa, Valdi!";
+        }
     } else {
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
         const nextDay = tomorrow.getDay();
-        const hTom = getHijriDate(tomorrow);
-
         const isTomSenin = nextDay === 1;
         const isTomKamis = nextDay === 4;
         const isTomAyyamul = [13, 14, 15].includes(hTom.day);
 
-        if (isTomSenin) { fastingTitle = "Puasa Senin"; fastingDesc = "Insya Allah Besok"; widgetLabel = "Besok"; showWidget = true; }
-        else if (isTomKamis) { fastingTitle = "Puasa Kamis"; fastingDesc = "Insya Allah Besok"; widgetLabel = "Besok"; showWidget = true; }
-        else if (isTomAyyamul) { fastingTitle = "Ayyamul Bidh"; fastingDesc = `Besok Tanggal ${hTom.day}`; widgetLabel = "Besok"; showWidget = true; }
+        if (isTomSenin || isTomKamis || isTomAyyamul) {
+            widgetLabel = "BESOK";
+            if (isTomSenin) fastingTitle = "Puasa Sunnah Senin";
+            else if (isTomKamis) fastingTitle = "Puasa Sunnah Kamis";
+            else if (isTomAyyamul) fastingTitle = "Puasa Ayyamul Bidh";
+            fastingDesc = "Siapkan niat untuk berpuasa esok hari ya.";
+        }
     }
 
-    if (showWidget) {
+    if (fastingTitle) {
+        // Tampilan yang lebih halus & tidak terlalu mencolok
         container.innerHTML = `
-            <div onclick="vibrateSoft(); openFasting()" class="cursor-pointer bento-card hover-amber bg-white dark:bg-slate-900 p-4 rounded-[2rem] flex items-center justify-between border border-slate-200 dark:border-slate-800 transition-all group shadow-sm">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-sm">
-                        <i data-lucide="utensils-crossed" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-slate-800 dark:text-white text-sm uppercase tracking-wide">${widgetLabel}</h4>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">${fastingTitle} - ${fastingDesc}</p>
-                    </div>
+            <div onclick="vibrateSoft(); openFasting()" class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] flex items-center gap-4 border border-amber-100 dark:border-amber-900/40 shadow-sm relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all">
+                <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100/50 dark:border-amber-800/30">
+                    <i data-lucide="utensils-crossed" class="w-6 h-6"></i>
                 </div>
-                <div class="bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
-                    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Sunnah</span>
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <span class="text-[9px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest">${widgetLabel}</span>
+                        <span class="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-800"></span>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sunnah</span>
+                    </div>
+                    <h4 class="font-bold text-slate-800 dark:text-white text-base leading-tight">${fastingTitle}</h4>
+                    <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">${fastingDesc}</p>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-300 group-hover:text-amber-500 transition-colors">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
                 </div>
             </div>
         `;
         container.classList.remove('hidden');
-        // Proteksi render icon
-        if (window.lucide && container) {
-            try {
-                lucide.createIcons({ root: container });
-            } catch (e) { }
-        }
+        if (window.lucide) lucide.createIcons({ root: container });
     } else {
         container.classList.add('hidden');
     }
@@ -175,17 +175,14 @@ async function loadLastReadCard() {
     if (!state.currentUser) return;
     const container = document.getElementById('homeLastReadContainer');
     if (!container) return;
-
     try {
         const docRef = doc(db, "users", state.currentUser.uid, "quran", "last_read");
         const docSnap = await getDoc(docRef);
-
         if (docSnap.exists()) {
             const data = docSnap.data();
             window.lastReadData = data;
-
             container.innerHTML = `
-                <div onclick="continueReading()" class="bento-card relative w-full bg-white dark:bg-slate-900 rounded-[2rem] p-5 cursor-pointer group hover:border-emerald-300 dark:hover:border-emerald-700 transition-all">
+                <div onclick="continueReading()" class="bento-card relative w-full bg-white dark:bg-slate-900 rounded-[2rem] p-5 cursor-pointer group hover:border-emerald-300 dark:hover:border-emerald-700 transition-all border border-white dark:border-slate-800 shadow-sm">
                     <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-3xl -mr-5 -mt-5"></div>
                     <div class="flex items-center justify-between relative z-10">
                         <div class="flex items-center gap-4">
@@ -202,8 +199,7 @@ async function loadLastReadCard() {
                             <i data-lucide="arrow-right" class="w-5 h-5"></i>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
             container.classList.remove('hidden');
             if (window.lucide) lucide.createIcons({ root: container });
         } else {
@@ -215,122 +211,72 @@ async function loadLastReadCard() {
 function continueReading() {
     if (window.lastReadData) {
         const { surah, ayat } = window.lastReadData;
-        if (window.openQuran) {
-            window.openQuran();
-        } else {
-            window.location.href = '/quran';
-        }
-        setTimeout(() => {
-            if (window.openSurah) {
-                window.openSurah(surah, ayat);
-            }
-        }, 500);
+        if (typeof openQuran === 'function') openQuran();
+        setTimeout(() => { if (typeof openSurah === 'function') openSurah(surah, ayat); }, 500);
     }
 }
 
 function loadHomeRecords() {
     if (!state.currentUser) return;
-    const offset = state.currentDate.getTimezoneOffset();
-    const localDate = new Date(state.currentDate.getTime() - (offset * 60 * 1000));
-    const dateKey = localDate.toISOString().split('T')[0];
-
-    if (unsubscribeRecords) { unsubscribeRecords(); unsubscribeRecords = null; }
-
-    try {
-        unsubscribeRecords = onSnapshot(doc(db, "users", state.currentUser.uid, "daily_records", dateKey), (docSnap) => {
-            setTodayRecords(docSnap.exists() ? docSnap.data() : {});
-            renderTodayPrayers();
-        }, (error) => console.error("Gagal sync realtime:", error));
-    } catch (e) {
-        console.error("Error setting up snapshot listener:", e);
+    const dateKey = new Date(state.currentDate.getTime() - (state.currentDate.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+    if (unsubscribeRecords) unsubscribeRecords();
+    unsubscribeRecords = onSnapshot(doc(db, "users", state.currentUser.uid, "daily_records", dateKey), (docSnap) => {
+        setTodayRecords(docSnap.exists() ? docSnap.data() : {});
         renderTodayPrayers();
-    }
+    });
 }
 
 function renderTodayPrayers() {
     const container = document.getElementById('todayPrayerGrid');
     if (!container) return;
-
     const wajibPrayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
     let html = '';
-
     wajibPrayers.forEach((name) => {
         const time = state.prayerTimes[name] || '--:--';
         const isDone = state.todayRecords && state.todayRecords[name] === true;
-
-        let cardStyle, textNameStyle, textTimeStyle;
-
-        if (isDone) {
-            cardStyle = "bg-emerald-500 border-emerald-500 text-white shadow-sm";
-            textNameStyle = "text-emerald-50 font-bold";
-            textTimeStyle = "text-white";
-        } else {
-            cardStyle = "bg-white dark:bg-slate-800 border-slate-50 dark:border-slate-700 shadow-sm";
-            textNameStyle = "text-slate-400 dark:text-slate-500 font-bold";
-            textTimeStyle = "text-slate-800 dark:text-white";
-        }
-
+        let cardStyle = isDone ? "bg-emerald-500 border-emerald-500 text-white shadow-sm" : "bg-white dark:bg-slate-800 border-slate-50 dark:border-slate-700 shadow-sm";
+        let textNameStyle = isDone ? "text-emerald-50 font-bold" : "text-slate-400 dark:text-slate-500 font-bold";
+        let textTimeStyle = isDone ? "text-white" : "text-slate-800 dark:text-white";
         html += `
             <div class="flex flex-col items-center justify-center py-2 px-0.5 rounded-2xl border ${cardStyle} transition-all duration-300">
                 <span class="text-[8.5px] md:text-[11px] leading-none tracking-tighter ${textNameStyle}">${name}</span>
                 <span class="text-[11px] md:text-sm font-black font-mono ${textTimeStyle} mt-1">${time}</span>
             </div>`;
     });
-
     container.innerHTML = html;
-    if (window.lucide) lucide.createIcons({ root: container });
 }
 
 function refreshLocation() {
-    const text = document.getElementById('homeLocationText');
     const icon = document.getElementById('locIcon');
-
-    if (text) text.innerText = "Mencari...";
-    if (icon) {
-        icon.classList.add('animate-spin');
-        icon.setAttribute('data-lucide', 'loader-2');
-    }
-    if (window.lucide) lucide.createIcons();
+    if (icon) icon.classList.add('animate-spin');
     setTimeout(() => { getLocation(true); }, 500);
 }
 
 function getLocation(isManualRefresh = false) {
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                window.lastLat = pos.coords.latitude;
-                window.lastLng = pos.coords.longitude;
-                localStorage.setItem('last_lat', window.lastLat);
-                localStorage.setItem('last_lng', window.lastLng);
-                fetchJadwal(window.lastLat, window.lastLng);
-                fetchCityName(window.lastLat, window.lastLng);
-                if (isManualRefresh) resetLocationButton();
-            },
-            () => {
-                useDefaultLocation();
-                if (isManualRefresh) resetLocationButton();
-            }
-        );
-    } else {
-        useDefaultLocation();
-        if (isManualRefresh) resetLocationButton();
+        navigator.geolocation.getCurrentPosition((pos) => {
+            window.lastLat = pos.coords.latitude;
+            window.lastLng = pos.coords.longitude;
+            localStorage.setItem('last_lat', window.lastLat);
+            localStorage.setItem('last_lng', window.lastLng);
+            fetchJadwal(window.lastLat, window.lastLng);
+            fetchCityName(window.lastLat, window.lastLng);
+            if (isManualRefresh) resetLocationButton();
+        }, () => {
+            useDefaultLocation();
+            if (isManualRefresh) resetLocationButton();
+        });
     }
 }
 
 function resetLocationButton() {
     const icon = document.getElementById('locIcon');
-    if (icon) {
-        icon.classList.remove('animate-spin');
-        icon.setAttribute('data-lucide', 'map-pin');
-    }
-    if (window.lucide) lucide.createIcons();
+    if (icon) icon.classList.remove('animate-spin');
 }
 
 function useDefaultLocation() {
-    if (!state.lastCity || state.lastCity === "Menunggu GPS...") {
-        setLastCity("GPS Tidak Terdeteksi");
-        updateHomeUI();
-    }
+    if (!state.lastCity) setLastCity("Lokasi Belum Diatur");
+    updateHomeUI();
 }
 
 async function fetchCityName(lat, lng) {
@@ -341,45 +287,28 @@ async function fetchCityName(lat, lng) {
         setLastCity(cityName);
         localStorage.setItem('last_city_name', cityName);
         updateHomeUI();
-    } catch (e) {
-        if (!state.lastCity || state.lastCity === "Menunggu GPS...") {
-            setLastCity("Lokasi Terdeteksi");
-            updateHomeUI();
-        }
-    }
+    } catch (e) { console.error(e); }
 }
 
 async function fetchJadwal(lat, lng) {
-    if (typeof adhan === 'undefined') {
-        setTimeout(() => fetchJadwal(lat, lng), 500);
-        return;
-    }
+    if (typeof adhan === 'undefined') return;
     const coordinates = new adhan.Coordinates(lat, lng);
     const date = state.currentDate;
     const params = adhan.CalculationMethod.Singapore();
-    params.madhab = adhan.Madhab.Shafi;
-    params.fajrAngle = 20;
-    params.ishaAngle = 18;
     const prayerTimes = new adhan.PrayerTimes(coordinates, date, params);
     const timeFormat = (t) => t.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
-    const dhuhaTime = new Date(prayerTimes.sunrise.getTime() + (20 * 60000));
-    const newTimes = {
+    setPrayerTimes({
         Subuh: timeFormat(prayerTimes.fajr),
-        Dhuha: timeFormat(dhuhaTime),
         Dzuhur: timeFormat(prayerTimes.dhuhr),
         Ashar: timeFormat(prayerTimes.asr),
         Maghrib: timeFormat(prayerTimes.maghrib),
-        Isya: timeFormat(prayerTimes.isha),
-        Tahajud: '03:00'
-    };
-    setPrayerTimes(newTimes);
+        Isya: timeFormat(prayerTimes.isha)
+    });
     const hEl = document.getElementById('hijriDisplay');
-    // Menggunakan getHijriDate dari date-utils
     if (hEl) hEl.innerText = getHijriDate(date).full;
     updateNextPrayer();
     renderTodayPrayers();
     loadFastingWidget();
-    window.dispatchEvent(new Event('prayerTimesUpdated'));
 }
 
 function updateNextPrayer() {
@@ -389,7 +318,6 @@ function updateNextPrayer() {
     const now = new Date();
     const curTime = now.getHours() * 60 + now.getMinutes();
     let nextP = null;
-    let minDiff = 9999;
     const timesToCheck = [
         { name: 'Subuh', time: state.prayerTimes.Subuh },
         { name: 'Dzuhur', time: state.prayerTimes.Dzuhur },
@@ -398,12 +326,11 @@ function updateNextPrayer() {
         { name: 'Isya', time: state.prayerTimes.Isya }
     ];
     for (let p of timesToCheck) {
-        if (!p.time || p.time === '--:--') continue;
+        if (!p.time) continue;
         const [h, m] = p.time.split(':').map(Number);
-        const pTime = h * 60 + m;
-        if (pTime > curTime && (pTime - curTime) < minDiff) { minDiff = pTime - curTime; nextP = p; }
+        if (h * 60 + m > curTime) { nextP = p; break; }
     }
-    if (!nextP) nextP = { name: 'Subuh', time: state.prayerTimes.Subuh || "Besok" };
+    if (!nextP) nextP = { name: 'Subuh', time: state.prayerTimes.Subuh };
     nameEl.innerText = nextP.name;
     timeEl.innerText = nextP.time;
     startCountdown(nextP.time);
@@ -412,26 +339,18 @@ function updateNextPrayer() {
 function startCountdown(targetTimeStr) {
     if (countdownInterval) clearInterval(countdownInterval);
     const countEl = document.getElementById('countdownTimer');
-    if (!countEl || !targetTimeStr || targetTimeStr === '--:--') return;
     const [h, m] = targetTimeStr.split(':').map(Number);
-    function tick() {
+    countdownInterval = setInterval(() => {
         const now = new Date();
         let target = new Date();
         target.setHours(h, m, 0, 0);
         if (target < now) target.setDate(target.getDate() + 1);
         const diff = target - now;
-        if (diff <= 0) {
-            countEl.innerText = "Waktunya Sholat!";
-            setTimeout(() => { fetchJadwal(window.lastLat, window.lastLng); }, 2000);
-            return;
-        }
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        countEl.innerText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
-    tick();
-    countdownInterval = setInterval(tick, 1000);
+        const hh = Math.floor(diff / 3600000);
+        const mm = Math.floor((diff % 3600000) / 60000);
+        const ss = Math.floor((diff % 60000) / 1000);
+        if (countEl) countEl.innerText = `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`;
+    }, 1000);
 }
 
 function initTheme() {
@@ -439,29 +358,14 @@ function initTheme() {
     applyTheme();
 }
 
-// Tambahkan proteksi pada applyTheme
 function applyTheme() {
-    const html = document.documentElement;
-    if (!html) return; // Proteksi awal
-    
-    if (isDarkMode) html.classList.add('dark');
-    else html.classList.remove('dark');
-    
-    // Perbaikan: Panggil lucide hanya jika elemen sudah siap di DOM
-    if (window.lucide) {
-        try {
-            lucide.createIcons(); 
-        } catch (e) { console.warn("Lucide belum siap di applyTheme"); }
-    }
+    if (isDarkMode) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+    if (window.lucide) lucide.createIcons();
 }
 
 async function toggleDarkMode() {
     isDarkMode = !isDarkMode;
-    const themeStr = isDarkMode ? 'dark' : 'light';
-    localStorage.setItem('valdi_theme', themeStr);
+    localStorage.setItem('valdi_theme', isDarkMode ? 'dark' : 'light');
     applyTheme();
-    if (state.currentUser) {
-        try { await setDoc(doc(db, "users", state.currentUser.uid, "settings", "preferences"), { theme: themeStr }, { merge: true }); }
-        catch (e) { console.error(e); }
-    }
 }
