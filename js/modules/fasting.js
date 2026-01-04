@@ -56,7 +56,7 @@ function renderTodayFasting(date, hijri, masehi, isBesok = false) {
         const isWajib = type === "Puasa Ramadhan";
         let fastingDesc = isBesok 
             ? "Siapkan niat untuk berpuasa esok hari ya." 
-            : "Semangat menjalankan ibadah puasa, Valdi!";
+            : "Semangat menjalankan ibadah puasa!";
 
         container.innerHTML = `
             <div onclick="vibrateSoft(); openNiatModal('${niatKey}')" class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] flex items-center gap-4 border border-amber-100 dark:border-amber-900/40 shadow-sm relative overflow-hidden group cursor-pointer active:scale-95 transition-all w-full">
@@ -84,7 +84,7 @@ function renderTodayFasting(date, hijri, masehi, isBesok = false) {
                     <div>
                         <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full mb-1 inline-block">${labelDate}</span>
                         <h4 class="text-base font-black text-slate-800 dark:text-white leading-tight">Tidak Ada Jadwal</h4>
-                        <p class="text-[10px] font-medium text-slate-400 mt-1">Gunakan hari ini untuk ibadah lainnya, Valdi!</p>
+                        <p class="text-[10px] font-medium text-slate-400 mt-1">Gunakan hari ini untuk ibadah lainnya!</p>
                     </div>
                 </div>
             </div>`;

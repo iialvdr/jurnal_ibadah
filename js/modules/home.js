@@ -126,7 +126,7 @@ function loadFastingWidget() {
             if (isSenin) fastingTitle = "Puasa Sunnah Senin";
             else if (isKamis) fastingTitle = "Puasa Sunnah Kamis";
             else if (isAyyamulBidh) fastingTitle = "Puasa Ayyamul Bidh";
-            fastingDesc = "Selamat menjalankan ibadah puasa, Valdi!";
+            fastingDesc = "Selamat menjalankan ibadah puasa!";
         }
     } else {
         const nextDay = tomorrow.getDay();
