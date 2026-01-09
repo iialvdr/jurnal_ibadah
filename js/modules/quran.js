@@ -9,7 +9,7 @@ let activeBtn = null;
 let lastReadData = null;
 let lastScrollTop = 0;
 let currentTafsirData = null;
-let nextAudioPreload = null; // Untuk menyimpan buffer ayat berikutnya
+let nextAudioPreload = null; 
 
 function searchSurah(query) {
     const lowerQ = query.toLowerCase();
@@ -31,6 +31,18 @@ export function initQuran() {
     window.toggleTafsir = toggleTafsir;
 
     renderSkeleton();
+
+    // Fix Refresh: Ambil bookmark ulang setiap kali view Quran aktif
+    window.addEventListener('viewChanged', async (e) => {
+        if (e.detail.viewId === 'quranView') {
+            await fetchLastRead();
+            if (allSurahs.length > 0) {
+                renderSurahList(allSurahs);
+            } else {
+                fetchSurahList();
+            }
+        }
+    });
 
     const view = document.getElementById('quranView');
     const searchContainer = document.getElementById('quranSearchContainer');
@@ -99,7 +111,7 @@ async function fetchSurahList() {
     if (loader && allSurahs.length === 0) loader.classList.remove('hidden-force');
 
     try {
-        if (state.currentUser && !lastReadData) await fetchLastRead();
+        await fetchLastRead();
         const response = await fetch('https://equran.id/api/v2/surat');
         const result = await response.json();
         if (result.code === 200) {
@@ -118,8 +130,14 @@ async function fetchLastRead() {
     try {
         const docRef = doc(db, "users", state.currentUser.uid, "quran", "last_read");
         const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) lastReadData = docSnap.data();
-    } catch (e) { console.error("Bookmark error:", e); }
+        if (docSnap.exists()) {
+            lastReadData = docSnap.data();
+        } else {
+            lastReadData = null;
+        }
+    } catch (e) { 
+        console.error("Bookmark error:", e); 
+    }
 }
 
 function renderSurahList(data) {
@@ -249,7 +267,7 @@ async function openSurah(nomor, targetAyah = null, surahName = null) {
             renderAyahs(data.ayat, data.namaLatin);
             if (navButtons) navButtons.classList.remove('translate-y-40');
 
-            if (targetAyah) {
+            if (targetAyah && targetAyah !== 'null') {
                 setTimeout(() => {
                     const el = document.getElementById(`ayah-${targetAyah}`);
                     if (el && ayahContainer) {
@@ -292,7 +310,6 @@ function playAudio(url, btnElement, ayatNum) {
 
     stopCurrentAudio();
 
-    // Gunakan preloaded audio jika tersedia, jika tidak buat baru
     let audio = nextAudioPreload && nextAudioPreload.src === url ? nextAudioPreload : new Audio(url);
     audio.preload = "auto";
     activeAudio = audio;
@@ -302,7 +319,6 @@ function playAudio(url, btnElement, ayatNum) {
     icon.setAttribute('data-lucide', 'pause');
     if (window.lucide) lucide.createIcons();
 
-    // --- PRELOAD AYAT BERIKUTNYA ---
     const nextAyatNum = ayatNum + 1;
     const nextBtn = document.querySelector(`#ayah-${nextAyatNum} .play-audio-btn`);
     if (nextBtn) {
@@ -313,16 +329,10 @@ function playAudio(url, btnElement, ayatNum) {
 
     audio.onended = () => {
         stopCurrentAudio();
-
-        // --- SEAMLESS TRANSITION ---
         if (nextBtn) {
             const nextCard = document.getElementById(`ayah-${nextAyatNum}`);
             const ayahContainer = document.getElementById('ayahListContainer');
-
-            // Panggil playAudio langsung tanpa delay
             playAudio(nextBtn.getAttribute('data-audio-url'), nextBtn, nextAyatNum);
-
-            // Smooth Scroll presisi ke atas
             if (nextCard && ayahContainer) {
                 const offset = 120;
                 ayahContainer.scrollTo({
@@ -366,6 +376,9 @@ async function toggleBookmark(surahNum, ayatNum, surahName) {
         lastReadData = { surah: surahNum, ayat: ayatNum, name: surahName, timestamp: new Date() };
         try { await setDoc(doc(db, "users", state.currentUser.uid, "quran", "last_read"), lastReadData); } catch (e) { }
     }
+
+    // Beritahu sistem bahwa bookmark berubah (untuk update Home UI)
+    window.dispatchEvent(new CustomEvent('bookmarkUpdated'));
 
     renderSurahList(allSurahs);
 

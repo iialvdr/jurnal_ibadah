@@ -364,8 +364,16 @@ function applyTheme() {
     if (window.lucide) lucide.createIcons();
 }
 
-async function toggleDarkMode() {
+export async function toggleDarkMode() {
     isDarkMode = !isDarkMode;
     localStorage.setItem('valdi_theme', isDarkMode ? 'dark' : 'light');
     applyTheme();
+    if (state.currentUser) {
+        try {
+            const docRef = doc(db, "users", state.currentUser.uid, "settings", "preferences");
+            await setDoc(docRef, { theme: isDarkMode ? 'dark' : 'light' }, { merge: true });
+        } catch (e) {
+            console.error("Gagal menyimpan tema ke Cloud:", e);
+        }
+    }
 }
