@@ -27,16 +27,13 @@ window.vibrateSuccess = () => { if (navigator.vibrate) navigator.vibrate([10, 30
  */
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js', { scope: './' })
+        navigator.serviceWorker.register('./sw.js', { scope: './', type: 'module' })
             .then(reg => {
                 console.log('SW Registered:', reg.scope);
-                
-                // Cek update secara berkala setiap kali aplikasi dibuka
                 reg.update();
             })
             .catch(err => console.error('SW Registration Failed:', err));
 
-        // Deteksi jika Service Worker baru mengambil kendali (karena skipWaiting)
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (refreshing) return;
