@@ -100,6 +100,9 @@ self.addEventListener('activate', event => {
           }
         })
       );
+    }).then(() => {
+      // Mengambil kendali atas semua klien/halaman segera setelah SW aktif
+      return self.clients.claim();
     })
   );
 });

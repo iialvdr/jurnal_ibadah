@@ -23,6 +23,31 @@ window.vibrateSoft = () => { if (navigator.vibrate) navigator.vibrate(10); };
 window.vibrateSuccess = () => { if (navigator.vibrate) navigator.vibrate([10, 30, 10]); };
 
 /**
+ * Registrasi Service Worker dengan deteksi update otomatis
+ */
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+            .then(reg => {
+                console.log('SW Registered:', reg.scope);
+                
+                // Cek update secara berkala setiap kali aplikasi dibuka
+                reg.update();
+            })
+            .catch(err => console.error('SW Registration Failed:', err));
+
+        // Deteksi jika Service Worker baru mengambil kendali (karena skipWaiting)
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (refreshing) return;
+            refreshing = true;
+            console.log('Versi baru ditemukan, memuat ulang halaman...');
+            window.location.reload();
+        });
+    }
+}
+
+/**
  * Fungsi baru untuk sinkronisasi warna Status Bar sistem
  */
 function updateStatusBarColor() {
@@ -152,4 +177,8 @@ function initializeApp() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', loadAllViews);
+// Daftarkan Service Worker dan Muat Views
+document.addEventListener('DOMContentLoaded', () => {
+    registerServiceWorker();
+    loadAllViews();
+});
