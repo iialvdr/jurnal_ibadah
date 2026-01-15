@@ -3,8 +3,9 @@ import { signOut, updateProfile, updatePassword, EmailAuthProvider, linkWithCred
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { state } from '../state.js';
 import { APP_VERSION } from '../version.js';
-// Import fungsi satpam dari auth.js
+// Import fungsi satpam dari auth.js dan fungsi toggle dari home.js
 import { handleLinkGoogle } from './auth.js';
+import { toggleNotifications } from './home.js';
 
 let activityChart = null;
 let isChartLibLoaded = false;
@@ -255,6 +256,16 @@ function setupEditProfileListeners() {
 
     const dmToggle = document.getElementById('darkModeToggleProfile');
     if (dmToggle) dmToggle.addEventListener('change', () => { if (window.toggleDarkMode) window.toggleDarkMode(); });
+
+    // Listener baru untuk saklar notifikasi
+    const notifToggle = document.getElementById('notificationToggleProfile');
+    if (notifToggle) {
+        notifToggle.addEventListener('change', async () => {
+            const newState = await toggleNotifications();
+            // Sinkronkan kembali jika izin browser ditolak di tengah jalan
+            notifToggle.checked = newState;
+        });
+    }
 }
 
 async function loadChartLibrary() { if (isChartLibLoaded || typeof Chart !== 'undefined') return true; return new Promise((resolve) => { const script = document.createElement('script'); script.src = 'https://cdn.jsdelivr.net/npm/chart.js'; script.onload = () => { isChartLibLoaded = true; resolve(true); }; script.onerror = () => resolve(false); document.head.appendChild(script); }); }
@@ -389,6 +400,30 @@ function renderChart(labels, data) {
 }
 
 function setupLogoutListeners() { const logoutBtn = document.getElementById('logoutBtnProfile'); const cancelBtn = document.getElementById('cancelLogoutBtn'); const confirmBtn = document.getElementById('confirmLogoutBtn'); if (logoutBtn) logoutBtn.addEventListener('click', () => toggleLogoutModal(true)); if (cancelBtn) cancelBtn.addEventListener('click', () => toggleLogoutModal(false)); if (confirmBtn) confirmBtn.addEventListener('click', async () => { toggleLogoutModal(false); try { await signOut(auth); window.location.reload(); } catch (e) { console.error(e); } }); }
-function openEditProfile() { const user = state.currentUser; if (!user) return; const modal = document.getElementById('editProfileModal'); const content = document.getElementById('editProfileContent'); const input = document.getElementById('editNameInput'); const dmToggle = document.getElementById('darkModeToggleProfile'); if (input) input.value = user.displayName || ""; if (dmToggle) dmToggle.checked = document.documentElement.classList.contains('dark'); if (modal) { modal.classList.remove('invisible', 'pointer-events-none'); document.getElementById('editProfileBackdrop').classList.add('opacity-100'); content.classList.remove('translate-y-full'); } }
+
+function openEditProfile() { 
+    const user = state.currentUser; 
+    if (!user) return; 
+    const modal = document.getElementById('editProfileModal'); 
+    const content = document.getElementById('editProfileContent'); 
+    const input = document.getElementById('editNameInput'); 
+    const dmToggle = document.getElementById('darkModeToggleProfile'); 
+    const notifToggle = document.getElementById('notificationToggleProfile');
+
+    if (input) input.value = user.displayName || ""; 
+    if (dmToggle) dmToggle.checked = document.documentElement.classList.contains('dark'); 
+    
+    // Set status toggle notifikasi berdasarkan localStorage
+    if (notifToggle) {
+        notifToggle.checked = localStorage.getItem('jurnal_notifications') === 'true';
+    }
+
+    if (modal) { 
+        modal.classList.remove('invisible', 'pointer-events-none'); 
+        document.getElementById('editProfileBackdrop').classList.add('opacity-100'); 
+        content.classList.remove('translate-y-full'); 
+    } 
+}
+
 function closeEditProfile() { const modal = document.getElementById('editProfileModal'); const content = document.getElementById('editProfileContent'); if (modal) { document.getElementById('editProfileBackdrop').classList.remove('opacity-100'); content.classList.add('translate-y-full'); setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 500); } }
 function toggleLogoutModal(show) { const modal = document.getElementById('logoutModal'); const content = document.getElementById('logoutModalContent'); if (!modal) return; if (show) { modal.classList.remove('invisible', 'pointer-events-none'); document.getElementById('logoutBackdrop').classList.add('opacity-100'); content.classList.remove('scale-90', 'opacity-0'); } else { document.getElementById('logoutBackdrop').classList.remove('opacity-100'); content.classList.add('scale-90', 'opacity-0'); setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 300); } }

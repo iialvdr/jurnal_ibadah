@@ -6,16 +6,20 @@ import { APP_VERSION } from '../version.js';
 import { getHijriDate } from '../utils/date-utils.js';
 
 let isDarkMode = false;
+let isNotificationActive = true; // Default aktif
 let countdownInterval = null;
 let unsubscribeRecords = null;
+let lastNotifiedPrayer = null;
 
 export function initHome() {
     window.refreshLocation = refreshLocation;
     window.toggleDarkMode = toggleDarkMode;
+    window.toggleNotifications = toggleNotifications; // Daftarkan fungsi toggle baru
     window.continueReading = continueReading;
     window.openFasting = () => switchView('fastingView');
 
     initTheme();
+    initNotificationPreference(); // Inisialisasi preferensi notifikasi
     loadCachedLocation();
     getLocation();
 
@@ -76,6 +80,9 @@ function loadCachedLocation() {
     }
 }
 
+/**
+ * Sinkronisasi Tema dan Notifikasi dari Cloud
+ */
 export async function syncThemeWithCloud() {
     if (!state.currentUser) return;
     try {
@@ -83,13 +90,21 @@ export async function syncThemeWithCloud() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
             const data = docSnap.data();
+            
+            // Sinkronisasi Tema
             if (data.theme) {
                 isDarkMode = data.theme === 'dark';
                 localStorage.setItem('valdi_theme', data.theme);
                 applyTheme();
             }
+
+            // Sinkronisasi Notifikasi
+            if (typeof data.notifications === 'boolean') {
+                isNotificationActive = data.notifications;
+                localStorage.setItem('jurnal_notifications', isNotificationActive);
+            }
         }
-    } catch (e) { console.error("Gagal sinkronisasi tema:", e); }
+    } catch (e) { console.error("Gagal sinkronisasi preferensi:", e); }
 }
 
 function loadFastingWidget() {
@@ -144,7 +159,6 @@ function loadFastingWidget() {
     }
 
     if (fastingTitle) {
-        // Tampilan yang lebih halus & tidak terlalu mencolok
         container.innerHTML = `
             <div onclick="vibrateSoft(); openFasting()" class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] flex items-center gap-4 border border-amber-100 dark:border-amber-900/40 shadow-sm relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all">
                 <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100/50 dark:border-amber-800/30">
@@ -336,6 +350,44 @@ function updateNextPrayer() {
     startCountdown(nextP.time);
 }
 
+/**
+ * Pengecekan notifikasi dengan verifikasi status aktif/mati
+ */
+function checkPrayerNotification() {
+    // Berhenti jika izin browser tidak ada atau notifikasi dimatikan oleh user
+    if (Notification.permission !== 'granted' || !isNotificationActive) return;
+
+    const now = new Date();
+    const currentTimeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+    
+    const prayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
+    
+    prayers.forEach(name => {
+        const prayerTime = state.prayerTimes[name];
+        if (prayerTime === currentTimeStr && lastNotifiedPrayer !== name) {
+            sendLocalNotification(`Waktu Sholat ${name}`, `Panggilan sholat ${name} telah tiba untuk wilayah ${state.lastCity}.`);
+            lastNotifiedPrayer = name;
+        }
+    });
+
+    if (currentTimeStr === "00:00") lastNotifiedPrayer = null;
+}
+
+function sendLocalNotification(title, body) {
+    if ('serviceWorker' in navigator && Notification.permission === 'granted') {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification(title, {
+                body: body,
+                icon: './assets/favicon/android-chrome-192x192.png',
+                badge: './assets/favicon/favicon-32x32.png',
+                vibrate: [200, 100, 200],
+                tag: 'prayer-reminder',
+                renotify: true
+            });
+        });
+    }
+}
+
 function startCountdown(targetTimeStr) {
     if (countdownInterval) clearInterval(countdownInterval);
     const countEl = document.getElementById('countdownTimer');
@@ -350,12 +402,24 @@ function startCountdown(targetTimeStr) {
         const mm = Math.floor((diff % 3600000) / 60000);
         const ss = Math.floor((diff % 60000) / 1000);
         if (countEl) countEl.innerText = `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`;
+        
+        checkPrayerNotification();
     }, 1000);
 }
 
 function initTheme() {
     isDarkMode = localStorage.getItem('valdi_theme') === 'dark';
     applyTheme();
+}
+
+/**
+ * Inisialisasi preferensi notifikasi dari LocalStorage
+ */
+function initNotificationPreference() {
+    const saved = localStorage.getItem('jurnal_notifications');
+    if (saved !== null) {
+        isNotificationActive = saved === 'true';
+    }
 }
 
 function applyTheme() {
@@ -372,8 +436,33 @@ export async function toggleDarkMode() {
         try {
             const docRef = doc(db, "users", state.currentUser.uid, "settings", "preferences");
             await setDoc(docRef, { theme: isDarkMode ? 'dark' : 'light' }, { merge: true });
-        } catch (e) {
-            console.error("Gagal menyimpan tema ke Cloud:", e);
+        } catch (e) { console.error("Gagal menyimpan tema:", e); }
+    }
+}
+
+/**
+ * Fungsi untuk menyalakan/mematikan notifikasi
+ */
+export async function toggleNotifications() {
+    isNotificationActive = !isNotificationActive;
+    localStorage.setItem('jurnal_notifications', isNotificationActive);
+    
+    // Feedback jika dinyalakan tapi izin browser belum ada
+    if (isNotificationActive && Notification.permission !== 'granted') {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            isNotificationActive = false;
+            localStorage.setItem('jurnal_notifications', false);
+            alert("Izin notifikasi diblokir oleh browser. Silakan aktifkan di pengaturan browser Anda.");
         }
     }
+
+    if (state.currentUser) {
+        try {
+            const docRef = doc(db, "users", state.currentUser.uid, "settings", "preferences");
+            await setDoc(docRef, { notifications: isNotificationActive }, { merge: true });
+        } catch (e) { console.error("Gagal menyimpan preferensi notifikasi:", e); }
+    }
+
+    return isNotificationActive;
 }

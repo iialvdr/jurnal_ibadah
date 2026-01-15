@@ -180,16 +180,29 @@
                     <input type="text" id="editNameInput" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-3.5 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 transition shadow-inner">
                 </div>
 
-                <label class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer group hover:border-emerald-500/30 transition-colors">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-slate-500 shadow-sm"><i data-lucide="moon" class="w-4 h-4"></i></div>
-                        <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Dark Mode</span>
-                    </div>
-                    <div class="relative inline-flex items-center">
-                        <input type="checkbox" id="darkModeToggleProfile" class="sr-only peer">
-                        <div class="relative w-11 h-6 bg-slate-200 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:bg-emerald-500 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                    </div>
-                </label>
+                <div class="space-y-3">
+                    <label class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer group hover:border-emerald-500/30 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-slate-500 shadow-sm"><i data-lucide="moon" class="w-4 h-4"></i></div>
+                            <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Dark Mode</span>
+                        </div>
+                        <div class="relative inline-flex items-center">
+                            <input type="checkbox" id="darkModeToggleProfile" class="sr-only peer">
+                            <div class="relative w-11 h-6 bg-slate-200 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:bg-emerald-500 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                        </div>
+                    </label>
+
+                    <label class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer group hover:border-emerald-500/30 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-slate-500 shadow-sm"><i data-lucide="bell" class="w-4 h-4"></i></div>
+                            <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Notifikasi Sholat</span>
+                        </div>
+                        <div class="relative inline-flex items-center">
+                            <input type="checkbox" id="notificationToggleProfile" class="sr-only peer">
+                            <div class="relative w-11 h-6 bg-slate-200 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:bg-emerald-500 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                        </div>
+                    </label>
+                </div>
 
                 <div class="pt-5 border-t border-slate-100 dark:border-slate-800">
                     <label class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest block ml-1 mb-3">Keamanan & Akses</label>

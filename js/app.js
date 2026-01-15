@@ -45,6 +45,20 @@ function registerServiceWorker() {
 }
 
 /**
+ * Meminta izin notifikasi kepada pengguna
+ */
+async function requestNotificationPermission() {
+    if (!('Notification' in window)) return;
+    
+    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            console.log('Izin notifikasi diberikan');
+        }
+    }
+}
+
+/**
  * Fungsi baru untuk sinkronisasi warna Status Bar sistem
  */
 function updateStatusBarColor() {
@@ -144,6 +158,8 @@ function initializeApp() {
             if (loginOverlay) loginOverlay.classList.add('hidden-force');
 
             setupRouter();
+            // Minta izin notifikasi setelah login jika user mengizinkan secara global
+            requestNotificationPermission();
         } else {
             setCurrentUser(null);
             if (window.location.pathname !== '/' && window.location.pathname !== '/home') {
@@ -169,7 +185,6 @@ function initializeApp() {
             }, 500);
         }
 
-        // Panggil sekali saat start
         updateStatusBarColor();
     });
 }
