@@ -1,92 +1,204 @@
-<div id="loginOverlay" class="absolute inset-0 z-[100] flex flex-col items-center justify-center p-6 transition-all duration-500 bg-slate-50 dark:bg-slate-950 overflow-hidden">
-    
-    <div id="floatingToast" class="fixed top-8 left-1/2 -translate-x-1/2 z-[200] transition-all duration-500 transform opacity-0 -translate-y-10 pointer-events-none">
-        <div class="flex items-center gap-3 px-5 py-4 bg-rose-500/90 dark:bg-rose-600/90 backdrop-blur-xl shadow-2xl rounded-2xl border border-white/20 min-w-[300px] max-w-[90vw]">
-            <div class="shrink-0 bg-white/20 p-2 rounded-full animate-pulse">
-                <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
+<div
+  id="loginOverlay"
+  class="absolute inset-0 z-[100] flex flex-col items-center justify-center p-6 transition-all duration-500 bg-slate-50 dark:bg-slate-950 overflow-hidden"
+>
+  <div
+    id="floatingToast"
+    class="fixed top-8 left-1/2 -translate-x-1/2 z-[200] transition-all duration-500 transform opacity-0 -translate-y-10 pointer-events-none"
+  >
+    <div
+      class="flex items-center gap-3 px-5 py-4 bg-rose-500/90 dark:bg-rose-600/90 backdrop-blur-xl shadow-2xl rounded-2xl border border-white/20 min-w-[300px] max-w-[90vw]"
+    >
+      <div class="shrink-0 bg-white/20 p-2 rounded-full animate-pulse">
+        <svg
+          class="w-5 h-5 text-white"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2.5"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+          />
+        </svg>
+      </div>
+      <div class="flex-1">
+        <h4
+          class="text-[10px] font-black uppercase tracking-widest text-white mb-0.5"
+        >
+          Perhatian
+        </h4>
+        <p
+          id="toastMessage"
+          class="text-[11px] font-semibold text-white/95 leading-snug"
+        >
+          Pesan error akan muncul di sini.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="fixed top-0 left-0 right-0 h-full w-full pointer-events-none z-0">
+    <div
+      class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-full blur-[100px] animate-pulse"
+    ></div>
+    <div
+      class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-teal-500/10 rounded-full blur-[100px] animate-pulse"
+      style="animation-delay: 2s"
+    ></div>
+  </div>
+
+  <div
+    class="relative w-full max-w-[320px] group transition-all duration-500 z-10"
+  >
+    <div
+      class="absolute -inset-1 bg-gradient-to-b from-emerald-500/20 to-teal-500/20 rounded-[2.5rem] blur-2xl opacity-50 group-hover:opacity-100 transition duration-1000"
+    ></div>
+
+    <div
+      class="relative w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-white dark:border-slate-800 shadow-2xl rounded-[2.5rem] p-6 overflow-hidden"
+    >
+      <div class="flex flex-col items-center text-center mb-6">
+        <img
+          src="img/logo.png"
+          class="w-16 h-16 mb-4 rounded-full object-contain shadow-sm border border-white/50 dark:border-slate-700/50"
+          alt="Logo"
+        />
+        <h1
+          class="text-xl font-black text-slate-800 dark:text-white tracking-tighter"
+        >
+          Jurnal Ibadah
+        </h1>
+      </div>
+
+      <div
+        id="toggleContainer"
+        class="relative w-full bg-slate-100 dark:bg-slate-800/50 p-1 rounded-2xl mb-6 flex items-center"
+      >
+        <div
+          id="authGlider"
+          class="absolute top-1 left-1 h-[calc(100%-8px)] w-[calc(50%-4px)] bg-white dark:bg-slate-700 rounded-xl shadow-md transition-all duration-300 ease-in-out translate-x-0"
+        ></div>
+
+        <button
+          onclick="toggleAuth(false)"
+          class="relative z-10 flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-white transition-colors duration-300"
+        >
+          Masuk
+        </button>
+        <button
+          onclick="toggleAuth(true)"
+          class="relative z-10 flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors duration-300"
+        >
+          Daftar
+        </button>
+      </div>
+
+      <div id="authWindow" class="w-full overflow-hidden">
+        <div
+          id="authTrack"
+          class="flex w-[200%] transition-transform duration-300 ease-in-out translate-x-0"
+        >
+          <div class="w-1/2 flex flex-col items-center px-1">
+            <div class="w-full space-y-2.5">
+              <input
+                type="email"
+                id="emailLogin"
+                class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all"
+                placeholder="EMAIL"
+              />
+              <input
+                type="password"
+                id="passwordLogin"
+                class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all"
+                placeholder="PASSWORD"
+              />
+              <button
+                id="btnLoginAction"
+                class="w-full py-3.5 rounded-xl bg-slate-800 dark:bg-slate-700 text-white font-black text-[10px] uppercase tracking-widest hover:bg-slate-900 transition active:scale-95 shadow-lg"
+              >
+                Masuk Sekarang
+              </button>
+              <button
+                id="forgotPasswordBtn"
+                class="w-full text-[9px] font-black text-slate-400 hover:text-emerald-500 transition uppercase tracking-tighter text-center"
+              >
+                Lupa Password?
+              </button>
             </div>
-            <div class="flex-1">
-                <h4 class="text-[10px] font-black uppercase tracking-widest text-white mb-0.5">Perhatian</h4>
-                <p id="toastMessage" class="text-[11px] font-semibold text-white/95 leading-snug">Pesan error akan muncul di sini.</p>
+          </div>
+
+          <div class="w-1/2 flex flex-col items-center px-1">
+            <div class="w-full space-y-2.5">
+              <input
+                type="email"
+                id="emailSignup"
+                class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all"
+                placeholder="EMAIL BARU"
+              />
+              <input
+                type="password"
+                id="passwordSignup"
+                class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all"
+                placeholder="BUAT PASSWORD"
+              />
+              <button
+                id="btnSignupAction"
+                class="w-full py-3.5 rounded-xl bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 transition active:scale-95 shadow-lg"
+              >
+                Buat Akun Baru
+              </button>
             </div>
+          </div>
         </div>
-    </div>
+      </div>
 
-    <div class="fixed top-0 left-0 right-0 h-full w-full pointer-events-none z-0">
-        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-full blur-[100px] animate-pulse"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-teal-500/10 rounded-full blur-[100px] animate-pulse" style="animation-delay: 2s;"></div>
-    </div>
-
-    <div class="relative w-full max-w-[320px] group transition-all duration-500 z-10">
-        <div class="absolute -inset-1 bg-gradient-to-b from-emerald-500/20 to-teal-500/20 rounded-[2.5rem] blur-2xl opacity-50 group-hover:opacity-100 transition duration-1000"></div>
-        
-        <div class="relative w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-white dark:border-slate-800 shadow-2xl rounded-[2.5rem] p-6 overflow-hidden">
-            
-            <div class="flex flex-col items-center text-center mb-6">
-                <img src="assets/logo.png" class="w-16 h-16 mb-4 rounded-full object-contain shadow-sm border border-white/50 dark:border-slate-700/50" alt="Logo">
-                <h1 class="text-xl font-black text-slate-800 dark:text-white tracking-tighter">Jurnal Ibadah</h1>
-            </div>
-
-            <div id="toggleContainer" class="relative w-full bg-slate-100 dark:bg-slate-800/50 p-1 rounded-2xl mb-6 flex items-center">
-                <div id="authGlider" class="absolute top-1 left-1 h-[calc(100%-8px)] w-[calc(50%-4px)] bg-white dark:bg-slate-700 rounded-xl shadow-md transition-all duration-300 ease-in-out translate-x-0"></div>
-                
-                <button onclick="toggleAuth(false)" class="relative z-10 flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-white transition-colors duration-300">Masuk</button>
-                <button onclick="toggleAuth(true)" class="relative z-10 flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors duration-300">Daftar</button>
-            </div>
-
-            <div id="authWindow" class="w-full overflow-hidden">
-                <div id="authTrack" class="flex w-[200%] transition-transform duration-300 ease-in-out translate-x-0">
-                    
-                    <div class="w-1/2 flex flex-col items-center px-1">
-                        <div class="w-full space-y-2.5">
-                            <input type="email" id="emailLogin" class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all" placeholder="EMAIL">
-                            <input type="password" id="passwordLogin" class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all" placeholder="PASSWORD">
-                            <button id="btnLoginAction" class="w-full py-3.5 rounded-xl bg-slate-800 dark:bg-slate-700 text-white font-black text-[10px] uppercase tracking-widest hover:bg-slate-900 transition active:scale-95 shadow-lg">Masuk Sekarang</button>
-                            <button id="forgotPasswordBtn" class="w-full text-[9px] font-black text-slate-400 hover:text-emerald-500 transition uppercase tracking-tighter text-center">Lupa Password?</button>
-                        </div>
-                    </div>
-
-                    <div class="w-1/2 flex flex-col items-center px-1">
-                        <div class="w-full space-y-2.5">
-                            <input type="email" id="emailSignup" class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all" placeholder="EMAIL BARU">
-                            <input type="password" id="passwordSignup" class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all" placeholder="BUAT PASSWORD">
-                            <button id="btnSignupAction" class="w-full py-3.5 rounded-xl bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 transition active:scale-95 shadow-lg">Buat Akun Baru</button>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <div class="w-full mt-4">
-                <div class="flex items-center gap-3 my-3 opacity-20">
-                    <div class="h-[1px] flex-1 bg-slate-400"></div>
-                    <span class="text-[8px] font-black uppercase">Atau</span>
-                    <div class="h-[1px] flex-1 bg-slate-400"></div>
-                </div>
-
-                <p class="text-center text-[9px] font-bold text-slate-400 dark:text-slate-500 mb-2 tracking-wide">
-                    Ingin lebih praktis? Gunakan akun Google
-                </p>
-                
-                <button id="googleLoginBtn" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 py-3.5 rounded-xl transition active:scale-95 flex flex-row-reverse items-center justify-center gap-3 group/btn">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-white pointer-events-none">
-                        Masuk via Google
-                    </span>
-
-                    <div class="shrink-0 bg-slate-100 dark:bg-slate-700 p-1.5 rounded-full text-emerald-500 shadow-sm">
-                         <svg class="w-4 h-4" viewBox="0 0 24 24">
-                            <path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/>
-                         </svg>
-                    </div>
-                </button>
-            </div>
-            
-            <div class="mt-5">
-                <p id="loginStatus" class="text-[9px] font-black text-emerald-500 animate-pulse hidden uppercase tracking-widest text-center">Memproses...</p>
-            </div>
-
+      <div class="w-full mt-4">
+        <div class="flex items-center gap-3 my-3 opacity-20">
+          <div class="h-[1px] flex-1 bg-slate-400"></div>
+          <span class="text-[8px] font-black uppercase">Atau</span>
+          <div class="h-[1px] flex-1 bg-slate-400"></div>
         </div>
+
+        <p
+          class="text-center text-[9px] font-bold text-slate-400 dark:text-slate-500 mb-2 tracking-wide"
+        >
+          Ingin lebih praktis? Gunakan akun Google
+        </p>
+
+        <button
+          id="googleLoginBtn"
+          class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 py-3.5 rounded-xl transition active:scale-95 flex flex-row-reverse items-center justify-center gap-3 group/btn"
+        >
+          <span
+            class="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-white pointer-events-none"
+          >
+            Masuk via Google
+          </span>
+
+          <div
+            class="shrink-0 bg-slate-100 dark:bg-slate-700 p-1.5 rounded-full text-emerald-500 shadow-sm"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"
+              />
+            </svg>
+          </div>
+        </button>
+      </div>
+
+      <div class="mt-5">
+        <p
+          id="loginStatus"
+          class="text-[9px] font-black text-emerald-500 animate-pulse hidden uppercase tracking-widest text-center"
+        >
+          Memproses...
+        </p>
+      </div>
     </div>
+  </div>
 </div>

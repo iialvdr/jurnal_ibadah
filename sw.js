@@ -38,12 +38,16 @@ const urlsToCache = [
   './views/fasting.html',
   './views/credits.html',
 
-  './assets/logo.png',
-  './assets/favicon/android-chrome-192x192.png',
-  './assets/favicon/android-chrome-512x512.png',
-  './assets/favicon/favicon-32x32.png',
-  './assets/favicon/favicon-16x16.png',
-  './assets/favicon/favicon.ico'
+  './img/logo.png',
+  './img/favicon/android-chrome-192x192.png',
+  './img/favicon/android-chrome-512x512.png',
+  './img/favicon/web-app-manifest-192x192.png',
+  './img/favicon/web-app-manifest-512x512.png',
+  './img/favicon/favicon-32x32.png',
+  './img/favicon/favicon-16x16.png',
+  './img/favicon/favicon.svg',
+  './img/favicon/favicon.ico',
+  './img/favicon/site.webmanifest'
 ];
 
 self.addEventListener('install', event => {
@@ -104,9 +108,6 @@ self.addEventListener('activate', event => {
   );
 });
 
-/**
- * Event Listener untuk menangani interaksi pada notifikasi
- */
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
