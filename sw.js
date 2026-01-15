@@ -47,7 +47,7 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting(); // Paksa update segera
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
@@ -60,7 +60,6 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Strategi Cache-First untuk API Publik (EQuran & GitHub)
   if (url.origin === 'https://equran.id' || url.href.includes('githubusercontent.com') || url.href.includes('api.bigdatacloud.net')) {
     event.respondWith(
       caches.open(API_CACHE_NAME).then(cache => {
@@ -78,7 +77,6 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Strategi Default: Stale-While-Revalidate
   event.respondWith(
     caches.match(event.request)
       .then(response => {
@@ -101,7 +99,6 @@ self.addEventListener('activate', event => {
         })
       );
     }).then(() => {
-      // Mengambil kendali atas semua klien/halaman segera setelah SW aktif
       return self.clients.claim();
     })
   );

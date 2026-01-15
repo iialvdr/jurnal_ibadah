@@ -14,12 +14,12 @@ let lastNotifiedPrayer = null;
 export function initHome() {
     window.refreshLocation = refreshLocation;
     window.toggleDarkMode = toggleDarkMode;
-    window.toggleNotifications = toggleNotifications; // Daftarkan fungsi toggle baru
+    window.toggleNotifications = toggleNotifications; 
     window.continueReading = continueReading;
     window.openFasting = () => switchView('fastingView');
 
     initTheme();
-    initNotificationPreference(); // Inisialisasi preferensi notifikasi
+    initNotificationPreference(); 
     loadCachedLocation();
     getLocation();
 
@@ -80,9 +80,6 @@ function loadCachedLocation() {
     }
 }
 
-/**
- * Sinkronisasi Tema dan Notifikasi dari Cloud
- */
 export async function syncThemeWithCloud() {
     if (!state.currentUser) return;
     try {
@@ -90,15 +87,11 @@ export async function syncThemeWithCloud() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
             const data = docSnap.data();
-            
-            // Sinkronisasi Tema
             if (data.theme) {
                 isDarkMode = data.theme === 'dark';
                 localStorage.setItem('valdi_theme', data.theme);
                 applyTheme();
             }
-
-            // Sinkronisasi Notifikasi
             if (typeof data.notifications === 'boolean') {
                 isNotificationActive = data.notifications;
                 localStorage.setItem('jurnal_notifications', isNotificationActive);
@@ -311,13 +304,17 @@ async function fetchJadwal(lat, lng) {
     const params = adhan.CalculationMethod.Singapore();
     const prayerTimes = new adhan.PrayerTimes(coordinates, date, params);
     const timeFormat = (t) => t.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
-    setPrayerTimes({
+    
+    const times = {
         Subuh: timeFormat(prayerTimes.fajr),
         Dzuhur: timeFormat(prayerTimes.dhuhr),
         Ashar: timeFormat(prayerTimes.asr),
         Maghrib: timeFormat(prayerTimes.maghrib),
         Isya: timeFormat(prayerTimes.isha)
-    });
+    };
+    
+    setPrayerTimes(times);
+
     const hEl = document.getElementById('hijriDisplay');
     if (hEl) hEl.innerText = getHijriDate(date).full;
     updateNextPrayer();
@@ -350,11 +347,7 @@ function updateNextPrayer() {
     startCountdown(nextP.time);
 }
 
-/**
- * Pengecekan notifikasi dengan verifikasi status aktif/mati
- */
 function checkPrayerNotification() {
-    // Berhenti jika izin browser tidak ada atau notifikasi dimatikan oleh user
     if (Notification.permission !== 'granted' || !isNotificationActive) return;
 
     const now = new Date();
@@ -412,9 +405,6 @@ function initTheme() {
     applyTheme();
 }
 
-/**
- * Inisialisasi preferensi notifikasi dari LocalStorage
- */
 function initNotificationPreference() {
     const saved = localStorage.getItem('jurnal_notifications');
     if (saved !== null) {
@@ -440,20 +430,16 @@ export async function toggleDarkMode() {
     }
 }
 
-/**
- * Fungsi untuk menyalakan/mematikan notifikasi
- */
 export async function toggleNotifications() {
     isNotificationActive = !isNotificationActive;
     localStorage.setItem('jurnal_notifications', isNotificationActive);
     
-    // Feedback jika dinyalakan tapi izin browser belum ada
     if (isNotificationActive && Notification.permission !== 'granted') {
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
             isNotificationActive = false;
             localStorage.setItem('jurnal_notifications', false);
-            alert("Izin notifikasi diblokir oleh browser. Silakan aktifkan di pengaturan browser Anda.");
+            alert("Izin notifikasi diblokir oleh browser.");
         }
     }
 
@@ -461,7 +447,7 @@ export async function toggleNotifications() {
         try {
             const docRef = doc(db, "users", state.currentUser.uid, "settings", "preferences");
             await setDoc(docRef, { notifications: isNotificationActive }, { merge: true });
-        } catch (e) { console.error("Gagal menyimpan preferensi notifikasi:", e); }
+        } catch (error) { console.error("Gagal simpan preferensi:", error); }
     }
 
     return isNotificationActive;

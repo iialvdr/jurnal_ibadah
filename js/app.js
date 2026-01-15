@@ -1,4 +1,4 @@
-import { auth } from './config.js';
+import { auth, db } from './config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { setCurrentUser } from './state.js';
 import { setupRouter } from './router.js';
@@ -45,7 +45,7 @@ function registerServiceWorker() {
 }
 
 /**
- * Meminta izin notifikasi kepada pengguna
+ * Meminta izin notifikasi lokal kepada pengguna
  */
 async function requestNotificationPermission() {
     if (!('Notification' in window)) return;
@@ -53,7 +53,7 @@ async function requestNotificationPermission() {
     if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
-            console.log('Izin notifikasi diberikan');
+            console.log('Izin notifikasi lokal diberikan');
         }
     }
 }
@@ -158,7 +158,7 @@ function initializeApp() {
             if (loginOverlay) loginOverlay.classList.add('hidden-force');
 
             setupRouter();
-            // Minta izin notifikasi setelah login jika user mengizinkan secara global
+            // Minta izin notifikasi lokal setelah login
             requestNotificationPermission();
         } else {
             setCurrentUser(null);
