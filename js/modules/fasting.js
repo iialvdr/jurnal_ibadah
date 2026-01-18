@@ -59,7 +59,7 @@ function renderTodayFasting(date, hijri, masehi, isBesok = false) {
             : "Semangat menjalankan ibadah puasa!";
 
         container.innerHTML = `
-            <div onclick="vibrateSoft(); openNiatModal('${niatKey}')" class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] flex items-center gap-4 border border-amber-100 dark:border-amber-900/40 shadow-sm relative overflow-hidden group cursor-pointer active:scale-95 transition-all w-full">
+            <div onclick="vibrateSoft(); openNiatModal('${niatKey}')" class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2rem] flex items-center gap-4 border border-amber-100 dark:border-amber-900/40 shadow-sm relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all w-full">
                 <div class="absolute -right-4 -top-4 w-20 h-20 bg-amber-500/5 rounded-full blur-3xl"></div>
                 <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-800/30">
                     <i data-lucide="${isWajib ? 'sun' : 'utensils-crossed'}" class="w-6 h-6"></i>
@@ -76,7 +76,7 @@ function renderTodayFasting(date, hijri, masehi, isBesok = false) {
             </div>`;
     } else {
         container.innerHTML = `
-            <div class="bento-card bg-white dark:bg-slate-900 rounded-[2.5rem] p-5 border border-white dark:border-slate-800 shadow-sm w-full">
+            <div class="bento-card bg-white dark:bg-slate-900 rounded-[2rem] p-5 border border-white dark:border-slate-800 shadow-sm w-full">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700/50">
                         <i data-lucide="calendar" class="w-6 h-6 text-slate-400"></i>
@@ -108,7 +108,7 @@ function renderUpcomingFasting(startDate) {
         if (type) {
             const niatKey = FASTING_MAP[type] || '';
             html += `
-            <div onclick="vibrateSoft(); openNiatModal('${niatKey}')" class="bento-card bg-white dark:bg-slate-900 p-4 rounded-[1.8rem] border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group cursor-pointer active:scale-[0.98] transition-all hover:border-emerald-500/30">
+            <div onclick="vibrateSoft(); openNiatModal('${niatKey}')" class="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group cursor-pointer active:scale-[0.98] transition-all hover:border-emerald-500/30">
                 <div class="flex items-center gap-3">
                     <div class="flex flex-col items-center justify-center w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/30 shrink-0">
                         <span class="text-[6px] font-bold text-slate-400 uppercase leading-none mb-0.5">${masehiMonthShort}</span>
@@ -162,7 +162,7 @@ function openNiatModal(types) {
         if (data) {
             const isWajib = data.judul === "Puasa Ramadhan";
             html += `
-            <div class="bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm space-y-4">
+            <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-white dark:border-slate-800 shadow-sm space-y-4">
                 <div class="flex items-center justify-between mb-2">
                     <h4 class="text-sm font-black text-slate-800 dark:text-white">${data.judul}</h4>
                     <span class="text-[9px] font-black px-2 py-0.5 rounded-lg border ${isWajib ? 'text-amber-600 border-amber-100' : 'text-emerald-600 border-emerald-100'}">${isWajib ? 'Wajib' : 'Sunnah'}</span>

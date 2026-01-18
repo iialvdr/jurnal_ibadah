@@ -6,7 +6,7 @@ import { APP_VERSION } from '../version.js';
 import { getHijriDate } from '../utils/date-utils.js';
 
 let isDarkMode = false;
-let isNotificationActive = true; // Default aktif
+let isNotificationActive = true; 
 let countdownInterval = null;
 let unsubscribeRecords = null;
 let lastNotifiedPrayer = null;
@@ -17,6 +17,28 @@ export function initHome() {
     window.toggleNotifications = toggleNotifications; 
     window.continueReading = continueReading;
     window.openFasting = () => switchView('fastingView');
+    window.openHadith = () => switchView('hadithView');
+    window.openFaq = () => switchView('faqView');
+
+    window.toggleHadith = () => {
+        const content = document.getElementById('hadithContent');
+        const btn = document.getElementById('hadithToggleBtn');
+        const fade = document.getElementById('hadithFade');
+        const arab = document.getElementById('hadithArabContent');
+        
+        if (content.classList.contains('line-clamp-3')) {
+            content.classList.remove('line-clamp-3');
+            if (arab) arab.classList.remove('hidden');
+            btn.innerHTML = `Sembunyikan <i data-lucide="chevron-up" class="w-3 h-3"></i>`;
+            if (fade) fade.classList.add('hidden');
+        } else {
+            content.classList.add('line-clamp-3');
+            if (arab) arab.classList.add('hidden');
+            btn.innerHTML = `Selengkapnya <i data-lucide="chevron-down" class="w-3 h-3"></i>`;
+            if (fade) fade.classList.remove('hidden');
+        }
+        if (window.lucide) lucide.createIcons({ root: btn });
+    };
 
     initTheme();
     initNotificationPreference(); 
@@ -34,12 +56,18 @@ export function initHome() {
     });
 }
 
+function formatHadithText(text) {
+    if (!text) return "";
+    return text.replace(/\[([^\]]+)\]/g, '<b class="text-emerald-700 dark:text-emerald-400 font-bold">$1</b>');
+}
+
 export function updateHomeUI() {
     const footerVer = document.getElementById('homeFooterVersion');
     if (footerVer) footerVer.innerText = `Jurnal Ibadah App ${APP_VERSION}`;
 
     updateNextPrayer();
     loadFastingWidget();
+    loadDailyHadith(); 
 
     if (state.currentUser) {
         loadHomeRecords();
@@ -66,6 +94,100 @@ export function updateHomeUI() {
         const hName = document.getElementById('homeUserName');
         if (hName) hName.innerText = "Memuat...";
     }
+}
+
+async function loadDailyHadith() {
+    const container = document.getElementById('homeHadithContainer');
+    if (!container) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    const cached = localStorage.getItem('daily_hadith_v3');
+    const cachedDate = localStorage.getItem('daily_had_date');
+
+    if (cached && cachedDate === today) {
+        renderHadithCard(JSON.parse(cached));
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-white dark:border-slate-800 animate-pulse">
+            <div class="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded-full mb-3"></div>
+            <div class="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full mb-2"></div>
+        </div>
+    `;
+
+    try {
+        const narrators = ['bukhari', 'muslim', 'abu-daud', 'tirmidzi', 'nasai', 'ibnu-majah', 'ahmad', 'darimi', 'malik'];
+        const randomNarrator = narrators[Math.floor(Math.random() * narrators.length)];
+        const randomNum = Math.floor(Math.random() * 20) + 1;
+        const response = await fetch(`https://api.hadith.gading.dev/books/${randomNarrator}/${randomNum}`);
+        const result = await response.json();
+
+        if (result.code === 200 && result.data && result.data.contents) {
+            const hadithData = {
+                name: result.data.name,
+                number: result.data.contents.number,
+                arab: result.data.contents.arab,
+                text: result.data.contents.id 
+            };
+            
+            localStorage.setItem('daily_hadith_v3', JSON.stringify(hadithData));
+            localStorage.setItem('daily_had_date', today);
+            renderHadithCard(hadithData);
+        }
+    } catch (error) {
+        console.error("Gagal memuat hadits:", error);
+        container.classList.add('hidden');
+    }
+}
+
+function renderHadithCard(data) {
+    const container = document.getElementById('homeHadithContainer');
+    if (!container) return;
+
+    const isLong = data.text.length > 150;
+    const formattedText = formatHadithText(data.text);
+
+    container.innerHTML = `
+        <div class="bento-card bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-[2rem] relative overflow-hidden shadow-sm transition-all duration-500">
+            <div class="absolute -right-6 -top-6 opacity-[0.05] pointer-events-none">
+                <i data-lucide="quote" class="w-32 h-32 text-emerald-600"></i>
+            </div>
+            
+            <div class="relative z-10">
+                <div class="flex items-center gap-2.5 mb-4">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                        <i data-lucide="book-open-check" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em]">Hadits Hari Ini</span>
+                        <p class="text-[9px] font-bold text-slate-400 leading-none mt-0.5">${data.name} • No. ${data.number}</p>
+                    </div>
+                </div>
+
+                <div id="hadithArabContent" class="hidden mb-4 text-right" dir="rtl">
+                    <p class="font-quran text-xl text-slate-800 dark:text-white leading-[2.5]">${data.arab}</p>
+                </div>
+
+                <div class="relative">
+                    <p id="hadithContent" class="text-[13px] md:text-sm font-medium text-slate-700 dark:text-slate-200 leading-relaxed transition-all duration-500 ${isLong ? 'line-clamp-3' : ''}">
+                        "${formattedText}"
+                    </p>
+                    ${isLong ? '<div id="hadithFade" class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-emerald-50/50 dark:from-slate-900/50 to-transparent pointer-events-none"></div>' : ''}
+                </div>
+
+                ${isLong ? `
+                <button id="hadithToggleBtn" onclick="vibrateSoft(); toggleHadith()" class="mt-4 text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1.5 hover:opacity-70 transition-all">
+                    Selengkapnya
+                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                </button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    
+    container.classList.remove('hidden');
+    if (window.lucide) lucide.createIcons({ root: container });
 }
 
 function loadCachedLocation() {
@@ -153,7 +275,7 @@ function loadFastingWidget() {
 
     if (fastingTitle) {
         container.innerHTML = `
-            <div onclick="vibrateSoft(); openFasting()" class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] flex items-center gap-4 border border-amber-100 dark:border-amber-900/40 shadow-sm relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all">
+            <div onclick="vibrateSoft(); openFasting()" class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2rem] flex items-center gap-4 border border-amber-100 dark:border-amber-900/40 shadow-sm relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all">
                 <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100/50 dark:border-amber-800/30">
                     <i data-lucide="utensils-crossed" class="w-6 h-6"></i>
                 </div>
@@ -329,13 +451,9 @@ function updateNextPrayer() {
     const now = new Date();
     const curTime = now.getHours() * 60 + now.getMinutes();
     let nextP = null;
-    const timesToCheck = [
-        { name: 'Subuh', time: state.prayerTimes.Subuh },
-        { name: 'Dzuhur', time: state.prayerTimes.Dzuhur },
-        { name: 'Ashar', time: state.prayerTimes.Ashar },
-        { name: 'Maghrib', time: state.prayerTimes.Maghrib },
-        { name: 'Isya', time: state.prayerTimes.Isya }
-    ];
+    const prayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
+    const timesToCheck = prayers.map(p => ({ name: p, time: state.prayerTimes[p] }));
+
     for (let p of timesToCheck) {
         if (!p.time) continue;
         const [h, m] = p.time.split(':').map(Number);
@@ -371,8 +489,8 @@ function sendLocalNotification(title, body) {
         navigator.serviceWorker.ready.then(registration => {
             registration.showNotification(title, {
                 body: body,
-                icon: './assets/favicon/android-chrome-192x192.png',
-                badge: './assets/favicon/favicon-32x32.png',
+                icon: './img/favicon/android-chrome-192x192.png',
+                badge: './img/favicon/favicon-32x32.png',
                 vibrate: [200, 100, 200],
                 tag: 'prayer-reminder',
                 renotify: true

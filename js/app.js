@@ -18,13 +18,11 @@ import { initFasting } from './modules/fasting.js';
 import { initCredits } from './modules/credits.js';
 import { initChangelog } from './modules/changelog.js';
 import { initZakat } from './modules/zakat.js';
+import { initHadith } from './modules/hadith.js';
 
 window.vibrateSoft = () => { if (navigator.vibrate) navigator.vibrate(10); };
 window.vibrateSuccess = () => { if (navigator.vibrate) navigator.vibrate([10, 30, 10]); };
 
-/**
- * Registrasi Service Worker dengan deteksi update otomatis
- */
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js', { scope: './', type: 'module' })
@@ -44,9 +42,6 @@ function registerServiceWorker() {
     }
 }
 
-/**
- * Meminta izin notifikasi lokal kepada pengguna
- */
 async function requestNotificationPermission() {
     if (!('Notification' in window)) return;
     
@@ -58,12 +53,9 @@ async function requestNotificationPermission() {
     }
 }
 
-/**
- * Fungsi baru untuk sinkronisasi warna Status Bar sistem
- */
 function updateStatusBarColor() {
     const isDark = document.documentElement.classList.contains('dark');
-    const color = isDark ? '#020617' : '#f8fafc'; // Mengikuti bg-slate-950 dan bg-slate-50
+    const color = isDark ? '#020617' : '#f8fafc';
 
     let metaThemeColor = document.querySelector('meta[name="theme-color"]:not([media])');
     if (!metaThemeColor) {
@@ -74,11 +66,9 @@ function updateStatusBarColor() {
     metaThemeColor.setAttribute('content', color);
 }
 
-// Pantau perubahan class 'dark' pada tag HTML
 const themeObserver = new MutationObserver(() => updateStatusBarColor());
 themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
-// Tambahkan tanda / di awal setiap path view
 const VIEWS = [
     '/views/login.html',
     '/views/home.html',
@@ -93,7 +83,8 @@ const VIEWS = [
     '/views/credits.html',
     '/views/changelog.html',
     '/views/zakat.html',
-    '/views/faq.html'
+    '/views/faq.html',
+    '/views/hadith.html'
 ];
 
 async function loadAllViews() {
@@ -145,6 +136,7 @@ function initializeApp() {
     initCredits();
     initChangelog();
     initZakat();
+    initHadith();
 
     onAuthStateChanged(auth, (user) => {
         const splash = document.getElementById('splashScreen');
@@ -158,7 +150,6 @@ function initializeApp() {
             if (loginOverlay) loginOverlay.classList.add('hidden-force');
 
             setupRouter();
-            // Minta izin notifikasi lokal setelah login
             requestNotificationPermission();
         } else {
             setCurrentUser(null);
@@ -189,7 +180,6 @@ function initializeApp() {
     });
 }
 
-// Daftarkan Service Worker dan Muat Views
 document.addEventListener('DOMContentLoaded', () => {
     registerServiceWorker();
     loadAllViews();

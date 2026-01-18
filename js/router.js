@@ -6,18 +6,17 @@ export function setupRouter() {
     const handleNavigation = () => {
         const path = window.location.pathname.split('/').filter(Boolean).pop() || 'home';
 
-        // PROTEKSI: Jika belum login, sembunyikan semua view internal
         if (!state.currentUser) {
             const allInternalViews = [
                 'homeView', 'trackerView', 'profileView', 'tasbihView',
                 'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView',
                 'fastingView', 'creditsView', 'changelogView',
-                'zakatView', 'faqView'
+                'zakatView', 'faqView', 'hadithView'
             ];
 
             allInternalViews.forEach(id => {
                 const el = document.getElementById(id);
-                if (el && el.classList) { // Tambahkan pengecekan el.classList
+                if (el && el.classList) {
                     el.classList.add('hidden-force');
                     el.classList.remove('active');
                 }
@@ -42,7 +41,8 @@ export function setupRouter() {
             'credits': 'creditsView',
             'changelog': 'changelogView',
             'zakat': 'zakatView',
-            'faq': 'faqView'
+            'faq': 'faqView',
+            'hadith': 'hadithView'
         };
 
         const targetViewId = routes[path] || 'homeView';
@@ -75,6 +75,7 @@ export function setupRouter() {
     window.openCredits = () => navigateTo('credits');
     window.openZakat = () => navigateTo('zakat');
     window.openFaq = () => navigateTo('faq');
+    window.openHadith = () => navigateTo('hadith');
 
     window.goBack = () => {
         if (window.history.length > 1) {
@@ -90,7 +91,7 @@ export function switchView(targetId) {
         'homeView', 'trackerView', 'profileView', 'tasbihView',
         'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView',
         'fastingView', 'creditsView', 'changelogView',
-        'zakatView', 'faqView'
+        'zakatView', 'faqView', 'hadithView'
     ];
 
     const targetEl = document.getElementById(targetId);
@@ -103,7 +104,6 @@ export function switchView(targetId) {
         }));
     }
 
-    // Perbaikan: Pastikan targetEl ada sebelum render icon
     if (window.lucide && targetEl) {
         if (!targetEl.hasAttribute('data-icons-rendered')) {
             try {
@@ -116,7 +116,7 @@ export function switchView(targetId) {
     requestAnimationFrame(() => {
         allViews.forEach(id => {
             const el = document.getElementById(id);
-            if (!el || !el.classList) return; // Proteksi classList
+            if (!el || !el.classList) return;
 
             if (id === targetId) {
                 el.classList.remove('hidden-force');

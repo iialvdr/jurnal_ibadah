@@ -25,6 +25,11 @@ const urlsToCache = [
   './js/modules/doa.js',
   './js/modules/asmaul_husna.js',
   './js/modules/fasting.js',
+  './js/modules/hadith.js',
+  './js/modules/credits.js',
+  './js/modules/changelog.js',
+  './js/modules/zakat.js',
+  './js/modules/faq.js',
 
   './views/login.html',
   './views/home.html',
@@ -36,7 +41,11 @@ const urlsToCache = [
   './views/doa.html',
   './views/asmaul_husna.html',
   './views/fasting.html',
+  './views/hadith.html',
   './views/credits.html',
+  './views/changelog.html',
+  './views/zakat.html',
+  './views/faq.html',
 
   './img/logo.png',
   './img/favicon/android-chrome-192x192.png',

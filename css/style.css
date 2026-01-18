@@ -8,7 +8,6 @@
     -webkit-user-drag: none;
     touch-action: manipulation; 
     outline: none !important;
-    /* Transisi halus untuk pergerakan dan warna */
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -67,7 +66,6 @@ body {
     66% { transform: translate(-10px, 10px) scale(0.95); }
 }
 
-/* --- BENTO CARD & REFINED INTERACTION --- */
 .bento-card {
     position: relative;
     overflow: hidden;
@@ -82,7 +80,6 @@ body {
     box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.2);
 }
 
-/* Efek Hover/Active HANYA untuk elemen interaktif (memiliki onclick, button, atau link) */
 .bento-card[onclick]:hover, 
 .bento-card[onclick]:active,
 button.bento-card:hover,
@@ -102,7 +99,6 @@ a.bento-card:active {
     box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.3);
 }
 
-/* Warna Border saat Hover mengikuti warna Ikon (Hanya untuk yang interaktif) */
 .hover-emerald[onclick]:hover, .hover-emerald[onclick]:active { border-color: #10b981 !important; }
 .hover-purple[onclick]:hover, .hover-purple[onclick]:active { border-color: #a855f7 !important; }
 .hover-blue[onclick]:hover, .hover-blue[onclick]:active { border-color: #3b82f6 !important; }
@@ -111,7 +107,6 @@ a.bento-card:active {
 .hover-rose[onclick]:hover, .hover-rose[onclick]:active { border-color: #f43f5e !important; }
 .hover-indigo[onclick]:hover, .hover-indigo[onclick]:active { border-color: #6366f1 !important; }
 
-/* Animasi icon tipis (Hanya untuk yang interaktif) */
 .bento-card[onclick]:hover i, 
 .bento-card[onclick]:active i,
 button.bento-card:hover i,
@@ -119,19 +114,16 @@ a.bento-card:hover i {
     transform: scale(1.05);
 }
 
-/* KHUSUS LIST DOA: Tetap nonaktifkan scale icon agar tidak terpotong */
 .item-doa:hover i, .item-doa:active i {
     transform: none !important;
 }
 
-/* Row Sholat halus (Hanya aktif jika ada interaksi/clickable) */
 #todayPrayerGrid > div[onclick]:hover, 
 #todayPrayerGrid > div[onclick]:active {
     background-color: rgba(16, 185, 129, 0.05) !important;
     transform: translateX(2px);
 }
 
-/* Animasi tekan/klik */
 .bento-card[onclick]:active,
 button.bento-card:active,
 a.bento-card:active { 
@@ -150,7 +142,9 @@ a.bento-card:active {
 .animate-spin-slow { animation: spin 3s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-#homeView, #trackerView, #tasbihView, #qiblaView, #profileView, #fastingView, #doaView, #quranView, #asmaulHusnaView {
+#homeView, #trackerView, #tasbihView, #qiblaView, #profileView, #fastingView, 
+#doaView, #quranView, #asmaulHusnaView, #hadithView, #creditsView, 
+#changelogView, #zakatView, #faqView {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -167,7 +161,7 @@ a.bento-card:active {
 .hidden-force { display: none !important; }
 
 .font-quran {
-    font-family: 'Noto Naskh Arabic', serif !important;
+    font-family:'Noto Naskh Arabic', serif !important;
     line-height: 2.2 !important;
     font-weight: 600;
 }
