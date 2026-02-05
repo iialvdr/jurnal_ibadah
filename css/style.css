@@ -173,6 +173,18 @@ a.bento-card:active {
 .skeleton { background: #e2e8f0; border-radius: 0.5rem; }
 .dark .skeleton { background: #1e293b; }
 
+.tip-highlight {
+    position: relative;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.35), 0 0 0 10px rgba(16, 185, 129, 0.15) !important;
+    animation: tipPulse 1.6s ease-in-out infinite;
+    border-radius: 1.5rem;
+}
+
+@keyframes tipPulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.35), 0 0 0 10px rgba(16, 185, 129, 0.12); }
+    50% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.5), 0 0 0 14px rgba(16, 185, 129, 0.2); }
+}
+
 @media screen and (min-width: 768px) {
     #todayPrayerGrid {
         display: flex !important;

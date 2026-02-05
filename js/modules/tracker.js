@@ -2,6 +2,7 @@ import { state, setCurrentRecords } from '../state.js';
 import { db } from '../config.js';
 import { collection, query, where, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getHijriDate } from '../utils/date-utils.js';
+import { getFastingInfo } from './fasting.js';
 
 const PRAYER_CONFIG = [
     {
@@ -201,9 +202,14 @@ async function saveManualNote() {
             statusEl.classList.remove('opacity-0');
             setTimeout(() => statusEl.classList.add('opacity-0'), 2500);
         }
+        if (typeof window.showAppToast === 'function') window.showAppToast("Catatan tersimpan", "success");
     } catch (e) {
         console.error("Gagal simpan catatan:", e);
-        alert("Gagal menyimpan catatan. Periksa koneksi internet Anda.");
+        if (typeof window.showAppToast === 'function') {
+            window.showAppToast("Gagal menyimpan catatan. Periksa koneksi.", "error");
+        } else {
+            alert("Gagal menyimpan catatan. Periksa koneksi internet Anda.");
+        }
     } finally {
         btnEl.innerText = "SIMPAN";
         btnEl.disabled = false;
@@ -459,9 +465,25 @@ function renderHistoryGrid(monthData) {
         const isToday = dateKey === todayKey;
         const borderClass = isToday ? "ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-slate-950" : "";
 
+        const h = getHijriDate(new Date(dateKey));
+        const gDate = new Date(dateKey);
+        const fastingInfo = getFastingInfo(gDate, h);
+        let badge = '';
+        if (fastingInfo) {
+            let color = 'bg-sky-500';
+            if (fastingInfo.category === 'haram') color = 'bg-rose-500';
+            else if (fastingInfo.type === 'Puasa Ramadhan') color = 'bg-amber-500';
+            else if (fastingInfo.type === 'Puasa Syawal') color = 'bg-purple-500';
+            else if (fastingInfo.type === 'Puasa Arafah') color = 'bg-emerald-500';
+            else if (fastingInfo.type === 'Puasa Asyura') color = 'bg-cyan-500';
+            else if (fastingInfo.type === 'Puasa Ayyamul Bidh') color = 'bg-violet-500';
+            badge = `<span title="${fastingInfo.type}" class="absolute -top-1 -right-1 w-2 h-2 rounded-full ${color}"></span>`;
+        }
+
         grid.innerHTML += `
-            <div onclick="vibrateSoft(); goToDate('${dateKey}')" class="aspect-square flex items-center justify-center rounded-xl text-[10px] md:text-[11px] font-black cursor-pointer transition-all active:scale-90 ${bgClass} ${borderClass} hover:opacity-80">
+            <div onclick="vibrateSoft(); goToDate('${dateKey}')" class="relative aspect-square flex items-center justify-center rounded-xl text-[10px] md:text-[11px] font-black cursor-pointer transition-all active:scale-90 ${bgClass} ${borderClass} hover:opacity-80" title="${fastingInfo ? fastingInfo.type : ''}">
                 ${day}
+                ${badge}
             </div>`;
     }
 }

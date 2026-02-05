@@ -65,6 +65,7 @@ function showZakatResult(title, amount, details) {
     });
 
     if (window.lucide) lucide.createIcons({ root: modal });
+    if (typeof window.showAppToast === 'function') window.showAppToast("Perhitungan selesai", "success");
 }
 
 function closeZakatResult() {

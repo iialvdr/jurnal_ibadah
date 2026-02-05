@@ -137,7 +137,12 @@ async function loadDailyHadith() {
         }
     } catch (error) {
         console.error("Gagal memuat hadits:", error);
-        container.classList.add('hidden');
+        container.innerHTML = `
+            <div class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-white dark:border-slate-800 text-center">
+                <p class="text-[11px] font-bold text-slate-500 mb-3">Hadits hari ini gagal dimuat.</p>
+                <button onclick="vibrateSoft(); loadDailyHadith()" class="px-3 py-2 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest active:scale-95 transition">Coba Lagi</button>
+            </div>`;
+        container.classList.remove('hidden');
     }
 }
 
@@ -557,7 +562,11 @@ export async function toggleNotifications() {
         if (permission !== 'granted') {
             isNotificationActive = false;
             localStorage.setItem('jurnal_notifications', false);
-            alert("Izin notifikasi diblokir oleh browser.");
+            if (typeof window.showAppToast === 'function') {
+                window.showAppToast("Izin notifikasi diblokir browser", "error");
+            } else {
+                alert("Izin notifikasi diblokir oleh browser.");
+            }
         }
     }
 
@@ -566,6 +575,10 @@ export async function toggleNotifications() {
             const docRef = doc(db, "users", state.currentUser.uid, "settings", "preferences");
             await setDoc(docRef, { notifications: isNotificationActive }, { merge: true });
         } catch (error) { console.error("Gagal simpan preferensi:", error); }
+    }
+
+    if (typeof window.showAppToast === 'function') {
+        window.showAppToast(isNotificationActive ? "Notifikasi diaktifkan" : "Notifikasi dimatikan", "info");
     }
 
     return isNotificationActive;

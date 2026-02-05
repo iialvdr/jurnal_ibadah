@@ -31,292 +31,310 @@
   </div>
 
   <div
-    class="relative z-10 px-5 pt-4 pb-12 w-full max-w-7xl mx-auto md:grid md:grid-cols-12 md:gap-8 md:items-start"
+    class="relative z-10 px-5 pt-4 pb-12 w-full max-w-7xl mx-auto md:px-8"
   >
-    <div class="md:col-span-5 lg:col-span-4 flex flex-col gap-5">
-      <div
-        class="bento-card bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-white dark:border-slate-800 shadow-xl flex flex-col items-center text-center relative overflow-hidden group"
-      >
-        <div
-          class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-12 -mt-12 opacity-50"
-        ></div>
-
-        <div class="relative mb-6">
-          <div
-            class="w-24 h-24 bg-white dark:bg-slate-800 rounded-full shadow-2xl border border-slate-100 dark:border-slate-700 flex items-center justify-center relative overflow-hidden"
-          >
-            <img
-              src="img/logo.png"
-              alt="Logo"
-              class="w-full h-full object-contain"
-            />
-          </div>
+    <div
+      class="bento-card mb-6 md:mb-8 relative overflow-hidden rounded-[2rem] bg-white dark:bg-slate-900 p-6 md:p-8 shadow-xl border border-white dark:border-slate-800"
+    >
+      <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+      <div class="absolute -left-8 bottom-0 w-28 h-28 bg-teal-500/10 rounded-full blur-3xl"></div>
+      <div class="relative z-10 flex flex-col md:flex-row items-center md:items-center gap-5 md:gap-8">
+        <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+          <i data-lucide="info" class="w-8 h-8 md:w-9 md:h-9"></i>
         </div>
-
-        <h1
-          class="text-2xl font-black text-slate-800 dark:text-white tracking-tighter"
-        >
-          Jurnal Ibadah
-        </h1>
-        <p
-          class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-3 leading-relaxed max-w-[220px]"
-        >
-          Teman setia dalam perjalanan spiritualmu untuk menjaga istiqomah
-          setiap hari.
-        </p>
-        <div
-          class="mt-4 px-4 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30"
-        >
-          <p
-            id="appVersionText"
-            class="text-[10px] text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-widest"
-          >
-            Memuat Versi...
-          </p>
-        </div>
-      </div>
-
-      <div
-        class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm relative overflow-hidden"
-      >
-        <div class="flex items-center gap-4">
-          <div
-            class="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white text-lg font-black shadow-md shrink-0"
-          >
-            V
-          </div>
-          <div class="flex-1 min-w-0">
-            <p
-              class="text-[9px] font-bold text-slate-400 uppercase tracking-widest"
-            >
-              Developer
-            </p>
-            <h4
-              class="font-bold text-slate-800 dark:text-white text-sm truncate"
-            >
-              Rivaldi Aditya Maulana
-            </h4>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2 mt-4">
-          <a
-            href="https://linkedin.com/in/rivaldi-aditya-maulana"
-            target="_blank"
-            class="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors border border-transparent hover:border-blue-500/20"
-          >
-            <i data-lucide="linkedin" class="w-3.5 h-3.5"></i> LinkedIn
-          </a>
-          <a
-            href="https://github.com/iialvdr"
-            target="_blank"
-            class="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-400 hover:text-emerald-500 transition-colors border border-transparent hover:border-emerald-500/20"
-          >
-            <i data-lucide="github" class="w-3.5 h-3.5"></i> GitHub
-          </a>
+        <div class="flex-1 text-center md:text-left">
+          <h3 class="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight">Tentang Jurnal Ibadah</h3>
+          <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl">Profil aplikasi, pembuat, dan sumber daya yang membantu Jurnal Ibadah tetap ringan, akurat, dan bermanfaat.</p>
         </div>
       </div>
     </div>
 
-    <div class="md:col-span-7 lg:col-span-8 flex flex-col gap-4 mt-5 md:mt-0">
-      <h3
-        class="px-1 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1"
-      >
-        Sumber Daya & API
-      </h3>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div class="grid grid-cols-1 md:grid-cols-12 md:gap-8 md:items-start">
+      <div class="md:col-span-5 lg:col-span-4 flex flex-col gap-5">
         <div
-          class="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group"
+          class="bento-card bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-white dark:border-slate-800 shadow-xl flex flex-col items-center text-center relative overflow-hidden group"
         >
-          <div class="flex items-center gap-3">
+          <div
+            class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-12 -mt-12 opacity-50"
+          ></div>
+
+          <div class="relative mb-6">
             <div
-              class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center shrink-0"
+              class="w-24 h-24 bg-white dark:bg-slate-800 rounded-full shadow-2xl border border-slate-100 dark:border-slate-700 flex items-center justify-center relative overflow-hidden"
             >
-              <i data-lucide="book-open" class="w-4.5 h-4.5"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p
-                class="text-xs font-bold text-slate-700 dark:text-white truncate"
-              >
-                EQuran.id API
-              </p>
-              <p class="text-[9px] text-slate-400 font-medium mt-0.5">
-                Al-Qur'an & Doa
-              </p>
+              <img
+                src="img/logo.png"
+                alt="Logo"
+                class="w-full h-full object-contain"
+              />
             </div>
           </div>
-          <i
-            data-lucide="check-circle-2"
-            class="w-4 h-4 text-emerald-500/30 group-hover:text-emerald-500 transition-colors"
-          ></i>
+
+          <h1
+            class="text-2xl font-black text-slate-800 dark:text-white tracking-tighter"
+          >
+            Jurnal Ibadah
+          </h1>
+          <p
+            class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-3 leading-relaxed max-w-[220px]"
+          >
+            Teman setia dalam perjalanan spiritualmu untuk menjaga istiqomah
+            setiap hari.
+          </p>
+          <div
+            class="mt-4 px-4 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30"
+          >
+            <p
+              id="appVersionText"
+              class="text-[10px] text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-widest"
+            >
+              Memuat Versi...
+            </p>
+          </div>
         </div>
 
         <div
-          class="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group"
+          class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm relative overflow-hidden"
         >
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-4">
             <div
-              class="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-900/20 text-rose-600 flex items-center justify-center shrink-0"
+              class="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white text-lg font-black shadow-md shrink-0"
             >
-              <i data-lucide="quote" class="w-4.5 h-4.5"></i>
+              V
             </div>
             <div class="flex-1 min-w-0">
               <p
-                class="text-xs font-bold text-slate-700 dark:text-white truncate"
+                class="text-[9px] font-bold text-slate-400 uppercase tracking-widest"
               >
-                Gading Hadith API
+                Developer
               </p>
-              <p class="text-[9px] text-slate-400 font-medium mt-0.5">
-                Hadits Harian
-              </p>
+              <h4
+                class="font-bold text-slate-800 dark:text-white text-sm truncate"
+              >
+                Rivaldi Aditya Maulana
+              </h4>
             </div>
           </div>
-          <i
-            data-lucide="check-circle-2"
-            class="w-4 h-4 text-emerald-500/30 group-hover:text-emerald-500 transition-colors"
-          ></i>
-        </div>
 
-        <div
-          class="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 flex items-center justify-center shrink-0"
+          <div class="grid grid-cols-2 gap-2 mt-4">
+            <a
+              href="https://linkedin.com/in/rivaldi-aditya-maulana"
+              target="_blank"
+              class="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors border border-transparent hover:border-blue-500/20"
             >
-              <i data-lucide="clock" class="w-4.5 h-4.5"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p
-                class="text-xs font-bold text-slate-700 dark:text-white truncate"
-              >
-                Adhan.js
-              </p>
-              <p class="text-[9px] text-slate-400 font-medium mt-0.5">
-                Waktu Sholat
-              </p>
-            </div>
-          </div>
-          <i
-            data-lucide="check-circle-2"
-            class="w-4 h-4 text-emerald-500/30 group-hover:text-emerald-500 transition-colors"
-          ></i>
-        </div>
-
-        <div
-          class="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 flex items-center justify-center shrink-0"
+              <i data-lucide="linkedin" class="w-3.5 h-3.5"></i> LinkedIn
+            </a>
+            <a
+              href="https://github.com/iialvdr"
+              target="_blank"
+              class="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-400 hover:text-emerald-500 transition-colors border border-transparent hover:border-emerald-500/20"
             >
-              <i data-lucide="flame" class="w-4.5 h-4.5"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p
-                class="text-xs font-bold text-slate-700 dark:text-white truncate"
-              >
-                Firebase
-              </p>
-              <p class="text-[9px] text-slate-400 font-medium mt-0.5">
-                Database & Auth
-              </p>
-            </div>
+              <i data-lucide="github" class="w-3.5 h-3.5"></i> GitHub
+            </a>
           </div>
-          <i
-            data-lucide="check-circle-2"
-            class="w-4 h-4 text-emerald-500/30 group-hover:text-emerald-500 transition-colors"
-          ></i>
-        </div>
-
-        <div
-          class="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center shrink-0"
-            >
-              <i data-lucide="map-pin" class="w-4.5 h-4.5"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p
-                class="text-xs font-bold text-slate-700 dark:text-white truncate"
-              >
-                BigDataCloud
-              </p>
-              <p class="text-[9px] text-slate-400 font-medium mt-0.5">
-                Lokasi API
-              </p>
-            </div>
-          </div>
-          <i
-            data-lucide="check-circle-2"
-            class="w-4 h-4 text-emerald-500/30 group-hover:text-emerald-500 transition-colors"
-          ></i>
-        </div>
-
-        <div
-          class="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 flex items-center justify-center shrink-0"
-            >
-              <i data-lucide="feather" class="w-4.5 h-4.5"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p
-                class="text-xs font-bold text-slate-700 dark:text-white truncate"
-              >
-                Lucide Icons
-              </p>
-              <p class="text-[9px] text-slate-400 font-medium mt-0.5">
-                Visual Assets
-              </p>
-            </div>
-          </div>
-          <i
-            data-lucide="check-circle-2"
-            class="w-4 h-4 text-emerald-500/30 group-hover:text-emerald-500 transition-colors"
-          ></i>
-        </div>
-
-        <div
-          class="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-900/20 text-sky-600 flex items-center justify-center shrink-0"
-            >
-              <i data-lucide="palette" class="w-4.5 h-4.5"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p
-                class="text-xs font-bold text-slate-700 dark:text-white truncate"
-              >
-                Tailwind CSS
-              </p>
-              <p class="text-[9px] text-slate-400 font-medium mt-0.5">
-                Styling Framework
-              </p>
-            </div>
-          </div>
-          <i
-            data-lucide="check-circle-2"
-            class="w-4 h-4 text-emerald-500/30 group-hover:text-emerald-500 transition-colors"
-          ></i>
         </div>
       </div>
 
-      <div
-        class="mt-4 pt-6 text-center border-t border-slate-200 dark:border-slate-800"
-      >
-        <p
-          class="text-[9px] text-slate-400 font-bold uppercase tracking-[0.3em]"
+      <div class="md:col-span-7 lg:col-span-8 flex flex-col gap-4 mt-5 md:mt-0">
+        <h3
+          class="px-1 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1"
         >
-          &copy; 2025 Jurnal Ibadah • By Valdi
-        </p>
+          Sumber Daya & API
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div
+            class="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center shrink-0"
+              >
+                <i data-lucide="book-open" class="w-4.5 h-4.5"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p
+                  class="text-xs font-bold text-slate-700 dark:text-white truncate"
+                >
+                  EQuran.id API
+                </p>
+                <p class="text-[9px] text-slate-400 font-medium mt-0.5">
+                  Al-Qur'an & Doa
+                </p>
+              </div>
+            </div>
+            <i
+              data-lucide="check-circle-2"
+              class="w-4 h-4 text-emerald-500/30 group-hover:text-emerald-500 transition-colors"
+            ></i>
+          </div>
+
+          <div
+            class="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-900/20 text-rose-600 flex items-center justify-center shrink-0"
+              >
+                <i data-lucide="quote" class="w-4.5 h-4.5"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p
+                  class="text-xs font-bold text-slate-700 dark:text-white truncate"
+                >
+                  Gading Hadith API
+                </p>
+                <p class="text-[9px] text-slate-400 font-medium mt-0.5">
+                  Hadits Harian
+                </p>
+              </div>
+            </div>
+            <i
+              data-lucide="check-circle-2"
+              class="w-4 h-4 text-emerald-500/30 group-hover:text-emerald-500 transition-colors"
+            ></i>
+          </div>
+
+          <div
+            class="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 flex items-center justify-center shrink-0"
+              >
+                <i data-lucide="clock" class="w-4.5 h-4.5"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p
+                  class="text-xs font-bold text-slate-700 dark:text-white truncate"
+                >
+                  Adhan.js
+                </p>
+                <p class="text-[9px] text-slate-400 font-medium mt-0.5">
+                  Waktu Sholat
+                </p>
+              </div>
+            </div>
+            <i
+              data-lucide="check-circle-2"
+              class="w-4 h-4 text-emerald-500/30 group-hover:text-emerald-500 transition-colors"
+            ></i>
+          </div>
+
+          <div
+            class="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 flex items-center justify-center shrink-0"
+              >
+                <i data-lucide="flame" class="w-4.5 h-4.5"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p
+                  class="text-xs font-bold text-slate-700 dark:text-white truncate"
+                >
+                  Firebase
+                </p>
+                <p class="text-[9px] text-slate-400 font-medium mt-0.5">
+                  Database & Auth
+                </p>
+              </div>
+            </div>
+            <i
+              data-lucide="check-circle-2"
+              class="w-4 h-4 text-emerald-500/30 group-hover:text-emerald-500 transition-colors"
+            ></i>
+          </div>
+
+          <div
+            class="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center shrink-0"
+              >
+                <i data-lucide="map-pin" class="w-4.5 h-4.5"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p
+                  class="text-xs font-bold text-slate-700 dark:text-white truncate"
+                >
+                  BigDataCloud
+                </p>
+                <p class="text-[9px] text-slate-400 font-medium mt-0.5">
+                  Lokasi API
+                </p>
+              </div>
+            </div>
+            <i
+              data-lucide="check-circle-2"
+              class="w-4 h-4 text-emerald-500/30 group-hover:text-emerald-500 transition-colors"
+            ></i>
+          </div>
+
+          <div
+            class="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 flex items-center justify-center shrink-0"
+              >
+                <i data-lucide="feather" class="w-4.5 h-4.5"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p
+                  class="text-xs font-bold text-slate-700 dark:text-white truncate"
+                >
+                  Lucide Icons
+                </p>
+                <p class="text-[9px] text-slate-400 font-medium mt-0.5">
+                  Visual Assets
+                </p>
+              </div>
+            </div>
+            <i
+              data-lucide="check-circle-2"
+              class="w-4 h-4 text-emerald-500/30 group-hover:text-emerald-500 transition-colors"
+            ></i>
+          </div>
+
+          <div
+            class="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-900/20 text-sky-600 flex items-center justify-center shrink-0"
+              >
+                <i data-lucide="palette" class="w-4.5 h-4.5"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p
+                  class="text-xs font-bold text-slate-700 dark:text-white truncate"
+                >
+                  Tailwind CSS
+                </p>
+                <p class="text-[9px] text-slate-400 font-medium mt-0.5">
+                  Styling Framework
+                </p>
+              </div>
+            </div>
+            <i
+              data-lucide="check-circle-2"
+              class="w-4 h-4 text-emerald-500/30 group-hover:text-emerald-500 transition-colors"
+            ></i>
+          </div>
+        </div>
+
+        <div
+          class="mt-4 pt-6 text-center border-t border-slate-200 dark:border-slate-800"
+        >
+          <p
+            class="text-[9px] text-slate-400 font-bold uppercase tracking-[0.3em]"
+          >
+            &copy; 2025 Jurnal Ibadah • By Valdi
+          </p>
+        </div>
       </div>
     </div>
   </div>

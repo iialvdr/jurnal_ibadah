@@ -176,16 +176,21 @@ function setupEditProfileListeners() {
         saveBtn.addEventListener('click', async () => {
             const input = document.getElementById('editNameInput');
             const newName = input.value.trim();
-            if (!newName) return;
+            if (!newName) {
+                if (typeof window.showAppToast === 'function') window.showAppToast("Nama tidak boleh kosong", "error");
+                return;
+            }
             saveBtn.innerHTML = "Menyimpan...";
             saveBtn.disabled = true;
             try {
                 await updateProfile(auth.currentUser, { displayName: newName });
                 state.currentUser.displayName = newName;
                 updateProfileUI();
-                showUpdateStatus("Nama berhasil diperbarui!");
+                if (typeof window.showAppToast === 'function') window.showAppToast("Nama diperbarui", "success");
                 setTimeout(closeEditProfile, 1000);
-            } catch (error) { showUpdateStatus("Gagal memperbarui nama.", true); }
+            } catch (error) {
+                if (typeof window.showAppToast === 'function') window.showAppToast("Gagal memperbarui nama", "error");
+            }
             finally { saveBtn.disabled = false; saveBtn.innerHTML = "Simpan Perubahan"; if (window.lucide) window.lucide.createIcons(); }
         });
     }
@@ -195,15 +200,20 @@ function setupEditProfileListeners() {
         enableBtn.addEventListener('click', async () => {
             const password = document.getElementById('linkPasswordInput').value;
             const user = auth.currentUser;
-            if (!password || password.length < 6) return showUpdateStatus("Password minimal 6 karakter.", true);
+            if (!password || password.length < 6) {
+                if (typeof window.showAppToast === 'function') window.showAppToast("Password minimal 6 karakter", "error");
+                return;
+            }
             enableBtn.innerText = "MEMPROSES...";
             enableBtn.disabled = true;
             try {
                 const credential = EmailAuthProvider.credential(user.email, password);
                 await linkWithCredential(user, credential);
-                showUpdateStatus("Akses Password Aktif!");
+                if (typeof window.showAppToast === 'function') window.showAppToast("Password login aktif", "success");
                 updateProfileUI();
-            } catch (error) { showUpdateStatus("Gagal mengaktifkan password.", true); }
+            } catch (error) {
+                if (typeof window.showAppToast === 'function') window.showAppToast("Gagal mengaktifkan password", "error");
+            }
             finally { enableBtn.innerText = "Aktifkan Password"; enableBtn.disabled = false; }
         });
     }
@@ -212,20 +222,25 @@ function setupEditProfileListeners() {
     if (btnUpdatePwd) {
         btnUpdatePwd.addEventListener('click', async () => {
             const newPwd = document.getElementById('changePasswordInput').value;
-            if (!newPwd || newPwd.length < 6) return showUpdateStatus("Minimal 6 karakter.", true);
+            if (!newPwd || newPwd.length < 6) {
+                if (typeof window.showAppToast === 'function') window.showAppToast("Minimal 6 karakter", "error");
+                return;
+            }
             btnUpdatePwd.innerText = "UPDATING...";
             btnUpdatePwd.disabled = true;
             try {
                 await updatePassword(auth.currentUser, newPwd);
-                showUpdateStatus("Berhasil! Keluar otomatis...");
+                if (typeof window.showAppToast === 'function') window.showAppToast("Password diperbarui", "success");
                 setTimeout(async () => {
                     await signOut(auth);
                     window.location.reload();
                 }, 1500);
             } catch (error) {
                 if (error.code === 'auth/requires-recent-login') {
-                    showUpdateStatus("Logout & login ulang dulu demi keamanan.", true);
-                } else { showUpdateStatus("Gagal update password.", true); }
+                    if (typeof window.showAppToast === 'function') window.showAppToast("Perlu login ulang", "error");
+                } else {
+                    if (typeof window.showAppToast === 'function') window.showAppToast("Gagal update password", "error");
+                }
             } finally { btnUpdatePwd.innerText = "Update"; btnUpdatePwd.disabled = false; }
         });
     }
@@ -237,10 +252,10 @@ function setupEditProfileListeners() {
             btnLinkGoogle.disabled = true;
             try {
                 await handleLinkGoogle();
-                showUpdateStatus("Google Berhasil Terhubung!");
+                if (typeof window.showAppToast === 'function') window.showAppToast("Google terhubung", "success");
                 updateProfileUI();
             } catch (error) {
-                showUpdateStatus(error.message, true);
+                if (typeof window.showAppToast === 'function') window.showAppToast("Gagal hubungkan Google", "error");
             }
             finally { btnLinkGoogle.innerText = "Sambungkan Google"; btnLinkGoogle.disabled = false; }
         });

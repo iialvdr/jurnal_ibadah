@@ -136,12 +136,14 @@ function removeDhikr() {
     document.getElementById('dhikrArabicDisplay').innerText = "";
     document.getElementById('dhikrLatinDisplay').innerText = "";
     updateDisplay();
+    if (typeof window.showAppToast === 'function') window.showAppToast("Bacaan dihapus", "info");
 }
 
 function resetTasbih() {
     if (isVibroEnabled && typeof vibrateSoft === 'function') vibrateSoft();
     count = 0;
     updateDisplay();
+    if (typeof window.showAppToast === 'function') window.showAppToast("Tasbih di-reset", "info");
 }
 
 function toggleVibro() {

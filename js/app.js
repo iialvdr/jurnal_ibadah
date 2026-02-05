@@ -19,9 +19,89 @@ import { initCredits } from './modules/credits.js';
 import { initChangelog } from './modules/changelog.js';
 import { initZakat } from './modules/zakat.js';
 import { initHadith } from './modules/hadith.js';
+import { initFaq } from './modules/faq.js';
 
 window.vibrateSoft = () => { if (navigator.vibrate) navigator.vibrate(10); };
 window.vibrateSuccess = () => { if (navigator.vibrate) navigator.vibrate([10, 30, 10]); };
+
+let toastTimer = null;
+window.showAppToast = (message, type = 'info') => {
+    const toast = document.getElementById('appToast');
+    const inner = document.getElementById('appToastInner');
+    const text = document.getElementById('appToastText');
+    if (!toast || !inner || !text) return;
+
+    text.innerText = message || '';
+
+    inner.classList.remove('bg-slate-900/90', 'bg-emerald-600/90', 'bg-rose-600/90');
+    if (type === 'success') inner.classList.add('bg-emerald-600/90');
+    else if (type === 'error') inner.classList.add('bg-rose-600/90');
+    else inner.classList.add('bg-slate-900/90');
+
+    toast.classList.remove('opacity-0', '-translate-y-4');
+    toast.classList.add('opacity-100', 'translate-y-0');
+
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-4');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+    }, 2200);
+};
+
+function setupTips() {
+    const tips = Array.from(document.querySelectorAll('[data-tip-key]'));
+    if (tips.length === 0) return;
+
+    const clearHighlights = () => {
+        document.querySelectorAll('.tip-highlight').forEach(el => {
+            el.classList.remove('tip-highlight');
+        });
+    };
+
+    const hideTip = (tip) => {
+        if (!tip) return;
+        clearHighlights();
+        tip.classList.add('opacity-0', 'translate-y-4');
+        tip.classList.remove('opacity-100', 'translate-y-0');
+        setTimeout(() => tip.classList.add('hidden'), 200);
+    };
+
+    tips.forEach((tip) => {
+        const btn = tip.querySelector('[data-tip-dismiss]');
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const key = tip.dataset.tipKey;
+                if (key) localStorage.setItem(`jurnal_tip_${key}`, 'true');
+                hideTip(tip);
+            });
+        }
+    });
+
+    window.addEventListener('viewChanged', (e) => {
+        const viewId = e.detail.viewId;
+        tips.forEach((tip) => {
+            if (tip.dataset.tipView !== viewId) return;
+            const key = tip.dataset.tipKey;
+            if (localStorage.getItem(`jurnal_tip_${key}`) === 'true') return;
+            tip.classList.remove('hidden');
+            clearHighlights();
+            const targetSelector = tip.dataset.tipTarget;
+            if (targetSelector) {
+                const target = document.querySelector(targetSelector);
+                if (target) target.classList.add('tip-highlight');
+            }
+            requestAnimationFrame(() => {
+                tip.classList.remove('opacity-0', 'translate-y-4');
+                tip.classList.add('opacity-100', 'translate-y-0');
+            });
+        });
+    });
+
+    window.addEventListener('viewExit', () => {
+        clearHighlights();
+        tips.forEach(hideTip);
+    });
+}
 
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
@@ -137,6 +217,8 @@ function initializeApp() {
     initChangelog();
     initZakat();
     initHadith();
+    initFaq();
+    setupTips();
 
     onAuthStateChanged(auth, (user) => {
         const splash = document.getElementById('splashScreen');

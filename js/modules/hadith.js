@@ -50,7 +50,11 @@ async function loadBooks() {
             if (window.lucide) lucide.createIcons({ root: grid });
         }
     } catch (error) {
-        grid.innerHTML = '<p class="col-span-full text-center text-xs text-slate-400">Gagal memuat daftar kitab.</p>';
+        grid.innerHTML = `
+            <div class="col-span-full text-center text-xs text-slate-400">
+                <p class="font-bold mb-2">Gagal memuat daftar kitab.</p>
+                <button onclick="vibrateSoft(); loadBooks()" class="px-3 py-2 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest active:scale-95 transition">Coba Lagi</button>
+            </div>`;
     }
 }
 
@@ -107,7 +111,11 @@ async function loadHadithItems() {
             if (view) view.scrollTo({ top: 0, behavior: 'smooth' });
         }
     } catch (error) {
-        container.innerHTML = '<p class="py-10 text-center text-xs text-slate-400">Gagal memuat hadits. Silakan coba lagi.</p>';
+        container.innerHTML = `
+            <div class="py-10 text-center text-xs text-slate-400">
+                <p class="font-bold mb-2">Gagal memuat hadits.</p>
+                <button onclick="vibrateSoft(); loadHadithItems()" class="px-3 py-2 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest active:scale-95 transition">Coba Lagi</button>
+            </div>`;
     }
 }
 
@@ -225,6 +233,10 @@ async function searchHadithByNumber() {
             container.innerHTML = '<p class="py-10 text-center text-xs text-slate-400">Nomor hadits tidak ditemukan.</p>';
         }
     } catch (error) {
-        container.innerHTML = '<p class="py-10 text-center text-xs text-slate-400">Gagal mencari hadits.</p>';
+        container.innerHTML = `
+            <div class="py-10 text-center text-xs text-slate-400">
+                <p class="font-bold mb-2">Gagal mencari hadits.</p>
+                <button onclick="vibrateSoft(); searchHadithByNumber()" class="px-3 py-2 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest active:scale-95 transition">Coba Lagi</button>
+            </div>`;
     }
 }

@@ -24,6 +24,7 @@ export function initDoa() {
     window.closeDoaDetail = closeDoaDetail;
     window.toggleFilter = toggleFilter;
     window.selectFilter = selectFilter;
+    window.resetDoaFilters = resetDoaFilters;
 
     renderSkeleton();
 
@@ -140,6 +141,26 @@ function selectFilter(type, value, label) {
     fetchDoaList(currentGrup, currentTag);
 }
 
+function resetDoaFilters() {
+    currentGrup = '';
+    currentTag = '';
+
+    const labelGrup = document.getElementById('labelGrup');
+    const labelTag = document.getElementById('labelTag');
+    const btnGrup = document.getElementById('btnGrupFilter');
+    const btnTag = document.getElementById('btnTagFilter');
+    const input = document.getElementById('doaSearchInput');
+
+    if (labelGrup) labelGrup.innerText = 'Kategori';
+    if (labelTag) labelTag.innerText = 'Tagar';
+    if (btnGrup) btnGrup.classList.remove('border-emerald-500/50', 'bg-emerald-50', 'dark:bg-emerald-900/20');
+    if (btnTag) btnTag.classList.remove('border-emerald-500/50', 'bg-emerald-50', 'dark:bg-emerald-900/20');
+    if (input) input.value = '';
+
+    closeAllDropdowns();
+    fetchDoaList();
+}
+
 async function fetchDoaList(grup = '', tag = '') {
     const loader = document.getElementById('doaLoading');
     const container = document.getElementById('doaListContainer');
@@ -160,6 +181,15 @@ async function fetchDoaList(grup = '', tag = '') {
         renderDoaList(data);
     } catch (error) {
         console.error(error);
+        const container = document.getElementById('doaListContainer');
+        if (container) {
+            container.innerHTML = `
+            <div class="py-20 text-center opacity-70">
+                <p class="text-sm font-bold mb-2">Gagal memuat data doa</p>
+                <p class="text-[11px] font-bold text-slate-400 mb-4">Periksa koneksi atau coba lagi.</p>
+                <button onclick="vibrateSoft(); fetchDoaList('${currentGrup}', '${currentTag}')" class="px-4 py-2 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest active:scale-95 transition">Coba Lagi</button>
+            </div>`;
+        }
     } finally {
         if (loader) loader.classList.add('hidden-force');
         if (container) container.classList.remove('hidden');
@@ -196,7 +226,12 @@ function renderDoaList(data) {
     const container = document.getElementById('doaListContainer');
     if (!container) return;
     if (data.length === 0) {
-        container.innerHTML = `<div class="py-20 text-center opacity-40"><p class="text-sm font-bold">Tidak ada doa ditemukan</p></div>`;
+        container.innerHTML = `
+        <div class="py-20 text-center opacity-60">
+            <p class="text-sm font-bold mb-2">Tidak ada doa ditemukan</p>
+            <p class="text-[11px] font-bold text-slate-400 mb-4">Coba ganti kata kunci atau reset filter.</p>
+            <button onclick="vibrateSoft(); resetDoaFilters()" class="px-4 py-2 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest active:scale-95 transition">Reset Filter</button>
+        </div>`;
         return;
     }
     let html = '';

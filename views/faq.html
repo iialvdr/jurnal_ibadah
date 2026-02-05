@@ -13,105 +13,313 @@
     </div>
 
     <div class="relative z-10 px-5 pt-5 pb-10 w-full max-w-7xl mx-auto md:px-8">
-        <div class="bento-card mb-8 relative overflow-hidden rounded-[2rem] bg-white dark:bg-slate-900 p-8 shadow-xl border border-white dark:border-slate-800 text-center">
+        <div class="bento-card mb-6 md:mb-8 relative overflow-hidden rounded-[2rem] bg-white dark:bg-slate-900 p-6 md:p-8 shadow-xl border border-white dark:border-slate-800">
             <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-            <div class="relative z-10">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-500 text-white mb-4 shadow-lg shadow-emerald-500/30">
-                    <i data-lucide="help-circle" class="w-8 h-8"></i>
+            <div class="absolute -left-8 bottom-0 w-28 h-28 bg-teal-500/10 rounded-full blur-3xl"></div>
+            <div class="relative z-10 flex flex-col md:flex-row items-center md:items-center gap-5 md:gap-8">
+                <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                    <i data-lucide="help-circle" class="w-8 h-8 md:w-9 md:h-9"></i>
                 </div>
-                <h3 class="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight">Pusat Informasi & Bantuan</h3>
-                <p class="text-xs text-slate-400 mt-2 max-w-xs mx-auto">Temukan jawaban lengkap seputar penggunaan seluruh fitur Jurnal Ibadah.</p>
+                <div class="flex-1 text-center md:text-left">
+                    <h3 class="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight">Pusat Informasi & Bantuan</h3>
+                    <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl">Panduan ringkas dan jawaban penting untuk membantu kamu memakai seluruh fitur Jurnal Ibadah.</p>
+                    <div class="mt-4 flex flex-wrap justify-center md:justify-start gap-2">
+                        <button data-faq-filter="all" class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Semua</button>
+                        <button data-faq-filter="akun" class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500">Akun</button>
+                        <button data-faq-filter="ibadah" class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500">Ibadah</button>
+                        <button data-faq-filter="zakat" class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500">Zakat</button>
+                        <button data-faq-filter="quran" class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500">Qur'an & Hadits</button>
+                        <button data-faq-filter="jadwal" class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500">Jadwal</button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="mb-6 md:mb-8">
+            <div class="relative bento-card bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-[1.6rem] border border-white dark:border-slate-800 flex items-center px-5 py-4 transition-all duration-300 shadow-sm">
+                <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
+                <input id="faqSearchInput" type="text" placeholder="Cari pertanyaan atau kata kunci..." class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 ml-4 outline-none">
+            </div>
+            <div class="mt-3 flex flex-wrap items-center gap-3">
+                <p id="faqSearchHint" class="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-2">Ketik untuk memfilter pertanyaan.</p>
+                <div class="flex items-center gap-2">
+                    <button id="faqOpenAllBtn" class="px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-black uppercase tracking-widest">Buka Semua</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
             
-            <div class="space-y-8">
-                <section>
-                    <h4 class="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 ml-4 mb-4">Aplikasi & Instalasi</h4>
-                    <div class="space-y-4">
-                        <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm">
-                            <h5 class="text-sm font-bold text-slate-800 dark:text-white mb-2">Apa itu Jurnal Ibadah?</h5>
-                            <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Asisten digital modern untuk membantu mencatat aktivitas ibadah, membaca Al-Qur'an, melihat jadwal sholat, hingga menghitung zakat dalam satu aplikasi ringan.</p>
+            <div class="md:col-span-6 space-y-5">
+                <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm faq-section" data-faq-category="umum">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i>
                         </div>
-                        <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm">
-                            <h5 class="text-sm font-bold text-slate-800 dark:text-white mb-2">Apakah aplikasi ini gratis?</h5>
-                            <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Iya, sepenuhnya gratis dan dikembangkan untuk membantu sesama umat Muslim dalam mengelola rutinitas ibadah harian.</p>
+                        <h4 class="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-500">Aplikasi & Umum</h4>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Apa itu Jurnal Ibadah?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Apa itu Jurnal Ibadah?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Asisten digital modern untuk membantu mencatat aktivitas ibadah, membaca Al-Qur'an, melihat jadwal sholat, hingga menghitung zakat dalam satu aplikasi ringan.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Apakah aplikasi ini gratis?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Apakah aplikasi ini gratis?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Iya, sepenuhnya gratis dan dikembangkan untuk membantu sesama umat Muslim dalam mengelola rutinitas ibadah harian.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Apakah saya perlu mengunduh aplikasi di Play Store?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Apakah saya perlu mengunduh aplikasi di Play Store?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Tidak perlu, Anda bisa langsung mengaksesnya melalui browser. Namun, Anda bisa menyimpannya ke layar utama (Add to Home Screen) agar muncul seperti aplikasi biasa di menu HP Anda.</p>
+                            </div>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                <section>
-                    <h4 class="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 ml-4 mb-4">Akun & Keamanan</h4>
-                    <div class="space-y-4">
-                        <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm">
-                            <h5 class="text-sm font-bold text-slate-800 dark:text-white mb-2">Kenapa harus login Google?</h5>
-                            <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Dengan login via Google, seluruh progres ibadah dan bacaan Al-Qur'an kamu tersimpan aman. Data tidak akan hilang meskipun kamu mengganti perangkat.</p>
+                <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm faq-section" data-faq-category="akun">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
+                            <i data-lucide="shield" class="w-4 h-4"></i>
                         </div>
-                        <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm">
-                            <h5 class="text-sm font-bold text-slate-800 dark:text-white mb-2">Apakah data saya aman?</h5>
-                            <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Tentu. Kami menggunakan infrastruktur Google Firebase untuk memastikan keamanan akun dan privasi data pribadi kamu tetap terlindungi.</p>
+                        <h4 class="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-500">Akun & Sinkronisasi</h4>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Kenapa harus login Google?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Kenapa harus login Google?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Dengan login via Google, seluruh progres ibadah dan bacaan Al-Qur'an kamu tersimpan aman. Data tidak akan hilang meskipun kamu mengganti perangkat.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Apakah data saya aman?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Apakah data saya aman?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Tentu. Kami menggunakan infrastruktur Google Firebase untuk memastikan keamanan akun dan privasi data pribadi kamu tetap terlindungi.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Bagaimana cara mengganti foto profil?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Bagaimana cara mengganti foto profil?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Aplikasi mengambil data profil langsung dari akun Google Anda. Jika Anda mengubah foto di akun Google, maka tampilan di aplikasi Jurnal Ibadah akan ikut berubah.</p>
+                            </div>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                <section>
-                    <h4 class="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 ml-4 mb-4">Zakat & Fidyah</h4>
+                <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm faq-section" data-faq-category="zakat">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 flex items-center justify-center">
+                            <i data-lucide="calculator" class="w-4 h-4"></i>
+                        </div>
+                        <h4 class="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-500">Zakat, Doa & Fitur Lainnya</h4>
+                    </div>
                     <div class="space-y-4">
-                        <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm">
-                            <h5 class="text-sm font-bold text-slate-800 dark:text-white mb-2">Bagaimana cara hitung Zakat Maal?</h5>
-                            <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Cukup masukkan harga emas saat ini dan total harta simpananmu. Aplikasi akan menghitung apakah hartamu sudah mencapai nisab dan berapa nominal yang wajib dikeluarkan.</p>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Bagaimana cara hitung Zakat Maal?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Bagaimana cara hitung Zakat Maal?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Cukup masukkan harga emas saat ini dan total harta simpananmu. Aplikasi akan menghitung apakah hartamu sudah mencapai nisab dan berapa nominal yang wajib dikeluarkan.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Bagaimana akurasi Kiblat?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Bagaimana akurasi Kiblat?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Akurasi bergantung pada sensor magnetik perangkatmu. Pastikan kalibrasi GPS aktif dan jauhkan dari benda logam/magnet saat digunakan.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Apakah ada fitur Tasbih?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Apakah ada fitur Tasbih?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Ya, tersedia fitur Tasbih Digital dengan mode getar yang memungkinkan Anda berdzikir tanpa perlu melihat layar HP secara terus-menerus.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Apa itu fitur Asmaul Husna?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Apa itu fitur Asmaul Husna?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Fitur ini menyajikan 99 nama Allah yang mulia, lengkap dengan tulisan Arab, cara baca (latin), serta maknanya dalam bahasa Indonesia.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Bagaimana jika saya menemukan kesalahan atau ingin memberi saran?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Bagaimana jika saya menemukan kesalahan atau ingin memberi saran?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Anda dapat melihat informasi pengembang dan atribusi sumber data melalui menu "Kredit" atau melihat riwayat perubahan di menu "Changelog".</p>
+                            </div>
                         </div>
                     </div>
-                </section>
+                </div>
             </div>
 
-            <div class="space-y-8">
-                <section>
-                    <h4 class="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 ml-4 mb-4">Pencatat Ibadah (Tracker)</h4>
-                    <div class="space-y-4">
-                        <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm">
-                            <h5 class="text-sm font-bold text-slate-800 dark:text-white mb-2">Cara mengisi Jurnal Harian?</h5>
-                            <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Navigasikan ke halaman <b>Jurnal Harian</b>. Kamu bisa memberikan centang pada sholat Fardhu maupun Sunnah yang telah diselesaikan.</p>
+            <div class="md:col-span-6 space-y-5">
+                <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm faq-section" data-faq-category="ibadah">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center">
+                            <i data-lucide="list-checks" class="w-4 h-4"></i>
                         </div>
-                        <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm">
-                            <h5 class="text-sm font-bold text-slate-800 dark:text-white mb-2">Tombol centang tidak bisa diklik?</h5>
-                            <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Fitur <i>Smart Calculation</i> memastikan tombol hanya aktif setelah waktu sholat tersebut tiba, membantu kamu mencatat sesuai waktu aslinya.</p>
+                        <h4 class="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-500">Pencatat Ibadah</h4>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Cara mengisi Jurnal Harian?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Cara mengisi Jurnal Harian?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Navigasikan ke halaman <b>Jurnal Harian</b>. Kamu bisa memberikan centang pada sholat Fardhu maupun Sunnah yang telah diselesaikan.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Tombol centang tidak bisa diklik?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Tombol centang tidak bisa diklik?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Fitur <i>Smart Calculation</i> memastikan tombol hanya aktif setelah waktu sholat tersebut tiba, membantu kamu mencatat sesuai waktu aslinya.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Dapatkah saya melihat pencapaian ibadah saya?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Dapatkah saya melihat pencapaian ibadah saya?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Tentu. Di halaman profil, Anda dapat melihat statistik ringkas mengenai aktivitas ibadah yang telah Anda catat melalui fitur tracker.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Apakah saya bisa melihat catatan hari kemarin?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Apakah saya bisa melihat catatan hari kemarin?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Ya, Anda bisa mengganti tanggal pada halaman Jurnal Harian untuk meninjau atau mengisi catatan ibadah pada hari-hari sebelumnya.</p>
+                            </div>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                <section>
-                    <h4 class="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 ml-4 mb-4">Al-Qur'an & Hadits</h4>
+                <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm faq-section" data-faq-category="quran">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 flex items-center justify-center">
+                            <i data-lucide="book-open-check" class="w-4 h-4"></i>
+                        </div>
+                        <h4 class="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-500">Al-Qur'an & Hadits</h4>
+                    </div>
                     <div class="space-y-4">
-                        <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm">
-                            <h5 class="text-sm font-bold text-slate-800 dark:text-white mb-2">Apa itu Perpustakaan Hadits?</h5>
-                            <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Fitur baru yang memungkinkan kamu menjelajahi ribuan hadits dari 9 perawi besar seperti Bukhari, Muslim, hingga Tirmidzi secara lengkap dengan teks Indonesia.</p>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Apa itu Perpustakaan Hadits?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Apa itu Perpustakaan Hadits?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Fitur baru yang memungkinkan kamu menjelajahi ribuan hadits dari 9 perawi besar seperti Bukhari, Muslim, hingga Tirmidzi secara lengkap dengan teks Indonesia.</p>
+                            </div>
                         </div>
-                        <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm">
-                            <h5 class="text-sm font-bold text-slate-800 dark:text-white mb-2">Cara mencari nomor hadits?</h5>
-                            <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Buka kitab pilihanmu, lalu gunakan kotak pencarian di bagian atas untuk memasukkan nomor hadits yang spesifik.</p>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Cara mencari nomor hadits?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Cara mencari nomor hadits?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Buka kitab pilihanmu, lalu gunakan kotak pencarian di bagian atas untuk memasukkan nomor hadits yang spesifik.</p>
+                            </div>
                         </div>
-                        <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm">
-                            <h5 class="text-sm font-bold text-slate-800 dark:text-white mb-2">Dari mana sumber haditsnya?</h5>
-                            <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Data hadits disuplai secara real-time melalui <b>Gading Hadith API</b> untuk memastikan keakuratan nomor dan teks hadits yang ditampilkan.</p>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Bagaimana cara mencari surah tertentu?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Bagaimana cara mencari surah tertentu?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Pada daftar surah Al-Qur'an, tersedia fitur pencarian yang memudahkan Anda menemukan surah berdasarkan nama dengan cepat.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Bagaimana jika saya lupa ayat terakhir yang dibaca?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Bagaimana jika saya lupa ayat terakhir yang dibaca?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Aplikasi secara otomatis menyimpan ayat terakhir yang Anda buka. Informasi ini ditampilkan di bagian "Terakhir Dibaca" pada halaman beranda.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Dari mana sumber haditsnya?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Dari mana sumber haditsnya?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Data hadits disuplai secara real-time melalui <b>Gading Hadith API</b> untuk memastikan keakuratan nomor dan teks hadits yang ditampilkan.</p>
+                            </div>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                <section>
-                    <h4 class="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 ml-4 mb-4">Fitur Tambahan</h4>
+                <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm faq-section" data-faq-category="jadwal">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-900/20 text-teal-600 flex items-center justify-center">
+                            <i data-lucide="clock-3" class="w-4 h-4"></i>
+                        </div>
+                        <h4 class="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-500">Jadwal & Waktu Ibadah</h4>
+                    </div>
                     <div class="space-y-4">
-                        <div class="bento-card bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-white dark:border-slate-800 shadow-sm">
-                            <h5 class="text-sm font-bold text-slate-800 dark:text-white mb-2">Bagaimana akurasi Kiblat?</h5>
-                            <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Akurasi bergantung pada sensor magnetik perangkatmu. Pastikan kalibrasi GPS aktif dan jauhkan dari benda logam/magnet saat digunakan.</p>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Bagaimana cara melihat jadwal puasa?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Bagaimana cara melihat jadwal puasa?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Aplikasi menyediakan menu "Jadwal Puasa" yang menampilkan informasi hari-hari disunnahkan berpuasa, seperti Ayyamul Bidh, Senin-Kamis, dan hari besar Islam lainnya.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                            <button class="faq-toggle w-full flex items-center justify-between gap-4 p-4" data-faq-title="Mengapa jadwal sholat saya berbeda dengan masjid sekitar?">
+                                <h5 class="text-sm font-bold text-slate-800 dark:text-white text-left">Mengapa jadwal sholat saya berbeda dengan masjid sekitar?</h5>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                            </button>
+                            <div class="faq-content hidden px-4 pb-4">
+                                <p class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">Aplikasi menggunakan lokasi GPS perangkat Anda secara real-time untuk akurasi koordinat. Pastikan izin lokasi aktif agar jadwal yang ditampilkan sesuai dengan posisi Anda saat ini.</p>
+                            </div>
                         </div>
                     </div>
-                </section>
+                </div>
             </div>
         </div>
 
-        <div class="mt-12 text-center p-8 border-t border-slate-200 dark:border-slate-800">
+        <div class="mt-10 text-center p-6 md:p-8 border-t border-slate-200 dark:border-slate-800">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Jurnal Ibadah</p>
             <p class="text-[11px] text-slate-500 mt-2">Dibuat untuk memudahkan umat dalam memonitoring kualitas ibadah harian.</p>
         </div>

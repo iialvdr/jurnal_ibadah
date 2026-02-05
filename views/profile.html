@@ -15,69 +15,115 @@
     </div>
 
     <div class="relative z-10 px-5 pt-5 pb-10 w-full max-w-7xl mx-auto md:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-12 md:gap-6 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
             
-            <div class="md:col-span-4 lg:col-span-3 bento-card relative overflow-hidden rounded-[1.8rem] md:rounded-[2.5rem] bg-white dark:bg-slate-900 p-5 md:p-8 shadow-xl border border-white dark:border-slate-800 flex flex-col items-center text-center">
-                <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-3xl -mr-6 -mt-6"></div>
-                <div class="relative z-10 w-full flex flex-col items-center">
-                    <div class="relative mb-3 md:mb-5 group">
-                        <div class="absolute -inset-1 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-[2rem] blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
-                        <img id="profilePhotoLarge" src="" referrerpolicy="no-referrer" class="relative w-16 h-16 md:w-32 md:h-32 rounded-[1.8rem] border-[3px] border-white dark:border-slate-800 shadow-md object-cover bg-slate-100">
-                        <div class="absolute bottom-0 right-0 bg-emerald-500 text-white p-1 rounded-full border-[2px] border-white dark:border-slate-800 shadow-sm">
-                            <i data-lucide="shield-check" class="w-3 h-3 md:w-4 md:h-4"></i>
+            <div class="md:col-span-7 lg:col-span-8 bento-card relative overflow-hidden rounded-[2rem] md:rounded-[2.5rem] bg-white dark:bg-slate-900 border border-white dark:border-slate-800 shadow-xl">
+                <div class="relative h-24 md:h-32 bg-gradient-to-br from-emerald-500/30 via-emerald-500/10 to-transparent">
+                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-emerald-500/20 rounded-full blur-3xl"></div>
+                    <div class="absolute -left-10 bottom-0 w-32 h-32 bg-teal-500/20 rounded-full blur-3xl"></div>
+                    <div class="absolute right-6 top-6 px-3 py-1 rounded-full bg-white/80 dark:bg-slate-900/70 text-[8px] font-black uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400">Profil</div>
+                </div>
+                <div class="relative px-4 md:px-8 pb-5 md:pb-6 -mt-10 md:-mt-12">
+                    <div class="flex flex-col sm:flex-row items-center sm:items-end gap-3 sm:gap-5">
+                        <div class="relative group">
+                            <div class="absolute -inset-1 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-[2rem] blur opacity-30 group-hover:opacity-50 transition duration-500"></div>
+                            <img id="profilePhotoLarge" src="" referrerpolicy="no-referrer" class="relative w-20 h-20 sm:w-22 sm:h-22 md:w-28 md:h-28 rounded-[1.6rem] border-[3px] border-white dark:border-slate-900 shadow-xl object-cover bg-slate-100">
+                            <div class="absolute -bottom-1 -right-1 bg-emerald-500 text-white p-1.5 rounded-full border-[2px] border-white dark:border-slate-900 shadow-sm">
+                                <i data-lucide="shield-check" class="w-3 h-3 md:w-4 md:h-4"></i>
+                            </div>
                         </div>
+                        <div class="flex-1 text-center md:text-left">
+                            <h2 id="profileNameLarge" class="text-lg md:text-2xl font-black text-slate-800 dark:text-white tracking-tight leading-tight">...</h2>
+                            <p id="profileEmail" class="text-[9px] md:text-xs font-medium text-slate-400 mt-0.5 md:mt-1">...</p>
+                            <div class="mt-2 flex flex-wrap justify-center md:justify-start gap-2">
+                                <div class="px-2 py-1 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center gap-2">
+                                    <i data-lucide="calendar" class="w-3 h-3 text-slate-400"></i>
+                                    <span id="joinDate" class="text-[9px] font-black text-slate-600 dark:text-slate-300">...</span>
+                                </div>
+                                <div class="px-2 py-1 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center gap-2">
+                                    <i data-lucide="map-pin" class="w-3 h-3 text-slate-400"></i>
+                                    <span id="lastLocation" class="text-[9px] font-black text-slate-600 dark:text-slate-300">...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 md:ml-auto"></div>
                     </div>
-                    <h2 id="profileNameLarge" class="text-base md:text-2xl font-black text-slate-800 dark:text-white tracking-tight leading-tight">...</h2>
-                    <p id="profileEmail" class="text-[9px] md:text-xs font-medium text-slate-400 mt-0.5 md:mt-1">...</p>
-                    <div class="mt-3 md:mt-6 flex flex-wrap justify-center gap-1.5 md:gap-2">
-                         <div class="px-2 py-0.5 rounded-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center gap-1">
-                             <i data-lucide="calendar" class="w-2.5 h-2.5 text-slate-400"></i>
-                             <span id="joinDate" class="text-[8px] md:text-[10px] font-bold text-slate-500">...</span>
-                         </div>
-                         <div class="px-2 py-0.5 rounded-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center gap-1">
-                             <i data-lucide="map-pin" class="w-2.5 h-2.5 text-slate-400"></i>
-                             <span id="lastLocation" class="text-[8px] md:text-[10px] font-bold text-slate-500">...</span>
-                         </div>
+                    <div class="mt-4 grid grid-cols-3 gap-2 md:gap-3">
+                        <div class="bento-card bg-gradient-to-br from-blue-500/10 via-white to-white dark:from-blue-900/20 dark:via-slate-900 dark:to-slate-900 py-3 px-3 rounded-[1.1rem] md:rounded-[1.5rem] border border-white/80 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center gap-1.5">
+                            <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-sm shrink-0">
+                                <i data-lucide="hourglass" class="w-5 h-5"></i>
+                            </div>
+                            <div class="text-center">
+                                <span id="statDays" class="block text-2xl font-black text-slate-800 dark:text-white leading-none tabular-nums">0</span>
+                                <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">Hari</span>
+                            </div>
+                        </div>
+                        <div class="bento-card bg-gradient-to-br from-emerald-500/10 via-white to-white dark:from-emerald-900/20 dark:via-slate-900 dark:to-slate-900 py-3 px-3 rounded-[1.1rem] md:rounded-[1.5rem] border border-white/80 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center gap-1.5">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-sm shrink-0">
+                                <i data-lucide="activity" class="w-5 h-5"></i>
+                            </div>
+                            <div class="text-center">
+                                <span id="statConsistency" class="block text-2xl font-black text-slate-800 dark:text-white leading-none tabular-nums">0%</span>
+                                <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">Konsisten</span>
+                            </div>
+                        </div>
+                        <div class="bento-card bg-gradient-to-br from-amber-500/10 via-white to-white dark:from-amber-900/20 dark:via-slate-900 dark:to-slate-900 py-3 px-3 rounded-[1.1rem] md:rounded-[1.5rem] border border-white/80 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center gap-1.5">
+                            <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shadow-sm shrink-0">
+                                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                            </div>
+                            <div class="text-center">
+                                <span id="statToday" class="block text-2xl font-black text-slate-800 dark:text-white leading-none tabular-nums">0/5</span>
+                                <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">Ibadah</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="md:col-span-8 lg:col-span-9 flex flex-col gap-4 mt-6 md:mt-0">
-                <div class="grid grid-cols-3 gap-2 md:gap-4 md:h-full">
-                    <div class="bento-card bg-white dark:bg-slate-900 py-4 px-2 rounded-[1.2rem] md:rounded-[2rem] border border-white dark:border-slate-800 shadow-sm flex flex-col items-center justify-center gap-2 group transition-all">
-                        <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center shadow-sm shrink-0">
-                            <i data-lucide="hourglass" class="w-5 h-5"></i>
-                        </div>
-                        <div class="text-center">
-                            <span id="statDays" class="block text-xl font-black text-slate-800 dark:text-white leading-none tabular-nums">0</span>
-                            <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">Hari</span>
-                        </div>
+            <div class="md:col-span-5 lg:col-span-4 hidden md:grid grid-cols-2 gap-3 md:order-2 order-last">
+                <button onclick="vibrateSoft(); window.openFaq()" class="bento-card bg-white dark:bg-slate-900 p-4 md:p-6 rounded-[1.4rem] border border-white dark:border-slate-800 shadow-sm flex flex-col items-start justify-between transition hover:border-emerald-500/20">
+                    <div class="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center shadow-sm">
+                        <i data-lucide="help-circle" class="w-5 h-5"></i>
                     </div>
+                    <div class="mt-4">
+                        <p class="font-bold text-slate-800 dark:text-white text-xs md:text-sm">Pusat Bantuan</p>
+                        <p class="text-[9px] md:text-[10px] text-slate-400">FAQ & Panduan</p>
+                    </div>
+                </button>
 
-                    <div class="bento-card bg-white dark:bg-slate-900 py-4 px-2 rounded-[1.2rem] md:rounded-[2rem] border border-white dark:border-slate-800 shadow-sm flex flex-col items-center justify-center gap-2 group transition-all">
-                        <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 flex items-center justify-center shadow-sm shrink-0">
-                            <i data-lucide="activity" class="w-5 h-5"></i>
-                        </div>
-                        <div class="text-center">
-                            <span id="statConsistency" class="block text-xl font-black text-slate-800 dark:text-white leading-none tabular-nums">0%</span>
-                            <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">Konsisten</span>
-                        </div>
+                <button onclick="vibrateSoft(); navigateTo('changelog')" class="bento-card bg-white dark:bg-slate-900 p-4 md:p-6 rounded-[1.4rem] border border-white dark:border-slate-800 shadow-sm flex flex-col items-start justify-between transition hover:border-emerald-500/20">
+                    <div class="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-orange-50 dark:bg-orange-900/20 text-orange-500 flex items-center justify-center shadow-sm">
+                        <i data-lucide="history" class="w-5 h-5"></i>
                     </div>
+                    <div class="mt-4">
+                        <p class="font-bold text-slate-800 dark:text-white text-xs md:text-sm">Riwayat Update</p>
+                        <p class="text-[9px] md:text-[10px] text-slate-400">Versi Aplikasi</p>
+                    </div>
+                </button>
 
-                    <div class="bento-card bg-white dark:bg-slate-900 py-4 px-2 rounded-[1.2rem] md:rounded-[2rem] border border-white dark:border-slate-800 shadow-sm flex flex-col items-center justify-center gap-2 group transition-all">
-                        <div class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-500 flex items-center justify-center shadow-sm shrink-0">
-                            <i data-lucide="check-circle-2" class="w-5 h-5"></i>
-                        </div>
-                        <div class="text-center">
-                            <span id="statToday" class="block text-xl font-black text-slate-800 dark:text-white leading-none tabular-nums">0/5</span>
-                            <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">Ibadah</span>
-                        </div>
+                <button onclick="vibrateSoft(); window.openCredits()" class="bento-card bg-white dark:bg-slate-900 p-4 md:p-6 rounded-[1.4rem] border border-white dark:border-slate-800 shadow-sm flex flex-col items-start justify-between transition hover:border-emerald-500/20">
+                    <div class="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center shadow-sm">
+                        <i data-lucide="info" class="w-5 h-5"></i>
                     </div>
-                </div>
+                    <div class="mt-4">
+                        <p class="font-bold text-slate-800 dark:text-white text-xs md:text-sm">Tentang Aplikasi</p>
+                        <p class="text-[9px] md:text-[10px] text-slate-400">Credits & Developer</p>
+                    </div>
+                </button>
+
+                <button id="logoutBtnProfile" class="bento-card group bg-red-50 dark:bg-red-500/5 p-4 md:p-6 rounded-[1.4rem] border border-red-100 dark:border-red-900/30 shadow-sm flex flex-col items-start justify-between transition hover:bg-red-500 hover:border-red-500 hover:text-white dark:hover:bg-red-500/15 dark:hover:border-red-500/40 dark:hover:text-red-300">
+                    <div class="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white dark:bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shadow-sm group-hover:bg-white group-hover:text-red-600 dark:group-hover:bg-red-500/40 dark:group-hover:text-red-100">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                    </div>
+                    <div class="mt-4">
+                        <p class="font-bold text-slate-800 dark:text-red-400 text-xs md:text-sm group-hover:text-white dark:group-hover:text-white">Keluar Aplikasi</p>
+                        <p class="text-[9px] md:text-[10px] text-slate-400 group-hover:text-white/80 dark:group-hover:text-white/80">Selesai Beribadah</p>
+                    </div>
+                </button>
             </div>
         </div>
 
-        <div class="mt-4 md:mt-6">
+        <div class="mt-5 md:mt-6 md:order-3 order-2">
             <div class="bento-card bg-white dark:bg-slate-900 p-5 md:p-8 rounded-[1.8rem] md:rounded-[2.5rem] border border-white dark:border-slate-800 shadow-sm flex flex-col min-h-[280px] md:min-h-[400px]">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-5 md:mb-10">
                     <div>
@@ -98,59 +144,48 @@
             </div>
         </div>
 
-        <div class="mt-4 md:mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-            <button onclick="vibrateSoft(); window.openFaq()" class="bento-card bg-white dark:bg-slate-900 p-4 md:p-6 rounded-[1.2rem] md:rounded-[2rem] border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group transition hover:border-emerald-500/20">
-                <div class="flex items-center gap-3 md:gap-4">
-                    <div class="w-9 h-9 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center shrink-0 shadow-sm">
-                        <i data-lucide="help-circle" class="w-4 h-4 md:w-5 md:h-5"></i>
-                    </div>
-                    <div class="text-left">
-                        <p class="font-bold text-slate-800 dark:text-white text-xs md:text-sm">Pusat Bantuan</p>
-                        <p class="text-[9px] md:text-[10px] text-slate-400">FAQ & Panduan</p>
-                    </div>
+        <div class="mt-4 md:mt-6 grid grid-cols-2 gap-3 md:hidden">
+            <button onclick="vibrateSoft(); window.openFaq()" class="bento-card bg-white dark:bg-slate-900 p-4 rounded-[1.4rem] border border-white dark:border-slate-800 shadow-sm flex flex-col items-start justify-between transition hover:border-emerald-500/20">
+                <div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center shadow-sm">
+                    <i data-lucide="help-circle" class="w-5 h-5"></i>
                 </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition"></i>
+                <div class="mt-4">
+                    <p class="font-bold text-slate-800 dark:text-white text-xs">Pusat Bantuan</p>
+                    <p class="text-[9px] text-slate-400">FAQ & Panduan</p>
+                </div>
             </button>
 
-            <button onclick="vibrateSoft(); navigateTo('changelog')" class="bento-card bg-white dark:bg-slate-900 p-4 md:p-6 rounded-[1.2rem] md:rounded-[2rem] border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group transition hover:border-emerald-500/20">
-                <div class="flex items-center gap-3 md:gap-4">
-                    <div class="w-9 h-9 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-orange-50 dark:bg-orange-900/20 text-orange-500 flex items-center justify-center shrink-0 shadow-sm">
-                        <i data-lucide="history" class="w-4 h-4 md:w-5 md:h-5"></i>
-                    </div>
-                    <div class="text-left">
-                        <p class="font-bold text-slate-800 dark:text-white text-xs md:text-sm">Riwayat Update</p>
-                        <p class="text-[9px] md:text-[10px] text-slate-400">Versi Aplikasi</p>
-                    </div>
+            <button onclick="vibrateSoft(); navigateTo('changelog')" class="bento-card bg-white dark:bg-slate-900 p-4 rounded-[1.4rem] border border-white dark:border-slate-800 shadow-sm flex flex-col items-start justify-between transition hover:border-emerald-500/20">
+                <div class="w-10 h-10 rounded-2xl bg-orange-50 dark:bg-orange-900/20 text-orange-500 flex items-center justify-center shadow-sm">
+                    <i data-lucide="history" class="w-5 h-5"></i>
                 </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition"></i>
+                <div class="mt-4">
+                    <p class="font-bold text-slate-800 dark:text-white text-xs">Riwayat Update</p>
+                    <p class="text-[9px] text-slate-400">Versi Aplikasi</p>
+                </div>
             </button>
 
-            <button onclick="vibrateSoft(); window.openCredits()" class="bento-card bg-white dark:bg-slate-900 p-4 md:p-6 rounded-[1.2rem] md:rounded-[2rem] border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group transition hover:border-emerald-500/20">
-                <div class="flex items-center gap-3 md:gap-4">
-                    <div class="w-9 h-9 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center shrink-0 shadow-sm">
-                        <i data-lucide="info" class="w-4 h-4 md:w-5 md:h-5"></i>
-                    </div>
-                    <div class="text-left">
-                        <p class="font-bold text-slate-800 dark:text-white text-xs md:text-sm">Tentang Aplikasi</p>
-                        <p class="text-[9px] md:text-[10px] text-slate-400">Credits & Developer</p>
-                    </div>
+            <button onclick="vibrateSoft(); window.openCredits()" class="bento-card bg-white dark:bg-slate-900 p-4 rounded-[1.4rem] border border-white dark:border-slate-800 shadow-sm flex flex-col items-start justify-between transition hover:border-emerald-500/20">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center shadow-sm">
+                    <i data-lucide="info" class="w-5 h-5"></i>
                 </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition"></i>
+                <div class="mt-4">
+                    <p class="font-bold text-slate-800 dark:text-white text-xs">Tentang Aplikasi</p>
+                    <p class="text-[9px] text-slate-400">Credits & Developer</p>
+                </div>
             </button>
 
-            <button id="logoutBtnProfile" class="bento-card p-4 md:p-6 rounded-[1.2rem] md:rounded-[2rem] border bg-red-50 dark:bg-red-500/5 border-red-100 dark:border-red-900/30 shadow-sm flex items-center justify-between group transition hover:bg-red-500 hover:text-white dark:hover:bg-red-500 dark:hover:text-white active:scale-95">
-                <div class="flex items-center gap-3 md:gap-4">
-                    <div class="w-9 h-9 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-white dark:bg-red-500/20 text-red-500 dark:text-red-400 flex items-center justify-center shrink-0 shadow-sm group-hover:bg-white/20 group-hover:text-white">
-                        <i data-lucide="log-out" class="w-4 h-4 md:w-5 md:h-5"></i>
-                    </div>
-                    <div class="text-left">
-                        <p class="font-bold text-slate-800 dark:text-red-400 group-hover:text-white text-xs md:text-sm">Keluar Aplikasi</p>
-                        <p class="text-[9px] md:text-[10px] text-slate-400 group-hover:text-white/80">Selesai Beribadah</p>
-                    </div>
+            <button id="logoutBtnProfile" class="bento-card group bg-red-50 dark:bg-red-500/5 p-4 rounded-[1.4rem] border border-red-100 dark:border-red-900/30 shadow-sm flex flex-col items-start justify-between transition hover:bg-red-500 hover:border-red-500 hover:text-white dark:hover:bg-red-500/15 dark:hover:border-red-500/40 dark:hover:text-red-300">
+                <div class="w-10 h-10 rounded-2xl bg-white dark:bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shadow-sm group-hover:bg-white group-hover:text-red-600 dark:group-hover:bg-red-500/40 dark:group-hover:text-red-100">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
                 </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-red-200 dark:text-red-900 group-hover:text-white group-hover:translate-x-1 transition"></i>
+                <div class="mt-4">
+                    <p class="font-bold text-slate-800 dark:text-red-400 text-xs group-hover:text-white dark:group-hover:text-white">Keluar Aplikasi</p>
+                    <p class="text-[9px] text-slate-400 group-hover:text-white/80 dark:group-hover:text-white/80">Selesai Beribadah</p>
+                </div>
             </button>
         </div>
+
 
         <div class="mt-8 text-center opacity-30">
             <p class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Jurnal Ibadah App • <span id="versionTextProfile">...</span></p>
@@ -159,12 +194,8 @@
     
     <div id="editProfileModal" class="fixed inset-0 z-[200] flex items-end sm:items-center justify-center invisible pointer-events-none">
         <div id="editProfileBackdrop" class="absolute inset-0 bg-slate-950/60 backdrop-blur-md opacity-0 transition-opacity duration-500" onclick="closeEditProfile()"></div>
-        <div id="editProfileContent" class="relative w-full sm:w-[90%] sm:max-w-md bg-white dark:bg-slate-950 p-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl border-t border-white/20 dark:border-slate-800 transform translate-y-full transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
+        <div id="editProfileContent" class="relative w-full sm:w-[92%] sm:max-w-lg bg-white dark:bg-slate-950 p-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl border-t border-white/20 dark:border-slate-800 transform translate-y-full transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
             <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8"></div>
-            
-            <div id="updateStatusMsg" class="hidden mb-6 p-4 rounded-2xl text-center border transition-all duration-300">
-                <p class="text-[10px] font-black uppercase tracking-widest"></p>
-            </div>
 
             <div class="flex justify-between items-start mb-6">
                 <div>
