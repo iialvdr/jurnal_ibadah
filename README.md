@@ -1,8 +1,10 @@
 <p align="center">
-  <img src="assets/favicon/android-chrome-192x192.png" alt="Logo Jurnal Ibadah" width="120" />
+  <a href="https://jurnal-ibadah.vercel.app/">
+    <img src="./img/logo.png" alt="Logo Jurnal Ibadah" width="120" />
+  </a>
 </p>
 
-<h1 align="center">🕌 Jurnal Ibadah</h1>
+<h1 align="center">Jurnal Ibadah</h1>
 
 <p align="center">
   <strong>"Catat ibadahmu, raih keberkahan-Nya."</strong>
@@ -10,116 +12,137 @@
 
 <p align="center">
   <a href="https://jurnal-ibadah.vercel.app/">
-    <img src="https://img.shields.io/badge/🚀_Live_Demo-Buka_Aplikasi-10b981?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
+    <img src="https://img.shields.io/badge/Live_Demo-Buka_Aplikasi-10b981?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
   </a>
 </p>
 
 <p align="center">
-  <a href="#-fitur-utama">Fitur</a> •
-  <a href="#-teknologi-yang-digunakan">Teknologi</a> •
-  <a href="#-cara-menjalankan-local-development">Instalasi</a>
+  <img src="https://img.shields.io/badge/PWA-Installable-0ea5e9?style=flat-square" alt="PWA" />
+  <img src="https://img.shields.io/badge/Offline-Friendly-10b981?style=flat-square" alt="Offline" />
+  <img src="https://img.shields.io/badge/Vanilla_JS-Clean-111827?style=flat-square" alt="Vanilla JS" />
 </p>
 
 ---
 
-**Jurnal Ibadah** adalah aplikasi web berbasis PWA (Progressive Web App) yang dirancang untuk membantu umat Muslim memantau aktivitas ibadah harian mereka. Aplikasi ini memiliki antarmuka modern (*Glassmorphism*), ringan, dan kini mendukung perhitungan jadwal sholat sepenuhnya **Offline**.
+**Jurnal Ibadah** adalah aplikasi web berbasis PWA yang membantu memantau rutinitas ibadah harian, membaca Al-Qur'an, melihat jadwal sholat, berdzikir, hingga menghitung zakat dalam satu aplikasi ringan dan nyaman untuk mobile.
 
-## ✨ Fitur Utama
+## Ringkasan Nilai
 
-Aplikasi ini memuat berbagai fitur interaktif:
+- Satu aplikasi untuk berbagai kebutuhan ibadah harian
+- Desain fokus mobile yang cepat dan ringan
+- Data tersimpan aman dan bisa sinkron lintas perangkat
+- Akses cepat tanpa instalasi Play Store
+- Berfungsi offline untuk fitur inti
 
-* **📝 Jurnal Harian (Prayer Tracker):**
-    * Checklist sholat Wajib (5 waktu) dan Sunnah (Dhuha & Tahajud).
-    * **Smart Calculation:** Jadwal sholat di setiap kartu tracker dihitung secara dinamis sesuai tanggal yang dipilih.
-    * Statistik & Grafik kemajuan ibadah.
-* **⏰ Jadwal Sholat & Kalender Hijriah (Offline Ready):**
-    * Menggunakan **Adhan.js** untuk perhitungan waktu sholat presisi tanpa internet.
-    * Konfigurasi standar mirip Kemenag RI (Metode Singapore/MABIMS).
-    * **Hijriah Adjustment:** Logika koreksi manual tanggal Hijriah untuk menyesuaikan dengan ketetapan lokal.
-* **📖 Al-Qur'an Digital:**
-    * Daftar 114 Surat lengkap dengan terjemahan dan audio.
-    * **Bookmark Pintar:** Simpan ayat terakhir yang dibaca dan lanjutkan langsung dari Dashboard.
-    * Fitur pencarian surat instan.
-* **🤲 Kumpulan Doa:**
-    * Cari doa harian, tahlil, dan wirid.
-    * Filter berdasarkan Kategori (Grup) dan Tag.
-    * UI/UX yang dioptimalkan untuk mobile (Anti-Flicker & Lazy GPU Rendering).
-* **🔢 Asmaul Husna:**
-    * Daftar 99 Nama Allah dengan teks Arab, Latin, dan Artinya.
-* **📿 Tasbih Digital:**
-    * Counter dzikir dengan target fleksibel (33, 100, ∞).
-    * Mode getar (*haptic feedback*) saat mencapai target.
-* **🧭 Arah Kiblat:** Kompas visual yang menunjuk ke Ka'bah menggunakan sensor perangkat.
-* **📊 Profil & Personalisasi:**
-    * Grafik tren ibadah 7-14 hari terakhir.
-    * **Dark Mode:** Dukungan tema gelap/terang yang tersinkronisasi dengan akun Cloud.
-* **📱 PWA Support:** Dapat diinstal (Add to Home Screen) dan berjalan layaknya aplikasi native.
+## Fitur Utama
 
-## 🛠️ Teknologi yang Digunakan
+- Jurnal harian sholat wajib dan sunnah dengan jadwal dinamis
+- Kalender ibadah dengan highlight puasa penting termasuk hari yang tidak boleh berpuasa
+- Jadwal sholat offline dan tanggal Hijriah
+- Al-Qur'an digital dengan pencarian dan bookmark ayat terakhir
+- Perpustakaan hadits lengkap dan hadits harian di beranda
+- Kumpulan doa dengan filter kategori dan tag
+- Asmaul Husna lengkap Arab, Latin, arti
+- Tasbih digital dengan target fleksibel dan getar
+- Kompas kiblat berbasis sensor perangkat
+- Kalkulator zakat maal, fitrah, dan fidyah
+- Pusat Informasi dan Bantuan dengan pencarian dan filter
+- FAQ, changelog, dan halaman kredit sumber data
 
-Project ini dibangun menggunakan *Vanilla JavaScript* dengan arsitektur modern:
+## Pengalaman Pengguna
 
-* **Frontend:** HTML5, CSS3 (Modern Features).
-* **Styling:** [Tailwind CSS](https://tailwindcss.com/) (via CDN).
-* **Logic Library:**
-    * **[Adhan.js](https://github.com/batoulapps/adhan-js):** Perhitungan waktu sholat offline.
-    * **[Chart.js](https://www.chartjs.org/):** Visualisasi data statistik.
-* **Icons:** [Lucide Icons](https://lucide.dev/).
-* **Database & Auth:** [Firebase](https://firebase.google.com/) (Authentication & Firestore).
-* **Architecture:** MVC-like structure (View & Logic separation).
+- Smart Calculation mengunci checklist sebelum waktunya agar pencatatan akurat
+- Riwayat harian dan statistik ringkas untuk memantau konsistensi
+- Pencarian cepat pada Al-Qur'an, hadits, dan doa
+- Tampilan konsisten, jelas, dan ramah layar kecil
 
-## 🔗 Sumber Data (API)
+## Teknologi
 
-Terima kasih kepada penyedia data terbuka yang membuat aplikasi ini dapat berjalan:
+| Area | Stack |
+| --- | --- |
+| Frontend | HTML5, CSS3, Vanilla JavaScript |
+| Styling | Tailwind CSS (CDN) |
+| Jadwal Sholat | Adhan.js |
+| Grafik | Chart.js |
+| Ikon | Lucide |
+| Auth & Database | Firebase Auth + Firestore |
 
-1.  **[EQuran.id API](https://equran.id/apidev):** Untuk data Surat, Ayat, Audio Al-Qur'an, dan Kumpulan Doa.
-2.  **[BigDataCloud](https://www.bigdatacloud.com/):** Untuk Reverse Geocoding (Nama Kota dari Koordinat GPS).
-3.  **[Mikqi Github Raw](https://github.com/mikqi/dzikir-counter):** Sumber data JSON untuk Asmaul Husna.
+## Sumber Data
 
-## 🚀 Cara Menjalankan (Local Development)
+| Sumber | Kegunaan |
+| --- | --- |
+| EQuran.id | Data Al-Qur'an dan doa |
+| Gading Hadith API | Hadits |
+| BigDataCloud | Reverse geocoding lokasi |
+| JSON lokal | Asmaul Husna |
 
-Karena aplikasi ini menggunakan **ES Modules** (`type="module"`) dan **Service Worker**, aplikasi tidak bisa dijalankan hanya dengan klik ganda pada `index.html`. Kamu memerlukan *local server*.
+## Cara Menjalankan (Local Development)
 
-### Opsi 1: Menggunakan VS Code Live Server (Disarankan)
-1.  Install ekstensi **Live Server** di VS Code.
-2.  Buka folder project di VS Code.
-3.  Klik kanan pada `index.html` lalu pilih **"Open with Live Server"**.
+Karena aplikasi menggunakan ES Modules dan Service Worker, jalankan dengan server lokal.
 
-### Opsi 2: Menggunakan Python
-Jika kamu memiliki Python terinstal:
+**Opsi Live Server**
+1. Install ekstensi Live Server di VS Code
+2. Buka folder project
+3. Jalankan `index.html` dengan Live Server
+
+**Opsi Python**
 ```bash
-# Masuk ke folder project
 cd jurnal-ibadah
-
-# Jalankan server HTTP sederhana
 python -m http.server 8000
-````
+```
 
-Buka browser dan akses `http://localhost:8000`.
+## Konfigurasi Firebase
 
-## 📂 Struktur Folder
+Atur konfigurasi Firebase di `js/config.js` sesuai project Firebase Anda.
+Pastikan Authentication dan Firestore sudah aktif di console Firebase.
+
+## PWA dan Offline
+
+- Aplikasi bisa ditambahkan ke layar utama
+- Service Worker menyimpan aset penting agar loading lebih cepat
+- Jadwal sholat tetap berfungsi tanpa koneksi
+
+## Struktur Folder
 
 ```text
 jurnal-ibadah/
-├── assets/             # Gambar, Logo, Favicon
-├── css/
-│   └── style.css       # Custom CSS & Animations
-├── js/
-│   ├── modules/        # Logika Bisnis (Terpisah per Fitur)
-│   │   ├── auth.js
-│   │   ├── home.js     # Logika Dashboard & Adhan.js
-│   │   ├── tracker.js  # Logika Jurnal & Kalkulasi Jadwal Dinamis
-│   │   ├── quran.js
-│   │   ├── doa.js      # Logika Doa & Filter UI
-│   │   ├── ...
-│   ├── views/          # Komponen UI (HTML Strings)
-│   ├── app.js          # Main Entry Point
-│   ├── config.js       # Firebase Config
-│   ├── router.js       # Routing System
-│   └── state.js        # Global State Management
-├── index.html          # Entry Point & Library Loader
-├── manifest.json       # Konfigurasi PWA
-└── sw.js               # Service Worker (Offline Cache)
+|-- assets/
+|   `-- data/
+|-- css/
+|   `-- style.css
+|-- img/
+|   |-- logo.png
+|   `-- favicon/
+|-- js/
+|   |-- modules/
+|   |-- utils/
+|   |-- app.js
+|   |-- config.js
+|   |-- router.js
+|   |-- state.js
+|   `-- version.js
+|-- views/
+|   |-- asmaul_husna.html
+|   |-- changelog.html
+|   |-- credits.html
+|   |-- doa.html
+|   |-- faq.html
+|   |-- fasting.html
+|   |-- hadith.html
+|   |-- home.html
+|   |-- login.html
+|   |-- profile.html
+|   |-- qibla.html
+|   |-- quran.html
+|   |-- tasbih.html
+|   |-- tracker.html
+|   `-- zakat.html
+|-- index.html
+|-- manifest.json
+`-- sw.js
+```
 
-```
-```
+## Catatan
+
+- Izin notifikasi dan lokasi bersifat opsional
+- Beberapa fitur membutuhkan login agar data tersinkron

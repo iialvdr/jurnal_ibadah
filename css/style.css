@@ -175,8 +175,8 @@ a.bento-card:active {
 
 .tip-highlight {
     position: relative;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.35), 0 0 0 10px rgba(16, 185, 129, 0.15) !important;
-    animation: tipPulse 1.6s ease-in-out infinite;
+    box-shadow: none !important;
+    animation: none;
     border-radius: 1.5rem;
 }
 
