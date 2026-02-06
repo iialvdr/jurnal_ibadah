@@ -29,6 +29,24 @@ function hideError() {
     }
 }
 
+function setupPasswordToggle(inputId, buttonId, iconEyeId, iconEyeOffId) {
+    const input = document.getElementById(inputId);
+    const button = document.getElementById(buttonId);
+    const iconEye = document.getElementById(iconEyeId);
+    const iconEyeOff = document.getElementById(iconEyeOffId);
+
+    if (!input || !button) return;
+
+    button.addEventListener('click', () => {
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        button.setAttribute('aria-label', isHidden ? 'Sembunyikan password' : 'Tampilkan password');
+        if (iconEye) iconEye.classList.toggle('hidden', isHidden);
+        if (iconEyeOff) iconEyeOff.classList.toggle('hidden', !isHidden);
+        input.focus();
+    });
+}
+
 /**
  * Fungsi Toast yang mendukung tipe 'error' (merah) dan 'success' (hijau)
  */
@@ -159,6 +177,9 @@ window.toggleAuth = (isSignUp) => {
 export function initAuth() {
     const verText = document.getElementById('versionTextLogin');
     if (verText) verText.innerText = APP_VERSION;
+
+    setupPasswordToggle('passwordLogin', 'togglePasswordLogin', 'iconEyeLogin', 'iconEyeOffLogin');
+    setupPasswordToggle('passwordSignup', 'togglePasswordSignup', 'iconEyeSignup', 'iconEyeOffSignup');
 
     const validateInput = (email, password) => {
         if (!email) {

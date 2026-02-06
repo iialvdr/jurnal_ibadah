@@ -40,6 +40,8 @@
     </div>
   </div>
 
+  <div class="fixed top-0 left-0 right-0 h-72 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
+
   <div class="fixed top-0 left-0 right-0 h-full w-full pointer-events-none z-0">
     <div
       class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-full blur-[100px] animate-pulse"
@@ -50,16 +52,10 @@
     ></div>
   </div>
 
-  <div
-    class="relative w-full max-w-[320px] group transition-all duration-500 z-10"
-  >
-    <div
-      class="absolute -inset-1 bg-gradient-to-b from-emerald-500/20 to-teal-500/20 rounded-[2.5rem] blur-2xl opacity-50 group-hover:opacity-100 transition duration-1000"
-    ></div>
+  <div class="relative w-full max-w-[320px] group transition-all duration-500 z-10">
+    <div class="absolute -inset-1 bg-gradient-to-b from-emerald-500/20 to-teal-500/20 rounded-[2rem] blur-2xl opacity-50 group-hover:opacity-100 transition duration-1000"></div>
 
-    <div
-      class="relative w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-white dark:border-slate-800 shadow-2xl rounded-[2.5rem] p-6 overflow-hidden"
-    >
+    <div class="relative w-full bento-card bg-white/95 dark:bg-slate-900/95 border border-white dark:border-slate-800 shadow-2xl rounded-[2rem] p-6 overflow-hidden">
       <div class="flex flex-col items-center text-center mb-6">
         <img
           src="img/logo.png"
@@ -73,13 +69,10 @@
         </h1>
       </div>
 
-      <div
-        id="toggleContainer"
-        class="relative w-full bg-slate-100 dark:bg-slate-800/50 p-1 rounded-2xl mb-6 flex items-center"
-      >
+      <div id="toggleContainer" class="glass-pill relative w-full bg-white/70 dark:bg-slate-900/70 p-1 rounded-2xl mb-6 flex items-center border border-white/40 dark:border-slate-700/50 shadow-sm">
         <div
           id="authGlider"
-          class="absolute top-1 left-1 h-[calc(100%-8px)] w-[calc(50%-4px)] bg-white dark:bg-slate-700 rounded-xl shadow-md transition-all duration-300 ease-in-out translate-x-0"
+          class="absolute top-1 left-1 h-[calc(100%-8px)] w-[calc(50%-4px)] bg-white dark:bg-slate-800 rounded-xl shadow-md transition-all duration-300 ease-in-out translate-x-0"
         ></div>
 
         <button
@@ -106,15 +99,52 @@
               <input
                 type="email"
                 id="emailLogin"
-                class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all"
+                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-3.5 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
                 placeholder="EMAIL"
               />
-              <input
-                type="password"
-                id="passwordLogin"
-                class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all"
-                placeholder="PASSWORD"
-              />
+              <div class="relative">
+                <input
+                  type="password"
+                  id="passwordLogin"
+                  class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 pr-11 py-3.5 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                  placeholder="PASSWORD"
+                />
+                <button
+                  type="button"
+                  id="togglePasswordLogin"
+                  aria-label="Tampilkan password"
+                  class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-500 transition"
+                >
+                  <svg
+                    id="iconEyeLogin"
+                    class="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  <svg
+                    id="iconEyeOffLogin"
+                    class="w-4 h-4 hidden"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.8 21.8 0 0 1 5.06-5.94" />
+                    <path d="M1 1l22 22" />
+                    <path d="M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a21.8 21.8 0 0 1-4.12 4.84" />
+                    <path d="M14.12 14.12a3 3 0 0 1-4.24-4.24" />
+                  </svg>
+                </button>
+              </div>
               <button
                 id="btnLoginAction"
                 class="w-full py-3.5 rounded-xl bg-slate-800 dark:bg-slate-700 text-white font-black text-[10px] uppercase tracking-widest hover:bg-slate-900 transition active:scale-95 shadow-lg"
@@ -135,15 +165,52 @@
               <input
                 type="email"
                 id="emailSignup"
-                class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all"
+                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-3.5 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
                 placeholder="EMAIL BARU"
               />
-              <input
-                type="password"
-                id="passwordSignup"
-                class="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent focus:border-emerald-500/50 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-800 dark:text-white focus:outline-none transition-all"
-                placeholder="BUAT PASSWORD"
-              />
+              <div class="relative">
+                <input
+                  type="password"
+                  id="passwordSignup"
+                  class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 pr-11 py-3.5 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                  placeholder="BUAT PASSWORD"
+                />
+                <button
+                  type="button"
+                  id="togglePasswordSignup"
+                  aria-label="Tampilkan password"
+                  class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-500 transition"
+                >
+                  <svg
+                    id="iconEyeSignup"
+                    class="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  <svg
+                    id="iconEyeOffSignup"
+                    class="w-4 h-4 hidden"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.8 21.8 0 0 1 5.06-5.94" />
+                    <path d="M1 1l22 22" />
+                    <path d="M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a21.8 21.8 0 0 1-4.12 4.84" />
+                    <path d="M14.12 14.12a3 3 0 0 1-4.24-4.24" />
+                  </svg>
+                </button>
+              </div>
               <button
                 id="btnSignupAction"
                 class="w-full py-3.5 rounded-xl bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 transition active:scale-95 shadow-lg"
