@@ -414,7 +414,14 @@ function renderChart(labels, data) {
     }
 }
 
-function setupLogoutListeners() { const logoutBtn = document.getElementById('logoutBtnProfile'); const cancelBtn = document.getElementById('cancelLogoutBtn'); const confirmBtn = document.getElementById('confirmLogoutBtn'); if (logoutBtn) logoutBtn.addEventListener('click', () => toggleLogoutModal(true)); if (cancelBtn) cancelBtn.addEventListener('click', () => toggleLogoutModal(false)); if (confirmBtn) confirmBtn.addEventListener('click', async () => { toggleLogoutModal(false); try { await signOut(auth); window.location.reload(); } catch (e) { console.error(e); } }); }
+function setupLogoutListeners() { 
+    const logoutBtns = document.querySelectorAll('.logoutBtnProfile'); 
+    const cancelBtn = document.getElementById('cancelLogoutBtn'); 
+    const confirmBtn = document.getElementById('confirmLogoutBtn'); 
+    logoutBtns.forEach(btn => btn.addEventListener('click', () => toggleLogoutModal(true))); 
+    if (cancelBtn) cancelBtn.addEventListener('click', () => toggleLogoutModal(false)); 
+    if (confirmBtn) confirmBtn.addEventListener('click', async () => { toggleLogoutModal(false); try { await signOut(auth); window.location.reload(); } catch (e) { console.error(e); } }); 
+}
 
 function openEditProfile() { 
     const user = state.currentUser; 
