@@ -2,9 +2,26 @@ import { state } from './state.js';
 
 let isExplicitNavigation = false;
 
+const detectReloadNavigation = () => {
+    try {
+        const entries = performance.getEntriesByType('navigation');
+        if (entries && entries.length > 0) {
+            return entries[0].type === 'reload';
+        }
+    } catch (e) { }
+    return performance && performance.navigation && performance.navigation.type === 1;
+};
+
 export function setupRouter() {
+    let forceHomeOnLoad = detectReloadNavigation();
     const handleNavigation = () => {
-        const path = window.location.pathname.split('/').filter(Boolean).pop() || 'home';
+        let path = window.location.pathname.split('/').filter(Boolean).pop() || 'home';
+
+        if (forceHomeOnLoad && !isExplicitNavigation && path !== 'home' && path !== '') {
+            history.replaceState(null, null, '/');
+            path = 'home';
+        }
+        if (forceHomeOnLoad) forceHomeOnLoad = false;
 
         if (!state.currentUser) {
             const allInternalViews = [

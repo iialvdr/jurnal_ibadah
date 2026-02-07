@@ -73,6 +73,16 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('./index.html').then(response => {
+        if (response) return response;
+        return fetch(event.request).catch(() => caches.match('./index.html'));
+      })
+    );
+    return;
+  }
+
   if (url.origin === 'https://equran.id' || url.href.includes('githubusercontent.com') || url.href.includes('api.bigdatacloud.net')) {
     event.respondWith(
       caches.open(API_CACHE_NAME).then(cache => {
