@@ -178,7 +178,7 @@ function renderHadithCard(data) {
                     <p id="hadithContent" class="text-[13px] md:text-sm font-medium text-slate-700 dark:text-slate-200 leading-relaxed transition-all duration-500 ${isLong ? 'line-clamp-3' : ''}">
                         "${formattedText}"
                     </p>
-                    ${isLong ? '<div id="hadithFade" class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-emerald-50/50 dark:from-slate-900/50 to-transparent pointer-events-none"></div>' : ''}
+                    
                 </div>
 
                 ${isLong ? `
@@ -542,9 +542,17 @@ function applyTheme() {
 }
 
 export async function toggleDarkMode() {
+    const root = document.documentElement;
+    const body = document.body;
+    root.classList.add('theme-transition');
+    if (body) body.classList.add('theme-flash');
     isDarkMode = !isDarkMode;
     localStorage.setItem('valdi_theme', isDarkMode ? 'dark' : 'light');
     applyTheme();
+    setTimeout(() => {
+        root.classList.remove('theme-transition');
+        if (body) body.classList.remove('theme-flash');
+    }, 600);
     if (state.currentUser) {
         try {
             const docRef = doc(db, "users", state.currentUser.uid, "settings", "preferences");
