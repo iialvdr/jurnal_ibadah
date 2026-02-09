@@ -65,6 +65,10 @@ const EXTRA_IBADAH = [
 
 let trackerSchedule = {};
 let historyDate = new Date();
+const PRAYER_SETTINGS_KEY = 'jurnal_prayer_settings_v1';
+const DEFAULT_PRAYER_SETTINGS = { tahajudTime: '03:00' };
+const PRAYER_SETTINGS_PANEL_KEY = 'jurnal_prayer_settings_panel';
+const PRAYER_SETTINGS_PROMPT = "Silakan atur jam Tahajud. Waktu harus sebelum Subuh.";
 
 export function initTracker() {
     window.changeDate = changeDate;
@@ -74,6 +78,10 @@ export function initTracker() {
     window.changeMonth = changeMonth;
     window.goToDate = goToDate;
     window.saveManualNote = saveManualNote; // Daftarkan fungsi simpan manual baru
+    window.savePrayerSettings = savePrayerSettings;
+    window.getPrayerSettings = getPrayerSettings;
+    window.savePrayerSettingsForm = savePrayerSettingsForm;
+    window.togglePrayerSettingsPanel = togglePrayerSettingsPanel;
 
     state.trackerDate = new Date();
 
@@ -91,11 +99,127 @@ function formatDateKey(date) {
     return localDate.toISOString().split('T')[0];
 }
 
+function normalizeTimeString(timeStr, fallback) {
+    if (typeof timeStr !== 'string') return fallback;
+    const match = timeStr.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+    return match ? timeStr : fallback;
+}
+
+function parseTimeToMinutes(timeStr) {
+    const valid = normalizeTimeString(timeStr, null);
+    if (!valid) return null;
+    const [h, m] = valid.split(':').map(Number);
+    return (h * 60) + m;
+}
+
+function getSubuhMinutesForValidation() {
+    const subuhTime = (trackerSchedule && trackerSchedule.Subuh) ? trackerSchedule.Subuh : state.prayerTimes.Subuh;
+    const minutes = parseTimeToMinutes(subuhTime);
+    return minutes !== null ? minutes : (5 * 60);
+}
+
+function setPrayerSettingsMessage(message, type = 'error') {
+    const help = document.getElementById('prayerSettingsHelp');
+    if (!help) return;
+    if (!message) {
+        help.classList.add('hidden');
+        return;
+    }
+    help.innerText = message;
+    help.classList.remove('hidden');
+    help.classList.toggle('text-rose-500', type === 'error');
+    help.classList.toggle('bg-rose-50', type === 'error');
+    help.classList.toggle('dark:bg-rose-900/20', type === 'error');
+    help.classList.toggle('border-rose-100', type === 'error');
+    help.classList.toggle('dark:border-rose-800/40', type === 'error');
+
+    help.classList.toggle('text-amber-600', type === 'info');
+    help.classList.toggle('bg-amber-50', type === 'info');
+    help.classList.toggle('dark:bg-amber-900/20', type === 'info');
+    help.classList.toggle('border-amber-100', type === 'info');
+    help.classList.toggle('dark:border-amber-800/40', type === 'info');
+}
+
+export function getPrayerSettings() {
+    try {
+        const raw = localStorage.getItem(PRAYER_SETTINGS_KEY);
+        if (!raw) return { ...DEFAULT_PRAYER_SETTINGS };
+        const parsed = JSON.parse(raw);
+        return {
+            tahajudTime: normalizeTimeString(parsed.tahajudTime, DEFAULT_PRAYER_SETTINGS.tahajudTime)
+        };
+    } catch (e) {
+        return { ...DEFAULT_PRAYER_SETTINGS };
+    }
+}
+
+export function savePrayerSettings(settings = {}) {
+    const current = getPrayerSettings();
+    const next = {
+        tahajudTime: normalizeTimeString(settings.tahajudTime, current.tahajudTime)
+    };
+    try {
+        localStorage.setItem(PRAYER_SETTINGS_KEY, JSON.stringify(next));
+    } catch (e) { }
+    calculateTrackerSchedule();
+    renderPrayers();
+    return next;
+}
+
+function syncPrayerSettingsForm() {
+    const inputTahajud = document.getElementById('prayerTahajudTime');
+    if (!inputTahajud) return;
+    const settings = getPrayerSettings();
+    inputTahajud.value = settings.tahajudTime;
+}
+
+function togglePrayerSettingsPanel(forceOpen = null) {
+    const panel = document.getElementById('prayerSettingsPanel');
+    const chevron = document.getElementById('prayerSettingsChevron');
+    if (!panel || !chevron) return;
+    const isOpen = forceOpen !== null ? forceOpen : panel.classList.contains('hidden');
+    panel.classList.toggle('hidden', !isOpen);
+    chevron.classList.toggle('rotate-180', isOpen);
+    if (isOpen) setPrayerSettingsMessage(PRAYER_SETTINGS_PROMPT, 'info');
+    else setPrayerSettingsMessage('');
+    try {
+        localStorage.setItem(PRAYER_SETTINGS_PANEL_KEY, isOpen ? 'open' : 'closed');
+    } catch (e) { }
+    if (window.lucide) lucide.createIcons({ root: chevron });
+}
+
+function savePrayerSettingsForm() {
+    const inputTahajud = document.getElementById('prayerTahajudTime');
+    if (!inputTahajud) return;
+
+    setPrayerSettingsMessage('');
+
+    const tahajudMinutes = parseTimeToMinutes(inputTahajud.value);
+    const subuhMinutes = getSubuhMinutesForValidation();
+    if (tahajudMinutes === null || tahajudMinutes >= subuhMinutes) {
+        const msg = "Waktu Tahajud harus sebelum waktu Subuh.";
+        setPrayerSettingsMessage(msg, 'error');
+        if (typeof window.showAppToast === 'function') window.showAppToast(msg, "error");
+        const current = getPrayerSettings();
+        inputTahajud.value = current.tahajudTime;
+        return;
+    }
+
+    const next = savePrayerSettings({
+        tahajudTime: inputTahajud.value
+    });
+    inputTahajud.value = next.tahajudTime;
+    if (typeof window.showAppToast === 'function') window.showAppToast("Pengaturan tersimpan", "success");
+}
+
 function calculateTrackerSchedule() {
+    const prayerSettings = getPrayerSettings();
     if (typeof adhan === 'undefined' || !window.lastLat || !window.lastLng) {
         trackerSchedule = { ...state.prayerTimes };
-        trackerSchedule.Tahajud = '03:00';
-        trackerSchedule.Dhuha = '06:30';
+        trackerSchedule.Tahajud = prayerSettings.tahajudTime;
+        if (!trackerSchedule.Dhuha || trackerSchedule.Dhuha === '--:--') {
+            trackerSchedule.Dhuha = '--:--';
+        }
         return;
     }
     const coordinates = new adhan.Coordinates(window.lastLat, window.lastLng);
@@ -112,7 +236,7 @@ function calculateTrackerSchedule() {
         Ashar: timeFormat(prayerTimes.asr),
         Maghrib: timeFormat(prayerTimes.maghrib),
         Isya: timeFormat(prayerTimes.isha),
-        Tahajud: '03:00'
+        Tahajud: prayerSettings.tahajudTime
     };
 }
 
@@ -134,6 +258,13 @@ async function updateTrackerUI() {
     if (hijriDisplay) {
         const h = getHijriDate(state.trackerDate);
         hijriDisplay.innerText = h.full;
+    }
+    syncPrayerSettingsForm();
+    try {
+        const savedPanel = localStorage.getItem(PRAYER_SETTINGS_PANEL_KEY);
+        togglePrayerSettingsPanel(savedPanel === 'open');
+    } catch (e) {
+        togglePrayerSettingsPanel(false);
     }
     if (window.lucide) lucide.createIcons();
 }

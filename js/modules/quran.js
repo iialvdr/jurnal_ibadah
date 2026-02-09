@@ -4,12 +4,17 @@ import { state } from '../state.js';
 
 let allSurahs = [];
 let currentSurahNumber = 0;
+let currentSurahName = '';
+let currentAyatNumber = null;
+let currentAudioUrl = '';
 let activeAudio = null;
 let activeBtn = null;
 let lastReadData = null;
 let lastScrollTop = 0;
 let currentTafsirData = null;
+let currentTafsirSurah = null;
 let nextAudioPreload = null; 
+let stickyPlayerReady = false;
 
 function searchSurah(query) {
     const lowerQ = query.toLowerCase();
@@ -31,10 +36,12 @@ export function initQuran() {
     window.toggleTafsir = toggleTafsir;
 
     renderSkeleton();
+    initStickyPlayerControls();
 
     // Fix Refresh: Ambil bookmark ulang setiap kali view Quran aktif
     window.addEventListener('viewChanged', async (e) => {
         if (e.detail.viewId === 'quranView') {
+            initStickyPlayerControls();
             await fetchLastRead();
             if (allSurahs.length > 0) {
                 renderSurahList(allSurahs);
@@ -92,7 +99,7 @@ function renderSkeleton() {
 }
 
 function forceCloseSurahDetail() {
-    stopCurrentAudio();
+    stopCurrentAudio(true);
     const ayahContainer = document.getElementById('ayahListContainer');
     const searchContainer = document.getElementById('quranSearchContainer');
     const navButtons = document.getElementById('surahNavButtons');
@@ -236,7 +243,9 @@ function renderAyahs(ayatList, surahName) {
 
 async function openSurah(nomor, targetAyah = null, surahName = null) {
     currentSurahNumber = nomor;
+    currentSurahName = surahName || '';
     currentTafsirData = null;
+    currentTafsirSurah = null;
     const ayahContainer = document.getElementById('ayahListContainer');
     const searchContainer = document.getElementById('quranSearchContainer');
     const title = document.getElementById('quranTitle');
@@ -257,13 +266,14 @@ async function openSurah(nomor, targetAyah = null, surahName = null) {
     if (prevBtn) prevBtn.style.display = (nomor === 1) ? 'none' : 'flex';
     if (nextBtn) nextBtn.style.display = (nomor === 114) ? 'none' : 'flex';
 
-    stopCurrentAudio();
+    stopCurrentAudio(true);
     try {
         const response = await fetch(`https://equran.id/api/v2/surat/${nomor}`);
         const result = await response.json();
         if (result.code === 200) {
             const data = result.data;
             if (title) title.innerText = data.namaLatin;
+            currentSurahName = data.namaLatin;
             renderAyahs(data.ayat, data.namaLatin);
             if (navButtons) navButtons.classList.remove('translate-y-40');
 
@@ -299,25 +309,26 @@ function playAudio(url, btnElement, ayatNum) {
     if (activeAudio && activeBtn === btnElement) {
         if (activeAudio.paused) {
             activeAudio.play();
-            icon.setAttribute('data-lucide', 'pause');
+            setPlayState(true);
         } else {
             activeAudio.pause();
-            icon.setAttribute('data-lucide', 'play');
+            setPlayState(false);
         }
-        if (window.lucide) lucide.createIcons();
         return;
     }
 
-    stopCurrentAudio();
+    stopCurrentAudio(false);
 
     let audio = nextAudioPreload && nextAudioPreload.src === url ? nextAudioPreload : new Audio(url);
     audio.preload = "auto";
     activeAudio = audio;
     activeBtn = btnElement;
+    currentAyatNumber = ayatNum;
+    currentAudioUrl = url;
 
     audio.play();
-    icon.setAttribute('data-lucide', 'pause');
-    if (window.lucide) lucide.createIcons();
+    setPlayState(true);
+    showStickyPlayer(currentSurahName, ayatNum);
 
     const nextAyatNum = ayatNum + 1;
     const nextBtn = document.querySelector(`#ayah-${nextAyatNum} .play-audio-btn`);
@@ -327,8 +338,19 @@ function playAudio(url, btnElement, ayatNum) {
         nextAudioPreload.preload = "auto";
     }
 
+    audio.onplay = () => {
+        setPlayState(true);
+        setBufferingState(false);
+    };
+    audio.onpause = () => {
+        setPlayState(false);
+        setBufferingState(false);
+    };
+    audio.onwaiting = () => setBufferingState(true);
+    audio.onstalled = () => setBufferingState(true);
+    audio.onplaying = () => setBufferingState(false);
     audio.onended = () => {
-        stopCurrentAudio();
+        stopCurrentAudio(false);
         if (nextBtn) {
             const nextCard = document.getElementById(`ayah-${nextAyatNum}`);
             const ayahContainer = document.getElementById('ayahListContainer');
@@ -344,22 +366,20 @@ function playAudio(url, btnElement, ayatNum) {
     };
 }
 
-function stopCurrentAudio() {
+function stopCurrentAudio(hidePlayer = true) {
     if (activeAudio) { activeAudio.pause(); activeAudio.currentTime = 0; }
-    if (activeBtn) {
-        const icon = activeBtn.querySelector('[data-lucide]');
-        if (icon) {
-            icon.setAttribute('data-lucide', 'play');
-            if (window.lucide) lucide.createIcons();
-        }
-    }
+    setPlayState(false);
+    setBufferingState(false);
+    if (hidePlayer) hideStickyPlayer();
     activeAudio = null; activeBtn = null;
+    currentAyatNumber = null;
+    currentAudioUrl = '';
 }
 
 function changeSurah(direction) {
     const newNumber = currentSurahNumber + direction;
     if (newNumber >= 1 && newNumber <= 114) {
-        stopCurrentAudio();
+        stopCurrentAudio(true);
         openSurah(newNumber);
     }
 }
@@ -404,22 +424,145 @@ async function toggleTafsir(ayatId) {
     const content = document.getElementById(`tafsir-text-${ayatId}`);
     if (container.classList.contains('hidden')) {
         container.classList.remove('hidden');
-        if (!currentTafsirData) {
-            currentTafsirData = await fetchTafsirData(currentSurahNumber);
-        }
-        if (currentTafsirData) {
-            const item = currentTafsirData.find(t => t.ayat === ayatId);
-            content.innerHTML = item ? item.teks : "Tafsir tidak tersedia.";
-        }
+        if (content) content.innerHTML = "Memuat...";
+        const tafsirText = await fetchTafsirData(currentSurahNumber, ayatId);
+        if (content) content.innerHTML = tafsirText || "Tafsir tidak tersedia.";
     } else {
         container.classList.add('hidden');
     }
 }
 
-async function fetchTafsirData(nomorSurat) {
+async function fetchTafsirData(nomorSurat, nomorAyat) {
+    const cacheKey = `tafsir_${nomorSurat}_${nomorAyat}`;
     try {
-        const response = await fetch(`https://equran.id/api/v2/tafsir/${nomorSurat}`);
-        const result = await response.json();
-        return (result.code === 200) ? result.data.tafsir : null;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) return cached;
+    } catch (e) { }
+
+    try {
+        if (!currentTafsirData || currentTafsirSurah !== nomorSurat) {
+            const response = await fetch(`https://equran.id/api/v2/tafsir/${nomorSurat}`);
+            const result = await response.json();
+            if (result.code === 200) {
+                currentTafsirData = result.data.tafsir || [];
+                currentTafsirSurah = nomorSurat;
+                currentTafsirData.forEach(item => {
+                    try {
+                        localStorage.setItem(`tafsir_${nomorSurat}_${item.ayat}`, item.teks);
+                    } catch (e) { }
+                });
+            }
+        }
+
+        if (currentTafsirData) {
+            const item = currentTafsirData.find(t => t.ayat === nomorAyat);
+            return item ? item.teks : null;
+        }
+        return null;
     } catch (e) { return null; }
+}
+
+function initStickyPlayerControls() {
+    if (stickyPlayerReady) return;
+    const playBtn = document.getElementById('stickyAudioPlayBtn');
+    const closeBtn = document.getElementById('stickyAudioCloseBtn');
+    const prevBtn = document.getElementById('stickyAudioPrevBtn');
+    const nextBtn = document.getElementById('stickyAudioNextBtn');
+    if (!playBtn || !closeBtn || !prevBtn || !nextBtn) return;
+    playBtn.addEventListener('click', () => {
+        if (!activeAudio) return;
+        if (activeAudio.paused) activeAudio.play();
+        else activeAudio.pause();
+    });
+    prevBtn.addEventListener('click', () => playAdjacentAyah(-1));
+    nextBtn.addEventListener('click', () => playAdjacentAyah(1));
+    closeBtn.addEventListener('click', () => {
+        stopCurrentAudio(true);
+    });
+    stickyPlayerReady = true;
+}
+
+function showStickyPlayer(surahName, ayatNum) {
+    initStickyPlayerControls();
+    const player = document.getElementById('stickyAudioPlayer');
+    const title = document.getElementById('stickyAudioTitle');
+    const ayah = document.getElementById('stickyAudioAyah');
+    if (!player) return;
+    if (title) title.innerText = surahName ? `QS. ${surahName}` : 'Audio Tilawah';
+    if (ayah) ayah.innerText = ayatNum ? `Ayat ${ayatNum}` : '';
+    updateStickyNavState(ayatNum);
+    player.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-6');
+    player.classList.add('opacity-100', 'translate-y-0');
+}
+
+function hideStickyPlayer() {
+    const player = document.getElementById('stickyAudioPlayer');
+    if (!player) return;
+    player.classList.add('opacity-0', 'pointer-events-none', 'translate-y-6');
+    player.classList.remove('opacity-100', 'translate-y-0');
+}
+
+function setPlayState(isPlaying) {
+    const iconName = isPlaying ? 'pause' : 'play';
+    if (activeBtn) {
+        const icon = activeBtn.querySelector('[data-lucide]');
+        if (icon) icon.setAttribute('data-lucide', iconName);
+    }
+    const stickyPlayBtn = document.getElementById('stickyAudioPlayBtn');
+    if (stickyPlayBtn) {
+        const stickyIcon = stickyPlayBtn.querySelector('[data-lucide]');
+        if (stickyIcon) stickyIcon.setAttribute('data-lucide', iconName);
+    }
+    if (window.lucide) {
+        if (activeBtn) lucide.createIcons({ root: activeBtn });
+        if (stickyPlayBtn) lucide.createIcons({ root: stickyPlayBtn });
+    }
+}
+
+function setBufferingState(isBuffering) {
+    const status = document.getElementById('stickyAudioStatus');
+    const stickyPlayBtn = document.getElementById('stickyAudioPlayBtn');
+    if (status) status.classList.toggle('hidden', !isBuffering);
+    if (stickyPlayBtn) {
+        const stickyIcon = stickyPlayBtn.querySelector('[data-lucide]');
+        if (stickyIcon) {
+            stickyIcon.setAttribute('data-lucide', isBuffering ? 'loader-2' : (activeAudio && !activeAudio.paused ? 'pause' : 'play'));
+            if (isBuffering) stickyIcon.classList.add('animate-spin');
+            else stickyIcon.classList.remove('animate-spin');
+        }
+    }
+    if (window.lucide && stickyPlayBtn) lucide.createIcons({ root: stickyPlayBtn });
+}
+
+function playAdjacentAyah(delta) {
+    if (!currentAyatNumber) return;
+    const targetAyat = currentAyatNumber + delta;
+    const btn = document.querySelector(`#ayah-${targetAyat} .play-audio-btn`);
+    if (!btn) return;
+    const url = btn.getAttribute('data-audio-url');
+    if (!url) return;
+    playAudio(url, btn, targetAyat);
+    const ayahContainer = document.getElementById('ayahListContainer');
+    const card = document.getElementById(`ayah-${targetAyat}`);
+    if (ayahContainer && card) {
+        const offset = 120;
+        ayahContainer.scrollTo({
+            top: card.offsetTop - offset,
+            behavior: 'smooth'
+        });
+    }
+}
+
+function updateStickyNavState(ayatNum) {
+    const prevBtn = document.getElementById('stickyAudioPrevBtn');
+    const nextBtn = document.getElementById('stickyAudioNextBtn');
+    if (!prevBtn || !nextBtn) return;
+    const hasPrev = !!document.querySelector(`#ayah-${ayatNum - 1} .play-audio-btn`);
+    const hasNext = !!document.querySelector(`#ayah-${ayatNum + 1} .play-audio-btn`);
+    prevBtn.disabled = !hasPrev;
+    nextBtn.disabled = !hasNext;
+    prevBtn.classList.toggle('opacity-40', !hasPrev);
+    nextBtn.classList.toggle('opacity-40', !hasNext);
+    prevBtn.classList.toggle('pointer-events-none', !hasPrev);
+    nextBtn.classList.toggle('pointer-events-none', !hasNext);
 }

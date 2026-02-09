@@ -48,4 +48,34 @@
             Selanjutnya <i data-lucide="chevron-right" class="w-5 h-5"></i>
         </button>
     </div>
+
+    <div id="stickyAudioPlayer" class="fixed left-4 right-4 bottom-24 z-[125] opacity-0 pointer-events-none translate-y-6 transition-all duration-300 max-w-xl mx-auto">
+        <div class="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/60 shadow-2xl rounded-2xl px-3 py-2 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                    <i data-lucide="volume-2" class="w-4 h-4"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Audio Tilawah</p>
+                    <p id="stickyAudioTitle" class="text-[11px] font-bold text-slate-800 dark:text-white truncate">QS. -</p>
+                    <p id="stickyAudioAyah" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate">Ayat -</p>
+                    <p id="stickyAudioStatus" class="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest hidden">Memuat audio...</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <button id="stickyAudioPrevBtn" class="w-8 h-8 rounded-full bg-white/60 dark:bg-slate-800/80 text-slate-500 dark:text-slate-300 flex items-center justify-center border border-white/50 dark:border-slate-700 active:scale-95 transition">
+                    <i data-lucide="skip-back" class="w-3.5 h-3.5"></i>
+                </button>
+                <button id="stickyAudioPlayBtn" class="w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 active:scale-95 transition">
+                    <i data-lucide="play" class="w-4 h-4 fill-current ml-0.5"></i>
+                </button>
+                <button id="stickyAudioNextBtn" class="w-8 h-8 rounded-full bg-white/60 dark:bg-slate-800/80 text-slate-500 dark:text-slate-300 flex items-center justify-center border border-white/50 dark:border-slate-700 active:scale-95 transition">
+                    <i data-lucide="skip-forward" class="w-3.5 h-3.5"></i>
+                </button>
+                <button id="stickyAudioCloseBtn" class="w-8 h-8 rounded-full bg-white/60 dark:bg-slate-800/80 text-slate-500 dark:text-slate-300 flex items-center justify-center border border-white/50 dark:border-slate-700 active:scale-95 transition">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
