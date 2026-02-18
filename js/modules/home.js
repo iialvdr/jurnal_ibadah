@@ -5,6 +5,7 @@ import { switchView } from '../router.js';
 import { APP_VERSION } from '../version.js';
 import { getHijriDate } from '../utils/date-utils.js';
 import { getFastingInfo } from './fasting.js';
+import { syncPushSubscription } from './push.js';
 
 let isDarkMode = false;
 let isNotificationActive = true; 
@@ -225,6 +226,7 @@ export async function syncThemeWithCloud() {
                 localStorage.setItem('jurnal_notifications', isNotificationActive);
             }
         }
+        await syncPushSubscription(state.currentUser, isNotificationActive);
     } catch (e) { console.error("Gagal sinkronisasi preferensi:", e); }
 }
 
@@ -563,6 +565,7 @@ export async function toggleNotifications() {
         try {
             const docRef = doc(db, "users", state.currentUser.uid, "settings", "preferences");
             await setDoc(docRef, { notifications: isNotificationActive }, { merge: true });
+            await syncPushSubscription(state.currentUser, isNotificationActive);
         } catch (error) { console.error("Gagal simpan preferensi:", error); }
     }
 

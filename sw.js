@@ -7,6 +7,7 @@ const urlsToCache = [
   './',
   './index.html',
   './manifest.json',
+  './css/tailwind.build.css',
   './css/style.css',
 
   './js/app.js',
@@ -30,22 +31,10 @@ const urlsToCache = [
   './js/modules/changelog.js',
   './js/modules/zakat.js',
   './js/modules/faq.js',
+  './js/modules/push.js',
 
   './views/login.html',
   './views/home.html',
-  './views/profile.html',
-  './views/tasbih.html',
-  './views/qibla.html',
-  './views/tracker.html',
-  './views/quran.html',
-  './views/doa.html',
-  './views/asmaul_husna.html',
-  './views/fasting.html',
-  './views/hadith.html',
-  './views/credits.html',
-  './views/changelog.html',
-  './views/zakat.html',
-  './views/faq.html',
 
   './img/logo.png',
   './img/favicon/android-chrome-192x192.png',
@@ -100,6 +89,24 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  if (url.origin === self.location.origin && event.request.method === 'GET') {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(cache => {
+        return cache.match(event.request).then(cachedResponse => {
+          const networkFetch = fetch(event.request).then(networkResponse => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          }).catch(() => cachedResponse);
+
+          return cachedResponse || networkFetch;
+        });
+      })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(response => {
@@ -127,21 +134,51 @@ self.addEventListener('activate', event => {
   );
 });
 
+self.addEventListener('push', event => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (e) {
+    payload = { body: event.data ? event.data.text() : '' };
+  }
+
+  const title = payload.title || 'Pengingat Ibadah';
+  const options = {
+    body: payload.body || 'Waktu ibadah telah tiba.',
+    icon: './img/favicon/android-chrome-192x192.png',
+    badge: './img/favicon/favicon-32x32.png',
+    vibrate: [200, 100, 200],
+    tag: payload.tag || 'jurnal-ibadah-push',
+    renotify: true,
+    data: {
+      url: payload.url || './'
+    }
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
 self.addEventListener('notificationclick', event => {
   event.notification.close();
+  const targetUrl = event.notification?.data?.url || './';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      if (clientList.length > 0) {
-        let client = clientList[0];
-        for (let i = 0; i < clientList.length; i++) {
-          if (clientList[i].focused) {
-            client = clientList[i];
-            break;
-          }
+      for (let i = 0; i < clientList.length; i++) {
+        const client = clientList[i];
+        if (client.url.includes(self.location.origin)) {
+          client.navigate(targetUrl);
+          return client.focus();
         }
-        return client.focus();
       }
-      return clients.openWindow('./');
+      return clients.openWindow(targetUrl);
+    })
+  );
+});
+
+self.addEventListener('pushsubscriptionchange', event => {
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      clientList.forEach(client => client.postMessage({ type: 'push-subscription-changed' }));
     })
   );
 });

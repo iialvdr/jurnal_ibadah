@@ -14,7 +14,7 @@ const detectReloadNavigation = () => {
 
 export function setupRouter() {
     let forceHomeOnLoad = detectReloadNavigation();
-    const handleNavigation = () => {
+    const handleNavigation = async () => {
         let path = window.location.pathname.split('/').filter(Boolean).pop() || 'home';
 
         if (forceHomeOnLoad && !isExplicitNavigation && path !== 'home' && path !== '') {
@@ -63,11 +63,11 @@ export function setupRouter() {
         };
 
         const targetViewId = routes[path] || 'homeView';
-        switchView(targetViewId);
+        await switchView(targetViewId);
     };
 
-    window.addEventListener('popstate', handleNavigation);
-    window.addEventListener('load', handleNavigation);
+    window.addEventListener('popstate', () => { handleNavigation(); });
+    window.addEventListener('load', () => { handleNavigation(); });
 
     handleNavigation();
 
@@ -104,6 +104,14 @@ export function setupRouter() {
 }
 
 export function switchView(targetId) {
+    const ensureViewLoaded = window.ensureViewLoaded;
+    if (typeof ensureViewLoaded === 'function') {
+        return ensureViewLoaded(targetId).then(() => applySwitchView(targetId));
+    }
+    return applySwitchView(targetId);
+}
+
+function applySwitchView(targetId) {
     const allViews = [
         'homeView', 'trackerView', 'profileView', 'tasbihView',
         'qiblaView', 'quranView', 'doaView', 'asmaulHusnaView',

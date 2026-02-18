@@ -61,7 +61,7 @@
 | Area | Stack |
 | --- | --- |
 | Frontend | HTML5, CSS3, Vanilla JavaScript |
-| Styling | Tailwind CSS (CDN) |
+| Styling | Tailwind CSS (Build/CLI) |
 | Jadwal Sholat | Adhan.js |
 | Grafik | Chart.js |
 | Ikon | Lucide |
@@ -91,10 +91,17 @@ cd jurnal-ibadah
 python -m http.server 8000
 ```
 
+**Build CSS Tailwind**
+```bash
+npm install
+npm run build:css
+```
+
 ## Konfigurasi Firebase
 
 Atur konfigurasi Firebase di `js/config.js` sesuai project Firebase Anda.
 Pastikan Authentication dan Firestore sudah aktif di console Firebase.
+Jika ingin mengaktifkan Web Push, isi `WEB_PUSH_VAPID_PUBLIC_KEY` di `js/config.js`.
 
 ## PWA dan Offline
 
@@ -109,6 +116,8 @@ jurnal-ibadah/
 |-- assets/
 |   `-- data/
 |-- css/
+|   |-- tailwind.input.css
+|   |-- tailwind.build.css
 |   `-- style.css
 |-- img/
 |   |-- logo.png
@@ -139,6 +148,9 @@ jurnal-ibadah/
 |   `-- zakat.html
 |-- index.html
 |-- manifest.json
+|-- package.json
+|-- package-lock.json
+|-- tailwind.config.js
 `-- sw.js
 ```
 

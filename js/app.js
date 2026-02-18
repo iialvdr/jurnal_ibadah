@@ -1,4 +1,4 @@
-import { auth, db } from './config.js';
+import { auth } from './config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { setCurrentUser } from './state.js';
 import { setupRouter } from './router.js';
@@ -20,6 +20,7 @@ import { initChangelog } from './modules/changelog.js';
 import { initZakat } from './modules/zakat.js';
 import { initHadith } from './modules/hadith.js';
 import { initFaq } from './modules/faq.js';
+import { syncPushSubscription } from './modules/push.js';
 
 window.vibrateSoft = () => { if (navigator.vibrate) navigator.vibrate(10); };
 window.vibrateSuccess = () => { if (navigator.vibrate) navigator.vibrate([10, 30, 10]); };
@@ -48,11 +49,108 @@ window.showAppToast = (message, type = 'info') => {
     }, 2200);
 };
 
+const VIEW_REGISTRY = {
+    loginOverlay: { path: '/views/login.html', init: initAuth },
+    homeView: { path: '/views/home.html', init: initHome },
+    trackerView: { path: '/views/tracker.html', init: initTracker },
+    profileView: { path: '/views/profile.html', init: initProfile },
+    tasbihView: { path: '/views/tasbih.html', init: initTasbih },
+    qiblaView: { path: '/views/qibla.html', init: initQibla },
+    quranView: { path: '/views/quran.html', init: initQuran },
+    doaView: { path: '/views/doa.html', init: initDoa },
+    asmaulHusnaView: { path: '/views/asmaul_husna.html', init: initAsmaulHusna },
+    fastingView: { path: '/views/fasting.html', init: initFasting },
+    creditsView: { path: '/views/credits.html', init: initCredits },
+    changelogView: { path: '/views/changelog.html', init: initChangelog },
+    zakatView: { path: '/views/zakat.html', init: initZakat },
+    faqView: { path: '/views/faq.html', init: initFaq },
+    hadithView: { path: '/views/hadith.html', init: initHadith }
+};
+
+const CORE_VIEWS = ['loginOverlay', 'homeView'];
+const initedViews = new Set();
+const loadingViews = new Map();
+let authWatcherInitialized = false;
+let tipsInitialized = false;
+
+function updateVersionLabels() {
+    const vLogin = document.getElementById('versionTextLogin');
+    if (vLogin) vLogin.innerText = APP_VERSION;
+
+    const vProfile = document.getElementById('versionTextProfile');
+    if (vProfile) vProfile.innerText = APP_VERSION;
+}
+
+function runViewInitializer(viewId) {
+    if (initedViews.has(viewId)) return;
+    const def = VIEW_REGISTRY[viewId];
+    if (!def || typeof def.init !== 'function') return;
+    def.init();
+    initedViews.add(viewId);
+}
+
+async function loadViewMarkup(path) {
+    const response = await fetch(path);
+    if (!response.ok) throw new Error(`Gagal memuat ${path}`);
+    return response.text();
+}
+
+export async function ensureViewLoaded(viewId) {
+    if (!viewId || !VIEW_REGISTRY[viewId]) return null;
+
+    const existing = document.getElementById(viewId);
+    if (existing) {
+        runViewInitializer(viewId);
+        updateVersionLabels();
+        if (typeof window.syncTipsForActiveView === 'function') window.syncTipsForActiveView();
+        return existing;
+    }
+
+    if (loadingViews.has(viewId)) return loadingViews.get(viewId);
+
+    const loadPromise = (async () => {
+        const appContainer = document.getElementById('appContainer');
+        if (!appContainer) return null;
+
+        const html = await loadViewMarkup(VIEW_REGISTRY[viewId].path);
+        appContainer.insertAdjacentHTML('beforeend', html);
+
+        const inserted = document.getElementById(viewId);
+        if (!inserted) return null;
+
+        if (window.lucide) {
+            try {
+                lucide.createIcons({ root: inserted });
+                inserted.setAttribute('data-icons-rendered', 'true');
+            } catch (e) {
+                console.warn('Lucide error di ensureViewLoaded:', e);
+            }
+        }
+
+        runViewInitializer(viewId);
+        updateVersionLabels();
+        if (typeof window.syncTipsForActiveView === 'function') window.syncTipsForActiveView();
+        return inserted;
+    })().finally(() => {
+        loadingViews.delete(viewId);
+    });
+
+    loadingViews.set(viewId, loadPromise);
+    return loadPromise;
+}
+
+window.ensureViewLoaded = ensureViewLoaded;
+
 function setupTips() {
-    const tips = Array.from(document.querySelectorAll('[data-tip-key]'));
-    if (tips.length === 0) return;
+    if (tipsInitialized) {
+        if (typeof window.syncTipsForActiveView === 'function') window.syncTipsForActiveView();
+        return;
+    }
+    tipsInitialized = true;
+
     const hideTimers = new WeakMap();
     const overlayStates = new Map();
+    const getTips = () => Array.from(document.querySelectorAll('[data-tip-key]'));
 
     const clearHighlights = () => {
         document.querySelectorAll('.tip-highlight').forEach(el => {
@@ -116,7 +214,7 @@ function setupTips() {
     };
 
     const hideAllOverlays = (exceptViewId = null) => {
-        tips.forEach((tip) => {
+        getTips().forEach((tip) => {
             const viewId = tip.dataset.tipView;
             if (!viewId || viewId === exceptViewId) return;
             hideOverlay(viewId);
@@ -148,7 +246,10 @@ function setupTips() {
     const syncTipByView = (viewId) => {
         if (!viewId) return;
         clearHighlights();
+
+        const tips = getTips();
         let hasVisibleTip = false;
+
         tips.forEach((tip) => {
             const key = tip.dataset.tipKey;
             const isDismissed = key && localStorage.getItem(`jurnal_tip_${key}`) === 'true';
@@ -157,6 +258,7 @@ function setupTips() {
             if (isCurrentView && !isDismissed) {
                 showTip(tip);
                 hasVisibleTip = true;
+
                 const targetSelector = tip.dataset.tipTarget;
                 if (targetSelector) {
                     const target = document.querySelector(targetSelector);
@@ -177,20 +279,34 @@ function setupTips() {
         }
     };
 
-    tips.forEach((tip) => {
-        const btn = tip.querySelector('[data-tip-dismiss]');
-        if (btn) {
-            btn.addEventListener('click', () => {
-                const key = tip.dataset.tipKey;
-                if (key) localStorage.setItem(`jurnal_tip_${key}`, 'true');
-                const activeView = document.querySelector('.active[id]');
-                if (activeView) syncTipByView(activeView.id);
-                else {
-                    hideTip(tip);
-                    clearHighlights();
-                    hideAllOverlays();
-                }
-            });
+    const syncTipForActiveView = () => {
+        const activeView = document.querySelector('.active[id]');
+        if (activeView) syncTipByView(activeView.id);
+        else {
+            clearHighlights();
+            hideAllOverlays();
+            getTips().forEach(hideTip);
+        }
+    };
+
+    window.syncTipsForActiveView = syncTipForActiveView;
+
+    document.addEventListener('click', (e) => {
+        const dismissButton = e.target.closest('[data-tip-dismiss]');
+        if (!dismissButton) return;
+
+        const tip = dismissButton.closest('[data-tip-key]');
+        if (!tip) return;
+
+        const key = tip.dataset.tipKey;
+        if (key) localStorage.setItem(`jurnal_tip_${key}`, 'true');
+
+        const activeView = document.querySelector('.active[id]');
+        if (activeView) syncTipByView(activeView.id);
+        else {
+            hideTip(tip);
+            clearHighlights();
+            hideAllOverlays();
         }
     });
 
@@ -200,19 +316,12 @@ function setupTips() {
 
     window.addEventListener('viewExit', () => {
         clearHighlights();
-        tips.forEach(hideTip);
+        getTips().forEach(hideTip);
         hideAllOverlays();
     });
 
-    requestAnimationFrame(() => {
-        const activeView = document.querySelector('.active[id]');
-        if (activeView) syncTipByView(activeView.id);
-    });
-
-    setTimeout(() => {
-        const activeView = document.querySelector('.active[id]');
-        if (activeView) syncTipByView(activeView.id);
-    }, 180);
+    requestAnimationFrame(syncTipForActiveView);
+    setTimeout(syncTipForActiveView, 180);
 }
 
 function registerServiceWorker() {
@@ -223,6 +332,14 @@ function registerServiceWorker() {
                 reg.update();
             })
             .catch(err => console.error('SW Registration Failed:', err));
+
+        navigator.serviceWorker.addEventListener('message', async (event) => {
+            if (!event?.data || event.data.type !== 'push-subscription-changed') return;
+            const enabled = localStorage.getItem('jurnal_notifications') === 'true';
+            if (enabled && auth.currentUser) {
+                await syncPushSubscription(auth.currentUser, true);
+            }
+        });
 
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -236,7 +353,7 @@ function registerServiceWorker() {
 
 async function requestNotificationPermission() {
     if (!('Notification' in window)) return;
-    
+
     if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
@@ -252,7 +369,7 @@ function updateStatusBarColor() {
     let metaThemeColor = document.querySelector('meta[name="theme-color"]:not([media])');
     if (!metaThemeColor) {
         metaThemeColor = document.createElement('meta');
-        metaThemeColor.name = "theme-color";
+        metaThemeColor.name = 'theme-color';
         document.head.appendChild(metaThemeColor);
     }
     metaThemeColor.setAttribute('content', color);
@@ -261,92 +378,28 @@ function updateStatusBarColor() {
 const themeObserver = new MutationObserver(() => updateStatusBarColor());
 themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
-const VIEWS = [
-    '/views/login.html',
-    '/views/home.html',
-    '/views/profile.html',
-    '/views/tasbih.html',
-    '/views/qibla.html',
-    '/views/tracker.html',
-    '/views/quran.html',
-    '/views/doa.html',
-    '/views/asmaul_husna.html',
-    '/views/fasting.html',
-    '/views/credits.html',
-    '/views/changelog.html',
-    '/views/zakat.html',
-    '/views/faq.html',
-    '/views/hadith.html'
-];
+function initializeAuthWatcher() {
+    if (authWatcherInitialized) return;
+    authWatcherInitialized = true;
 
-async function loadAllViews() {
-    const appContainer = document.getElementById('appContainer');
-    if (!appContainer) return;
-
-    appContainer.innerHTML = '';
-
-    const fetchPromises = VIEWS.map(async (viewPath) => {
-        try {
-            const response = await fetch(viewPath);
-            if (!response.ok) throw new Error(`Gagal memuat ${viewPath}`);
-            return await response.text();
-        } catch (error) {
-            console.error(error);
-            return '';
-        }
-    });
-
-    const viewsContent = await Promise.all(fetchPromises);
-
-    viewsContent.forEach(html => {
-        if (html) appContainer.insertAdjacentHTML('beforeend', html);
-    });
-
-    updateVersionLabels();
-    initializeApp();
-}
-
-function updateVersionLabels() {
-    const vLogin = document.getElementById('versionTextLogin');
-    if (vLogin) vLogin.innerText = APP_VERSION;
-
-    const vProfile = document.getElementById('versionTextProfile');
-    if (vProfile) vProfile.innerText = APP_VERSION;
-}
-
-function initializeApp() {
-    initAuth();
-    initHome();
-    initTracker();
-    initFasting();
-    initTasbih();
-    initQibla();
-    initQuran();
-    initDoa();
-    initAsmaulHusna();
-    initProfile();
-    initCredits();
-    initChangelog();
-    initZakat();
-    initHadith();
-    initFaq();
-    setupTips();
-
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
         const splash = document.getElementById('splashScreen');
         const appContainer = document.getElementById('appContainer');
 
         if (user) {
             setCurrentUser(user);
-            syncThemeWithCloud();
+            await requestNotificationPermission();
+            await syncThemeWithCloud();
 
-            const loginOverlay = document.getElementById('loginOverlay');
+            const loginOverlay = await ensureViewLoaded('loginOverlay');
             if (loginOverlay) loginOverlay.classList.add('hidden-force');
 
             setupRouter();
-            requestNotificationPermission();
+            if (typeof window.syncTipsForActiveView === 'function') window.syncTipsForActiveView();
         } else {
             setCurrentUser(null);
+            await ensureViewLoaded('loginOverlay');
+
             if (window.location.pathname !== '/' && window.location.pathname !== '/home') {
                 window.history.replaceState(null, null, '/');
             }
@@ -355,12 +408,15 @@ function initializeApp() {
                 Array.from(appContainer.children).forEach(child => {
                     if (child.id === 'loginOverlay') {
                         child.classList.remove('hidden-force');
+                        child.classList.remove('active');
                     } else {
                         child.classList.add('hidden-force');
                         child.classList.remove('active');
                     }
                 });
             }
+
+            if (typeof window.syncTipsForActiveView === 'function') window.syncTipsForActiveView();
         }
 
         if (splash) {
@@ -374,7 +430,25 @@ function initializeApp() {
     });
 }
 
+async function loadInitialViews() {
+    const appContainer = document.getElementById('appContainer');
+    if (!appContainer) return;
+
+    appContainer.innerHTML = '';
+
+    for (const viewId of CORE_VIEWS) {
+        try {
+            await ensureViewLoaded(viewId);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    setupTips();
+    initializeAuthWatcher();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     registerServiceWorker();
-    loadAllViews();
+    loadInitialViews();
 });
