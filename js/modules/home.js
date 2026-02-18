@@ -4,6 +4,7 @@ import { doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebas
 import { switchView } from '../router.js';
 import { APP_VERSION } from '../version.js';
 import { getHijriDate } from '../utils/date-utils.js';
+import { getFastingInfo } from './fasting.js';
 
 let isDarkMode = false;
 let isNotificationActive = true; 
@@ -232,77 +233,57 @@ function loadFastingWidget() {
     if (!container) return;
 
     const now = new Date();
-    const currentDay = now.getDay();
-    let isPastMaghrib = false;
+    let displayDate = new Date(now);
+    let isBesok = false;
 
     if (state.prayerTimes && state.prayerTimes.Maghrib && state.prayerTimes.Maghrib !== '--:--') {
         const [h, m] = state.prayerTimes.Maghrib.split(':').map(Number);
-        const maghribDate = new Date();
+        const maghribDate = new Date(now);
         maghribDate.setHours(h, m, 0, 0);
-        if (now >= maghribDate) isPastMaghrib = true;
-    }
-
-    let fastingTitle = "";
-    let fastingDesc = "";
-    let widgetLabel = ""; 
-
-    const hToday = getHijriDate(now);
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const hTom = getHijriDate(tomorrow);
-
-    if (!isPastMaghrib) {
-        const isSenin = currentDay === 1;
-        const isKamis = currentDay === 4;
-        const isAyyamulBidh = [13, 14, 15].includes(hToday.day);
-
-        if (isSenin || isKamis || isAyyamulBidh) {
-            widgetLabel = "HARI INI";
-            if (isSenin) fastingTitle = "Puasa Sunnah Senin";
-            else if (isKamis) fastingTitle = "Puasa Sunnah Kamis";
-            else if (isAyyamulBidh) fastingTitle = "Puasa Ayyamul Bidh";
-            fastingDesc = "Selamat menjalankan ibadah puasa!";
-        }
-    } else {
-        const nextDay = tomorrow.getDay();
-        const isTomSenin = nextDay === 1;
-        const isTomKamis = nextDay === 4;
-        const isTomAyyamul = [13, 14, 15].includes(hTom.day);
-
-        if (isTomSenin || isTomKamis || isTomAyyamul) {
-            widgetLabel = "BESOK";
-            if (isTomSenin) fastingTitle = "Puasa Sunnah Senin";
-            else if (isTomKamis) fastingTitle = "Puasa Sunnah Kamis";
-            else if (isTomAyyamul) fastingTitle = "Puasa Ayyamul Bidh";
-            fastingDesc = "Siapkan niat untuk berpuasa esok hari ya.";
+        if (now >= maghribDate) {
+            isBesok = true;
+            displayDate.setDate(displayDate.getDate() + 1);
         }
     }
 
-    if (fastingTitle) {
-        container.innerHTML = `
-            <div onclick="vibrateSoft(); openFasting()" class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2rem] flex items-center gap-4 border border-amber-100 dark:border-amber-900/40 shadow-sm relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all">
-                <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100/50 dark:border-amber-800/30">
-                    <i data-lucide="utensils-crossed" class="w-6 h-6"></i>
-                </div>
-                <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-0.5">
-                        <span class="text-[9px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest">${widgetLabel}</span>
-                        <span class="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-800"></span>
-                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sunnah</span>
-                    </div>
-                    <h4 class="font-bold text-slate-800 dark:text-white text-base leading-tight">${fastingTitle}</h4>
-                    <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">${fastingDesc}</p>
-                </div>
-                <div class="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-300 group-hover:text-amber-500 transition-colors">
-                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                </div>
-            </div>
-        `;
-        container.classList.remove('hidden');
-        if (window.lucide) lucide.createIcons({ root: container });
-    } else {
+    const hijri = getHijriDate(displayDate);
+    const info = getFastingInfo(displayDate, hijri);
+    if (!info) {
         container.classList.add('hidden');
+        return;
     }
+
+    const labelDate = isBesok ? "BESOK" : "HARI INI";
+    const isWajib = info.category === "wajib";
+    const isHaram = info.category === "haram";
+    const fastingDesc = isBesok
+        ? (isHaram ? "Hindari puasa pada hari ini." : "Siapkan niat untuk berpuasa esok hari ya.")
+        : (isHaram ? "Puasa tidak diperbolehkan pada hari ini." : "Semangat menjalankan ibadah puasa!");
+    const cardTone = isHaram ? 'border-rose-200 dark:border-rose-900/40' : 'border-amber-100 dark:border-amber-900/40';
+    const badgeTone = isHaram ? 'text-rose-600 dark:text-rose-500 bg-rose-500/10' : 'text-amber-600 dark:text-amber-500 bg-amber-500/10';
+    const iconTone = isHaram ? 'text-rose-600 bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-800/30' : 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/30';
+    const labelType = isHaram ? 'Haram' : (isWajib ? 'Wajib' : 'Sunnah');
+    const iconName = isHaram ? 'ban' : (isWajib ? 'sun' : 'utensils-crossed');
+
+    container.innerHTML = `
+        <div onclick="vibrateSoft(); openFasting()" class="bento-card bg-white dark:bg-slate-900 p-5 rounded-[2rem] flex items-center gap-4 border ${cardTone} shadow-sm relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all w-full">
+            <div class="absolute -right-4 -top-4 w-20 h-20 bg-amber-500/5 rounded-full blur-3xl"></div>
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${iconTone}">
+                <i data-lucide="${iconName}" class="w-6 h-6"></i>
+            </div>
+            <div class="flex-1 relative z-10">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${badgeTone}">${labelDate}</span>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">${labelType}</span>
+                </div>
+                <h4 class="text-base font-black text-slate-800 dark:text-white leading-tight">${info.type}</h4>
+                <p class="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-1">${hijri.full} - ${fastingDesc}</p>
+            </div>
+            ${isHaram ? '' : '<i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-amber-500 transition-colors"></i>'}
+        </div>
+    `;
+    container.classList.remove('hidden');
+    if (window.lucide) lucide.createIcons({ root: container });
 }
 
 async function loadLastReadCard() {

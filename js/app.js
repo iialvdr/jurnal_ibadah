@@ -51,6 +51,8 @@ window.showAppToast = (message, type = 'info') => {
 function setupTips() {
     const tips = Array.from(document.querySelectorAll('[data-tip-key]'));
     if (tips.length === 0) return;
+    const hideTimers = new WeakMap();
+    const overlayStates = new Map();
 
     const clearHighlights = () => {
         document.querySelectorAll('.tip-highlight').forEach(el => {
@@ -58,12 +60,121 @@ function setupTips() {
         });
     };
 
+    const clearHideTimer = (tip) => {
+        const timer = hideTimers.get(tip);
+        if (timer) {
+            clearTimeout(timer);
+            hideTimers.delete(tip);
+        }
+    };
+
+    const ensureOverlayForView = (viewId) => {
+        if (!viewId) return null;
+        const existing = overlayStates.get(viewId);
+        if (existing && existing.el && existing.el.isConnected) return existing;
+
+        const viewEl = document.getElementById(viewId);
+        if (!viewEl) return null;
+
+        let overlayEl = viewEl.querySelector('[data-tip-overlay]');
+        if (!overlayEl) {
+            overlayEl = document.createElement('div');
+            overlayEl.setAttribute('data-tip-overlay', viewId);
+            overlayEl.className = 'hidden fixed inset-0 z-[110] pointer-events-none bg-gradient-to-t from-black/70 via-black/35 to-transparent opacity-0 transition-opacity duration-300';
+            viewEl.appendChild(overlayEl);
+        }
+
+        const state = { el: overlayEl, timer: null };
+        overlayStates.set(viewId, state);
+        return state;
+    };
+
+    const showOverlay = (viewId) => {
+        const state = ensureOverlayForView(viewId);
+        if (!state || !state.el) return;
+        if (state.timer) {
+            clearTimeout(state.timer);
+            state.timer = null;
+        }
+        state.el.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            state.el.classList.remove('opacity-0');
+            state.el.classList.add('opacity-100');
+        });
+    };
+
+    const hideOverlay = (viewId) => {
+        const state = overlayStates.get(viewId) || ensureOverlayForView(viewId);
+        if (!state || !state.el) return;
+        if (state.timer) clearTimeout(state.timer);
+        state.el.classList.remove('opacity-100');
+        state.el.classList.add('opacity-0');
+        state.timer = setTimeout(() => {
+            state.el.classList.add('hidden');
+            state.timer = null;
+        }, 220);
+    };
+
+    const hideAllOverlays = (exceptViewId = null) => {
+        tips.forEach((tip) => {
+            const viewId = tip.dataset.tipView;
+            if (!viewId || viewId === exceptViewId) return;
+            hideOverlay(viewId);
+        });
+    };
+
     const hideTip = (tip) => {
         if (!tip) return;
-        clearHighlights();
+        clearHideTimer(tip);
         tip.classList.add('opacity-0', 'translate-y-4');
         tip.classList.remove('opacity-100', 'translate-y-0');
-        setTimeout(() => tip.classList.add('hidden'), 200);
+        const timer = setTimeout(() => {
+            tip.classList.add('hidden');
+            hideTimers.delete(tip);
+        }, 220);
+        hideTimers.set(tip, timer);
+    };
+
+    const showTip = (tip) => {
+        if (!tip) return;
+        clearHideTimer(tip);
+        tip.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            tip.classList.remove('opacity-0', 'translate-y-4');
+            tip.classList.add('opacity-100', 'translate-y-0');
+        });
+    };
+
+    const syncTipByView = (viewId) => {
+        if (!viewId) return;
+        clearHighlights();
+        let hasVisibleTip = false;
+        tips.forEach((tip) => {
+            const key = tip.dataset.tipKey;
+            const isDismissed = key && localStorage.getItem(`jurnal_tip_${key}`) === 'true';
+            const isCurrentView = tip.dataset.tipView === viewId;
+
+            if (isCurrentView && !isDismissed) {
+                showTip(tip);
+                hasVisibleTip = true;
+                const targetSelector = tip.dataset.tipTarget;
+                if (targetSelector) {
+                    const target = document.querySelector(targetSelector);
+                    if (target) target.classList.add('tip-highlight');
+                }
+                return;
+            }
+
+            hideTip(tip);
+        });
+
+        if (hasVisibleTip) {
+            showOverlay(viewId);
+            hideAllOverlays(viewId);
+        } else {
+            hideOverlay(viewId);
+            hideAllOverlays();
+        }
     };
 
     tips.forEach((tip) => {
@@ -72,35 +183,36 @@ function setupTips() {
             btn.addEventListener('click', () => {
                 const key = tip.dataset.tipKey;
                 if (key) localStorage.setItem(`jurnal_tip_${key}`, 'true');
-                hideTip(tip);
+                const activeView = document.querySelector('.active[id]');
+                if (activeView) syncTipByView(activeView.id);
+                else {
+                    hideTip(tip);
+                    clearHighlights();
+                    hideAllOverlays();
+                }
             });
         }
     });
 
     window.addEventListener('viewChanged', (e) => {
-        const viewId = e.detail.viewId;
-        tips.forEach((tip) => {
-            if (tip.dataset.tipView !== viewId) return;
-            const key = tip.dataset.tipKey;
-            if (localStorage.getItem(`jurnal_tip_${key}`) === 'true') return;
-            tip.classList.remove('hidden');
-            clearHighlights();
-            const targetSelector = tip.dataset.tipTarget;
-            if (targetSelector) {
-                const target = document.querySelector(targetSelector);
-                if (target) target.classList.add('tip-highlight');
-            }
-            requestAnimationFrame(() => {
-                tip.classList.remove('opacity-0', 'translate-y-4');
-                tip.classList.add('opacity-100', 'translate-y-0');
-            });
-        });
+        syncTipByView(e.detail.viewId);
     });
 
     window.addEventListener('viewExit', () => {
         clearHighlights();
         tips.forEach(hideTip);
+        hideAllOverlays();
     });
+
+    requestAnimationFrame(() => {
+        const activeView = document.querySelector('.active[id]');
+        if (activeView) syncTipByView(activeView.id);
+    });
+
+    setTimeout(() => {
+        const activeView = document.querySelector('.active[id]');
+        if (activeView) syncTipByView(activeView.id);
+    }, 180);
 }
 
 function registerServiceWorker() {
