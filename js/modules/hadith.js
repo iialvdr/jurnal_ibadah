@@ -96,7 +96,7 @@ async function loadHadithItems() {
                         </div>
                     </div>
                     <div class="mb-6 text-right" dir="rtl">
-                        <p class="font-quran text-2xl text-slate-800 dark:text-white leading-[2.8] md:leading-[3]">${h.arab}</p>
+                        <p class="font-quran text-2xl text-slate-800 dark:text-white leading-[2.8]">${h.arab}</p>
                     </div>
                     <div class="pt-5 border-t border-slate-50 dark:border-slate-800">
                         <p class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] mb-2">Terjemahan</p>
@@ -221,7 +221,7 @@ async function searchHadithByNumber() {
                     <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">${result.data.name}</span>
                 </div>
                 <div class="mb-6 text-right" dir="rtl">
-                    <p class="font-quran text-2xl text-slate-800 dark:text-white leading-[2.8] md:leading-[3]">${h.arab}</p>
+                    <p class="font-quran text-2xl text-slate-800 dark:text-white leading-[2.8]">${h.arab}</p>
                 </div>
                 <div class="pt-5 border-t border-slate-50 dark:border-slate-800">
                     <p class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] mb-2">Terjemahan</p>

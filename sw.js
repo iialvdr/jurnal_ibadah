@@ -9,6 +9,8 @@ const urlsToCache = [
   './manifest.json',
   './css/tailwind.build.css',
   './css/style.css',
+  './assets/fonts/scheherazade-new-400.ttf',
+  './assets/fonts/noto-naskh-arabic-400.ttf',
 
   './js/app.js',
   './js/config.js',

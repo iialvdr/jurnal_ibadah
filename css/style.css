@@ -1,3 +1,19 @@
+@font-face {
+    font-family: 'Scheherazade New';
+    src: url('/assets/fonts/scheherazade-new-400.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Noto Naskh Arabic';
+    src: url('/assets/fonts/noto-naskh-arabic-400.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* --- PROTEKSI & NATIVE FEEL --- */
 * {
     -webkit-user-select: none;
@@ -190,9 +206,9 @@ a.bento-card:active {
 .hidden-force { display: none !important; }
 
 .font-quran {
-    font-family:'Noto Naskh Arabic', serif !important;
+    font-family: 'Scheherazade New', 'Noto Naskh Arabic', 'Noto Sans Arabic', serif !important;
     line-height: 2.2 !important;
-    font-weight: 600;
+    font-weight: 400;
 }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }

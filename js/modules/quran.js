@@ -174,7 +174,7 @@ function renderSurahList(data) {
                     <p class="text-[10px] md:text-xs text-slate-400 font-medium">${surah.arti} • ${surah.jumlahAyat} Ayat</p>
                 </div>
                 <div class="text-right pl-2 shrink-0">
-                    <span class="font-quran text-lg md:text-2xl text-slate-300 dark:text-slate-700 group-hover:text-emerald-500/30 transition-colors">${surah.nama}</span>
+                    <span class="font-quran text-lg text-slate-300 dark:text-slate-700 group-hover:text-emerald-500/30 transition-colors">${surah.nama}</span>
                 </div>
             </div>`;
         fragment.appendChild(div);
