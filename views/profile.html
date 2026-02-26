@@ -431,14 +431,14 @@
       <p
         class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500"
       >
-        Jurnal Ibadah App • <span id="versionTextProfile">...</span>
+        Jurnal Ibadah App &bull; <span id="versionTextProfile">...</span>
       </p>
     </div>
   </div>
 
   <div
     id="editProfileModal"
-    class="fixed inset-0 z-[200] flex items-end sm:items-center justify-center invisible pointer-events-none"
+    class="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-6 invisible pointer-events-none"
   >
     <div
       id="editProfileBackdrop"
@@ -447,7 +447,7 @@
     ></div>
     <div
       id="editProfileContent"
-      class="relative w-full sm:w-[92%] sm:max-w-lg bg-white dark:bg-slate-950 p-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl border-t border-white/20 dark:border-slate-800 transform translate-y-full transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+      class="relative w-full sm:w-[92%] sm:max-w-lg max-h-[88vh] overflow-y-auto no-scrollbar bg-white dark:bg-slate-950 p-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl border-t sm:border border-white/20 dark:border-slate-800 transform translate-y-full sm:translate-y-4 sm:scale-95 sm:opacity-0 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
     >
       <div
         class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8"
@@ -486,30 +486,69 @@
         </div>
 
         <div class="space-y-3">
-          <label
-            class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer group hover:border-emerald-500/30 transition-colors"
+          <div
+            class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl group hover:border-emerald-500/30 transition-colors"
           >
             <div class="flex items-center gap-3">
               <div
                 class="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-slate-500 shadow-sm"
               >
-                <i data-lucide="moon" class="w-4 h-4"></i>
+                <i data-lucide="palette" class="w-4 h-4"></i>
               </div>
-              <span class="text-sm font-bold text-slate-700 dark:text-slate-200"
-                >Dark Mode</span
+              <div class="hidden sm:block">
+                <span class="text-sm font-bold text-slate-700 dark:text-slate-200"
+                  >Mode Tampilan</span
+                >
+                <p class="text-[10px] text-slate-400">Dark, Light, Sistem</p>
+              </div>
+              <span class="text-sm font-bold text-slate-700 dark:text-slate-200 sm:hidden">Mode</span>
+            </div>
+            
+            <div class="relative w-[140px] sm:w-[180px]">
+              <button
+                type="button"
+                id="themeModeDropdownBtnProfile"
+                class="w-full h-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 text-[10px] font-black text-slate-700 dark:text-slate-200 flex items-center justify-between gap-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 hover:border-emerald-400/40 shadow-sm transition-all"
               >
-            </div>
-            <div class="relative inline-flex items-center">
-              <input
-                type="checkbox"
-                id="darkModeToggleProfile"
-                class="sr-only peer"
-              />
+                <span id="themeModeDropdownLabelProfile" class="truncate">Ikuti Sistem</span>
+                <i
+                  id="themeModeDropdownChevronProfile"
+                  data-lucide="chevron-down"
+                  class="w-3.5 h-3.5 text-slate-400 transition-transform duration-300"
+                ></i>
+              </button>
+              
               <div
-                class="relative w-11 h-6 bg-slate-200 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:bg-emerald-500 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"
-              ></div>
+                id="themeModeDropdownMenuProfile"
+                class="hidden absolute right-0 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-1.5 shadow-2xl z-50 transform origin-top-right transition-all duration-200 opacity-0 scale-95"
+              >
+                <button
+                  type="button"
+                  data-theme-mode-profile-option="dark"
+                  class="w-full px-3 py-2 rounded-lg text-[10px] font-bold text-left flex items-center justify-between transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
+                >
+                  Dark Mode
+                  <span data-theme-mode-check class="w-1.5 h-1.5 rounded-full bg-emerald-500 opacity-0"></span>
+                </button>
+                <button
+                  type="button"
+                  data-theme-mode-profile-option="light"
+                  class="w-full px-3 py-2 rounded-lg text-[10px] font-bold text-left flex items-center justify-between transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
+                >
+                  Light Mode
+                  <span data-theme-mode-check class="w-1.5 h-1.5 rounded-full bg-emerald-500 opacity-0"></span>
+                </button>
+                <button
+                  type="button"
+                  data-theme-mode-profile-option="system"
+                  class="w-full px-3 py-2 rounded-lg text-[10px] font-bold text-left flex items-center justify-between transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
+                >
+                  Ikuti Sistem
+                  <span data-theme-mode-check class="w-1.5 h-1.5 rounded-full bg-emerald-500 opacity-0"></span>
+                </button>
+              </div>
             </div>
-          </label>
+          </div>
 
           <label
             class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer group hover:border-emerald-500/30 transition-colors"

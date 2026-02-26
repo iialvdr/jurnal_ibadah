@@ -169,7 +169,7 @@ function renderDhikrList() {
     const container = document.getElementById('dhikrListContainer');
     if (!container) return;
     container.innerHTML = DHIKR_LIST.map(dhikr => `
-        <div onclick="if(window.isTasbihVibroEnabled && typeof vibrateSoft === 'function') vibrateSoft(); selectDhikr('${dhikr.id}')" class="bg-slate-50 dark:bg-slate-800/40 p-6 rounded-[2rem] border border-transparent hover:border-emerald-500/30 transition-all cursor-pointer group active:scale-[0.98] shadow-sm">
+        <div onclick="if(window.isTasbihVibroEnabled && typeof vibrateSoft === 'function') vibrateSoft(); selectDhikr('${dhikr.id}')" class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500/30 transition-colors cursor-pointer group active:scale-[0.98] shadow-sm">
             <div class="flex justify-between items-center mb-3">
                 <span class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full">Target: ${dhikr.target}</span>
                 <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform"></i>

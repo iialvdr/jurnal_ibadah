@@ -7,15 +7,24 @@ import { getHijriDate } from '../utils/date-utils.js';
 import { getFastingInfo } from './fasting.js';
 import { syncPushSubscription } from './push.js';
 
+const THEME_KEY = 'valdi_theme';
+const THEME_MODE_DARK = 'dark';
+const THEME_MODE_LIGHT = 'light';
+const THEME_MODE_SYSTEM = 'system';
+let themeMode = THEME_MODE_SYSTEM;
 let isDarkMode = false;
 let isNotificationActive = true; 
 let countdownInterval = null;
 let unsubscribeRecords = null;
 let lastNotifiedPrayer = null;
+let systemThemeQuery = null;
+let hasSystemThemeListener = false;
 
 export function initHome() {
     window.refreshLocation = refreshLocation;
     window.toggleDarkMode = toggleDarkMode;
+    window.setThemeMode = setThemeMode;
+    window.getThemeMode = getThemeMode;
     window.toggleNotifications = toggleNotifications; 
     window.continueReading = continueReading;
     window.openFasting = () => switchView('fastingView');
@@ -217,8 +226,8 @@ export async function syncThemeWithCloud() {
         if (docSnap.exists()) {
             const data = docSnap.data();
             if (data.theme) {
-                isDarkMode = data.theme === 'dark';
-                localStorage.setItem('valdi_theme', data.theme);
+                themeMode = normalizeThemeMode(data.theme);
+                localStorage.setItem(THEME_KEY, themeMode);
                 applyTheme();
             }
             if (typeof data.notifications === 'boolean') {
@@ -507,7 +516,9 @@ function startCountdown(targetTimeStr) {
 }
 
 function initTheme() {
-    isDarkMode = localStorage.getItem('valdi_theme') === 'dark';
+    themeMode = normalizeThemeMode(localStorage.getItem(THEME_KEY));
+    localStorage.setItem(THEME_KEY, themeMode);
+    attachSystemThemeListener();
     applyTheme();
 }
 
@@ -519,29 +530,81 @@ function initNotificationPreference() {
 }
 
 function applyTheme() {
+    isDarkMode = getResolvedDarkMode();
     if (isDarkMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
     if (window.lucide) lucide.createIcons();
 }
 
-export async function toggleDarkMode() {
+function normalizeThemeMode(rawMode) {
+    if (rawMode === THEME_MODE_DARK || rawMode === THEME_MODE_LIGHT || rawMode === THEME_MODE_SYSTEM) {
+        return rawMode;
+    }
+    return THEME_MODE_SYSTEM;
+}
+
+function getResolvedDarkMode() {
+    if (themeMode === THEME_MODE_DARK) return true;
+    if (themeMode === THEME_MODE_LIGHT) return false;
+    if (window.matchMedia) return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return false;
+}
+
+function attachSystemThemeListener() {
+    if (hasSystemThemeListener || !window.matchMedia) return;
+    systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const onSystemThemeChange = () => {
+        if (themeMode === THEME_MODE_SYSTEM) applyTheme();
+    };
+    if (typeof systemThemeQuery.addEventListener === 'function') {
+        systemThemeQuery.addEventListener('change', onSystemThemeChange);
+    } else if (typeof systemThemeQuery.addListener === 'function') {
+        systemThemeQuery.addListener(onSystemThemeChange);
+    }
+    hasSystemThemeListener = true;
+}
+
+export function getThemeMode() {
+    return themeMode;
+}
+
+export async function setThemeMode(mode, options = {}) {
+    const normalizedMode = normalizeThemeMode(mode);
+    const withAnimation = options.withAnimation !== false;
+    const persistCloud = options.persistCloud !== false;
+
     const root = document.documentElement;
     const body = document.body;
-    root.classList.add('theme-transition');
-    if (body) body.classList.add('theme-flash');
-    isDarkMode = !isDarkMode;
-    localStorage.setItem('valdi_theme', isDarkMode ? 'dark' : 'light');
+
+    if (withAnimation) {
+        root.classList.add('theme-transition');
+        if (body) body.classList.add('theme-flash');
+    }
+
+    themeMode = normalizedMode;
+    localStorage.setItem(THEME_KEY, themeMode);
     applyTheme();
-    setTimeout(() => {
-        root.classList.remove('theme-transition');
-        if (body) body.classList.remove('theme-flash');
-    }, 600);
-    if (state.currentUser) {
+
+    if (withAnimation) {
+        setTimeout(() => {
+            root.classList.remove('theme-transition');
+            if (body) body.classList.remove('theme-flash');
+        }, 600);
+    }
+
+    if (persistCloud && state.currentUser) {
         try {
             const docRef = doc(db, "users", state.currentUser.uid, "settings", "preferences");
-            await setDoc(docRef, { theme: isDarkMode ? 'dark' : 'light' }, { merge: true });
+            await setDoc(docRef, { theme: themeMode }, { merge: true });
         } catch (e) { console.error("Gagal menyimpan tema:", e); }
     }
+
+    return themeMode;
+}
+
+export async function toggleDarkMode() {
+    const nextMode = isDarkMode ? THEME_MODE_LIGHT : THEME_MODE_DARK;
+    return setThemeMode(nextMode);
 }
 
 export async function toggleNotifications() {

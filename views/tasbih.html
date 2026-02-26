@@ -76,17 +76,17 @@
         </div>
     </div>
 
-    <div id="dhikrMenuModal" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center invisible pointer-events-none">
+    <div id="dhikrMenuModal" class="fixed inset-0 z-[200] flex items-end sm:items-center justify-center invisible pointer-events-none">
         <div id="dhikrMenuBackdrop" class="absolute inset-0 bg-slate-950/60 backdrop-blur-md opacity-0 transition-opacity duration-500" onclick="closeDhikrMenu()"></div>
-        <div id="dhikrModalContent" class="relative w-full sm:w-[90%] sm:max-w-md bg-white dark:bg-slate-900 p-8 rounded-t-[3rem] sm:rounded-[2.5rem] shadow-2xl border-t border-white/50 dark:border-slate-800 transform translate-y-full transition-transform duration-500 h-[80vh] flex flex-col pb-[env(safe-area-inset-bottom)]">
+        <div id="dhikrModalContent" class="relative w-full sm:w-[92%] sm:max-w-lg bg-white dark:bg-slate-950 p-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl border-t border-white/20 dark:border-slate-800 transform translate-y-full transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] h-[80vh] flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]">
             <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8 shrink-0"></div>
-            <div class="flex justify-between items-start mb-8 px-1">
+            <div class="flex justify-between items-start mb-6">
                 <div>
-                    <h3 class="font-black text-2xl text-slate-800 dark:text-white tracking-tight">Pilih Bacaan</h3>
-                    <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-1">Target Otomatis</p>
+                    <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Pilih Bacaan</h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-1">Pilih dzikir dengan target otomatis</p>
                 </div>
-                <button onclick="closeDhikrMenu()" class="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-500 transition active:scale-90 shrink-0">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                <button onclick="closeDhikrMenu()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition">
+                    <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
             <div id="dhikrListContainer" class="flex-1 overflow-y-auto space-y-4 pb-4 no-scrollbar"></div>

@@ -50,12 +50,23 @@ const urlsToCache = [
   './img/favicon/site.webmanifest'
 ];
 
+const postSwVersionToClients = async (phase = 'runtime') => {
+  const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  clientList.forEach(client => {
+    client.postMessage({
+      type: 'sw-version',
+      version: APP_VERSION,
+      cacheName: CACHE_NAME,
+      phase
+    });
+  });
+};
+
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Install SW Versi:', APP_VERSION);
         return cache.addAll(urlsToCache);
       })
   );
@@ -66,10 +77,15 @@ self.addEventListener('fetch', event => {
 
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      caches.match('./index.html').then(response => {
-        if (response) return response;
-        return fetch(event.request).catch(() => caches.match('./index.html'));
-      })
+      fetch('./index.html', { cache: 'no-store' })
+        .then(networkResponse => {
+          if (networkResponse && networkResponse.status === 200) {
+            const cloned = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put('./index.html', cloned));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match('./index.html'))
     );
     return;
   }
@@ -86,6 +102,34 @@ self.addEventListener('fetch', event => {
             return networkResponse;
           }).catch(() => { });
         });
+      })
+    );
+    return;
+  }
+
+  const isAppCodeRequest = (
+    url.origin === self.location.origin &&
+    event.request.method === 'GET' &&
+    (
+      url.pathname.includes('/views/') ||
+      url.pathname.includes('/js/') ||
+      url.pathname.includes('/css/') ||
+      url.pathname.endsWith('/manifest.json')
+    )
+  );
+
+  if (isAppCodeRequest) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async cache => {
+        try {
+          const networkResponse = await fetch(event.request);
+          if (networkResponse && networkResponse.status === 200) {
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch (error) {
+          return cache.match(event.request);
+        }
       })
     );
     return;
@@ -125,15 +169,30 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Hapus Cache Lama:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => {
-      return self.clients.claim();
-    })
+    }).then(() => self.clients.claim())
+      .then(() => postSwVersionToClients('activate'))
   );
+});
+
+self.addEventListener('message', event => {
+  if (!event?.data || event.data.type !== 'get-sw-version') return;
+  const payload = {
+    type: 'sw-version',
+    version: APP_VERSION,
+    cacheName: CACHE_NAME,
+    phase: 'message'
+  };
+
+  if (event.source && typeof event.source.postMessage === 'function') {
+    event.source.postMessage(payload);
+    return;
+  }
+
+  event.waitUntil(postSwVersionToClients('message'));
 });
 
 self.addEventListener('push', event => {

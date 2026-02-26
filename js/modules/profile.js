@@ -5,11 +5,17 @@ import { state } from '../state.js';
 import { APP_VERSION } from '../version.js';
 // Import fungsi satpam dari auth.js dan fungsi toggle dari home.js
 import { handleLinkGoogle } from './auth.js';
-import { toggleNotifications } from './home.js';
+import { toggleNotifications, setThemeMode, getThemeMode } from './home.js';
 
 let activityChart = null;
 let isChartLibLoaded = false;
 let currentConsistencyVal = 0; // Menyimpan nilai terakhir untuk animasi angka
+let themeDropdownHideTimeout = null;
+const THEME_MODE_LABELS = {
+    dark: "Dark Mode",
+    light: "Light Mode",
+    system: "Ikuti Sistem"
+};
 
 export function initProfile() {
     window.loadChartData = loadChartData;
@@ -269,8 +275,36 @@ function setupEditProfileListeners() {
     const btnCancelChange = document.getElementById('btnCancelChange');
     if (btnCancelChange) btnCancelChange.addEventListener('click', resetPasswordChangeArea);
 
-    const dmToggle = document.getElementById('darkModeToggleProfile');
-    if (dmToggle) dmToggle.addEventListener('change', () => { if (window.toggleDarkMode) window.toggleDarkMode(); });
+    const themeDropdownBtn = document.getElementById('themeModeDropdownBtnProfile');
+    const themeDropdownMenu = document.getElementById('themeModeDropdownMenuProfile');
+    const themeModeOptionButtons = document.querySelectorAll('[data-theme-mode-profile-option]');
+    if (themeDropdownBtn && themeDropdownMenu) {
+        themeDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const willOpen = themeDropdownMenu.classList.contains('hidden');
+            if (willOpen) {
+                if (typeof window.vibrateSoft === 'function') window.vibrateSoft();
+                openThemeModeDropdown();
+            } else {
+                closeThemeModeDropdown();
+            }
+        });
+
+        themeDropdownMenu.addEventListener('click', (e) => e.stopPropagation());
+        document.addEventListener('click', () => closeThemeModeDropdown());
+    }
+
+    if (themeModeOptionButtons.length) {
+        themeModeOptionButtons.forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const mode = btn.getAttribute('data-theme-mode-profile-option');
+                if (!mode) return;
+                await setThemeMode(mode);
+                syncThemeModeDropdown(getThemeMode());
+                closeThemeModeDropdown();
+            });
+        });
+    }
 
     // Listener baru untuk saklar notifikasi
     const notifToggle = document.getElementById('notificationToggleProfile');
@@ -423,17 +457,81 @@ function setupLogoutListeners() {
     if (confirmBtn) confirmBtn.addEventListener('click', async () => { toggleLogoutModal(false); try { await signOut(auth); window.location.reload(); } catch (e) { console.error(e); } }); 
 }
 
+function closeThemeModeDropdown() {
+    const menu = document.getElementById('themeModeDropdownMenuProfile');
+    const chevron = document.getElementById('themeModeDropdownChevronProfile');
+    if (themeDropdownHideTimeout) {
+        clearTimeout(themeDropdownHideTimeout);
+        themeDropdownHideTimeout = null;
+    }
+    if (!menu) return;
+
+    menu.classList.remove('opacity-100', 'scale-100');
+    menu.classList.add('opacity-0', 'scale-95');
+
+    if (!menu.classList.contains('hidden')) {
+        themeDropdownHideTimeout = setTimeout(() => {
+            menu.classList.add('hidden');
+            themeDropdownHideTimeout = null;
+        }, 200);
+    }
+
+    if (chevron) chevron.classList.remove('rotate-180');
+}
+
+function openThemeModeDropdown() {
+    const menu = document.getElementById('themeModeDropdownMenuProfile');
+    const chevron = document.getElementById('themeModeDropdownChevronProfile');
+    if (!menu) return;
+
+    if (themeDropdownHideTimeout) {
+        clearTimeout(themeDropdownHideTimeout);
+        themeDropdownHideTimeout = null;
+    }
+
+    menu.classList.remove('hidden');
+    window.requestAnimationFrame(() => {
+        menu.classList.remove('opacity-0', 'scale-95');
+        menu.classList.add('opacity-100', 'scale-100');
+    });
+
+    if (chevron) chevron.classList.add('rotate-180');
+}
+
+function syncThemeModeDropdown(mode) {
+    const activeMode = mode === 'dark' || mode === 'light' || mode === 'system' ? mode : 'system';
+    const label = document.getElementById('themeModeDropdownLabelProfile');
+    if (label) label.innerText = THEME_MODE_LABELS[activeMode] || THEME_MODE_LABELS.system;
+
+    const optionButtons = document.querySelectorAll('[data-theme-mode-profile-option]');
+    if (!optionButtons.length) return;
+
+    optionButtons.forEach((btn) => {
+        const isActive = btn.getAttribute('data-theme-mode-profile-option') === activeMode;
+        btn.classList.toggle('bg-emerald-500/10', isActive);
+        btn.classList.toggle('text-emerald-600', isActive);
+        btn.classList.toggle('dark:text-emerald-400', isActive);
+        btn.classList.toggle('text-slate-600', !isActive);
+        btn.classList.toggle('dark:text-slate-300', !isActive);
+        btn.classList.toggle('hover:bg-slate-100', !isActive);
+        btn.classList.toggle('dark:hover:bg-slate-800', !isActive);
+
+        const check = btn.querySelector('[data-theme-mode-check]');
+        if (check) check.classList.toggle('opacity-0', !isActive);
+    });
+}
+
 function openEditProfile() { 
     const user = state.currentUser; 
     if (!user) return; 
     const modal = document.getElementById('editProfileModal'); 
     const content = document.getElementById('editProfileContent'); 
     const input = document.getElementById('editNameInput'); 
-    const dmToggle = document.getElementById('darkModeToggleProfile'); 
     const notifToggle = document.getElementById('notificationToggleProfile');
 
     if (input) input.value = user.displayName || ""; 
-    if (dmToggle) dmToggle.checked = document.documentElement.classList.contains('dark'); 
+    syncThemeModeDropdown(getThemeMode());
+    closeThemeModeDropdown();
     
     // Set status toggle notifikasi berdasarkan localStorage
     if (notifToggle) {
@@ -442,10 +540,12 @@ function openEditProfile() {
 
     if (modal) { 
         modal.classList.remove('invisible', 'pointer-events-none'); 
-        document.getElementById('editProfileBackdrop').classList.add('opacity-100'); 
-        content.classList.remove('translate-y-full'); 
+        document.getElementById('editProfileBackdrop').classList.add('opacity-100');
+        requestAnimationFrame(() => {
+            content?.classList.remove('translate-y-full', 'sm:translate-y-4', 'sm:scale-95', 'sm:opacity-0');
+        });
     } 
 }
 
-function closeEditProfile() { const modal = document.getElementById('editProfileModal'); const content = document.getElementById('editProfileContent'); if (modal) { document.getElementById('editProfileBackdrop').classList.remove('opacity-100'); content.classList.add('translate-y-full'); setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 500); } }
+function closeEditProfile() { const modal = document.getElementById('editProfileModal'); const content = document.getElementById('editProfileContent'); if (modal) { document.getElementById('editProfileBackdrop').classList.remove('opacity-100'); content?.classList.add('translate-y-full', 'sm:translate-y-4', 'sm:scale-95', 'sm:opacity-0'); setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 300); } }
 function toggleLogoutModal(show) { const modal = document.getElementById('logoutModal'); const content = document.getElementById('logoutModalContent'); if (!modal) return; if (show) { modal.classList.remove('invisible', 'pointer-events-none'); document.getElementById('logoutBackdrop').classList.add('opacity-100'); content.classList.remove('scale-90', 'opacity-0'); } else { document.getElementById('logoutBackdrop').classList.remove('opacity-100'); content.classList.add('scale-90', 'opacity-0'); setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 300); } }

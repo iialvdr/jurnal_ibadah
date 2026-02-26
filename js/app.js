@@ -90,7 +90,18 @@ function runViewInitializer(viewId) {
 }
 
 async function loadViewMarkup(path) {
-    const response = await fetch(path);
+    const separator = path.includes('?') ? '&' : '?';
+    const versionedPath = `${path}${separator}v=${encodeURIComponent(APP_VERSION)}`;
+
+    let response = null;
+    try {
+        response = await fetch(versionedPath, { cache: 'no-store' });
+    } catch (e) { }
+
+    if (!response || !response.ok) {
+        response = await fetch(path, { cache: 'no-store' });
+    }
+
     if (!response.ok) throw new Error(`Gagal memuat ${path}`);
     return response.text();
 }
@@ -326,26 +337,47 @@ function setupTips() {
 
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
+        let swVersionLogged = false;
+        const requestSwVersion = (reg = null) => {
+            const activeWorker = reg?.active || navigator.serviceWorker.controller;
+            if (activeWorker && typeof activeWorker.postMessage === 'function') {
+                activeWorker.postMessage({ type: 'get-sw-version' });
+            }
+        };
+
         navigator.serviceWorker.register('./sw.js', { scope: './', type: 'module' })
             .then(reg => {
-                console.log('SW Registered:', reg.scope);
+                requestSwVersion(reg);
                 reg.update();
             })
             .catch(err => console.error('SW Registration Failed:', err));
 
         navigator.serviceWorker.addEventListener('message', async (event) => {
-            if (!event?.data || event.data.type !== 'push-subscription-changed') return;
+            if (!event?.data) return;
+
+            if (event.data.type === 'sw-version') {
+                if (!swVersionLogged) {
+                    console.info(`[SW] Active v${event.data.version} | Cache: ${event.data.cacheName}`);
+                    swVersionLogged = true;
+                }
+                return;
+            }
+
+            if (event.data.type !== 'push-subscription-changed') return;
             const enabled = localStorage.getItem('jurnal_notifications') === 'true';
             if (enabled && auth.currentUser) {
                 await syncPushSubscription(auth.currentUser, true);
             }
         });
 
+        navigator.serviceWorker.ready
+            .then(reg => requestSwVersion(reg))
+            .catch(() => { });
+
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (refreshing) return;
             refreshing = true;
-            console.log('Versi baru ditemukan, memuat ulang halaman...');
             window.location.reload();
         });
     }
