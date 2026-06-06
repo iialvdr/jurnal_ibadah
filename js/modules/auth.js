@@ -18,7 +18,14 @@ let toastTimeout = null;
 
 function showLoading(isLoading) {
     const status = document.getElementById('loginStatus');
-    if (status) status.classList.toggle('hidden', !isLoading);
+    if (!status) return;
+    if (isLoading) {
+        status.classList.remove('hidden');
+        status.classList.add('flex');
+    } else {
+        status.classList.remove('flex');
+        status.classList.add('hidden');
+    }
 }
 
 function hideError() {

@@ -6,6 +6,8 @@ import { APP_VERSION } from '../version.js';
 // Import fungsi satpam dari auth.js dan fungsi toggle dari home.js
 import { handleLinkGoogle } from './auth.js';
 import { toggleNotifications, setThemeMode, getThemeMode } from './home.js';
+import { getStreakData, renderBadgeGrid, getEarnedBadges } from './streak.js';
+import { getReminderSettings, saveReminderSettings } from './reminder.js';
 
 let activityChart = null;
 let isChartLibLoaded = false;
@@ -121,6 +123,20 @@ async function updateProfileUI() {
 
     // Load grafik belakangan (non-blocking) agar UI utama muncul duluan
     setTimeout(() => loadChartData(7), 100);
+
+    // Load streak data and badges
+    const streakEl = document.getElementById('statStreak');
+    const streakEmojiEl = document.getElementById('statStreakEmoji');
+    if (streakEl) {
+        const sd = getStreakData();
+        streakEl.innerText = sd.current;
+        if (streakEmojiEl) {
+            const earned = getEarnedBadges(sd.current);
+            const lastBadge = earned.length > 0 ? earned[earned.length - 1] : null;
+            streakEmojiEl.textContent = lastBadge ? lastBadge.emoji : (sd.current > 0 ? '🔥' : '💤');
+        }
+    }
+    renderBadgeGrid('badgeGrid');
 }
 
 // FUNGSI BARU: Animasi angka (Counting Effect)
@@ -313,6 +329,52 @@ function setupEditProfileListeners() {
             const newState = await toggleNotifications();
             // Sinkronkan kembali jika izin browser ditolak di tengah jalan
             notifToggle.checked = newState;
+        });
+    }
+
+    // --- Smart Reminder Settings ---
+    const preSelect = document.getElementById('preReminderSelect');
+    const missedToggle = document.getElementById('missedReminderToggle');
+    const perPrayerBtn = document.getElementById('perPrayerToggleBtn');
+    const perPrayerList = document.getElementById('perPrayerList');
+    const perPrayerChevron = document.getElementById('perPrayerChevron');
+    const prayerCheckboxes = document.querySelectorAll('[data-prayer-reminder]');
+
+    if (preSelect) {
+        preSelect.addEventListener('change', () => {
+            const settings = getReminderSettings();
+            settings.preReminder = parseInt(preSelect.value, 10);
+            saveReminderSettings(settings);
+            if (typeof window.showAppToast === 'function') {
+                window.showAppToast(settings.preReminder > 0 ? `Pengingat ${settings.preReminder} menit sebelum adzan` : 'Pengingat pra-adzan dimatikan', 'info');
+            }
+        });
+    }
+
+    if (missedToggle) {
+        missedToggle.addEventListener('change', () => {
+            const settings = getReminderSettings();
+            settings.missedReminder = missedToggle.checked;
+            saveReminderSettings(settings);
+        });
+    }
+
+    if (perPrayerBtn && perPrayerList && perPrayerChevron) {
+        perPrayerBtn.addEventListener('click', () => {
+            const isOpen = !perPrayerList.classList.contains('hidden');
+            perPrayerList.classList.toggle('hidden', isOpen);
+            perPrayerChevron.classList.toggle('rotate-180', !isOpen);
+        });
+    }
+
+    if (prayerCheckboxes.length) {
+        prayerCheckboxes.forEach(cb => {
+            cb.addEventListener('change', () => {
+                const prayer = cb.getAttribute('data-prayer-reminder');
+                const settings = getReminderSettings();
+                settings.perPrayer[prayer] = cb.checked;
+                saveReminderSettings(settings);
+            });
         });
     }
 }
@@ -537,6 +599,18 @@ function openEditProfile() {
     if (notifToggle) {
         notifToggle.checked = localStorage.getItem('jurnal_notifications') === 'true';
     }
+
+    // Sync reminder settings UI
+    const reminderSettings = getReminderSettings();
+    const preSelect = document.getElementById('preReminderSelect');
+    const missedToggle = document.getElementById('missedReminderToggle');
+    if (preSelect) preSelect.value = String(reminderSettings.preReminder);
+    if (missedToggle) missedToggle.checked = reminderSettings.missedReminder;
+    const prayerCheckboxes = document.querySelectorAll('[data-prayer-reminder]');
+    prayerCheckboxes.forEach(cb => {
+        const prayer = cb.getAttribute('data-prayer-reminder');
+        cb.checked = reminderSettings.perPrayer[prayer] !== false;
+    });
 
     if (modal) { 
         modal.classList.remove('invisible', 'pointer-events-none'); 

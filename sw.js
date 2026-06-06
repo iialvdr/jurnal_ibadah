@@ -1,5 +1,6 @@
-import { APP_VERSION } from './js/version.js';
+import { APP_VERSION } from './js/version.js?v=2.6.4';
 
+// SW Version trigger: 2.6.4
 const CACHE_NAME = `jurnal-ibadah-${APP_VERSION}`;
 const API_CACHE_NAME = `jurnal-ibadah-api-${APP_VERSION}`;
 
@@ -38,14 +39,10 @@ const urlsToCache = [
   './views/login.html',
   './views/home.html',
 
-  './img/logo.png',
   './img/favicon/android-chrome-192x192.png',
-  './img/favicon/android-chrome-512x512.png',
   './img/favicon/web-app-manifest-192x192.png',
-  './img/favicon/web-app-manifest-512x512.png',
   './img/favicon/favicon-32x32.png',
   './img/favicon/favicon-16x16.png',
-  './img/favicon/favicon.svg',
   './img/favicon/favicon.ico',
   './img/favicon/site.webmanifest'
 ];

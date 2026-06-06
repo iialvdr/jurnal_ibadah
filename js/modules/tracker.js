@@ -3,6 +3,7 @@ import { db } from '../config.js';
 import { collection, query, where, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getHijriDate } from '../utils/date-utils.js';
 import { getFastingInfo } from './fasting.js';
+import { updateStreak } from './streak.js';
 
 const PRAYER_CONFIG = [
     {
@@ -303,7 +304,14 @@ function togglePrayer(id, locked) {
     state.currentRecords[id] = newState;
 
     updateProgressBar();
-    saveToCloud();
+    saveToCloud().then(() => {
+        // Update streak after successful save (only for today's records)
+        const today = new Date();
+        const isToday = state.trackerDate.getDate() === today.getDate() &&
+            state.trackerDate.getMonth() === today.getMonth() &&
+            state.trackerDate.getFullYear() === today.getFullYear();
+        if (isToday) updateStreak();
+    }).catch(e => console.error('Save error:', e));
     
     const card = document.getElementById(`prayer-card-${id}`);
     const p = PRAYER_CONFIG.find(x => x.id === id);

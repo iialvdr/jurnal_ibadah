@@ -6,6 +6,8 @@ import { APP_VERSION } from '../version.js';
 import { getHijriDate } from '../utils/date-utils.js';
 import { getFastingInfo } from './fasting.js';
 import { syncPushSubscription } from './push.js';
+import { initStreak, calculateStreak, renderStreakWidget } from './streak.js';
+import { initReminder } from './reminder.js';
 
 const THEME_KEY = 'valdi_theme';
 const THEME_MODE_DARK = 'dark';
@@ -53,6 +55,8 @@ export function initHome() {
 
     initTheme();
     initNotificationPreference(); 
+    initStreak();
+    initReminder();
     loadCachedLocation();
     getLocation();
 
@@ -83,10 +87,17 @@ export function updateHomeUI() {
     if (state.currentUser) {
         loadHomeRecords();
         loadLastReadCard();
+        renderStreakWidget('homeStreakContainer');
+        // Calculate streak in background (non-blocking)
+        calculateStreak().then(() => {
+            renderStreakWidget('homeStreakContainer');
+        }).catch(e => console.warn('Streak calc error:', e));
     } else {
         renderTodayPrayers();
         const c = document.getElementById('homeLastReadContainer');
         if (c) c.classList.add('hidden');
+        const s = document.getElementById('homeStreakContainer');
+        if (s) s.classList.add('hidden');
     }
 
     const locText = document.getElementById('homeLocationText');
