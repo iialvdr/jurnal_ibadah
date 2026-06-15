@@ -613,8 +613,12 @@ function renderHistoryGrid(monthData) {
             if (fastingInfo.category === 'haram') color = 'bg-rose-500';
             else if (fastingInfo.type === 'Puasa Ramadhan') color = 'bg-amber-500';
             else if (fastingInfo.type === 'Puasa Syawal') color = 'bg-purple-500';
+            else if (fastingInfo.type === 'Puasa Dzulhijjah') color = 'bg-lime-500';
+            else if (fastingInfo.type === 'Puasa Tarwiyah') color = 'bg-teal-500';
             else if (fastingInfo.type === 'Puasa Arafah') color = 'bg-emerald-500';
+            else if (fastingInfo.type === 'Puasa Tasu\\'a') color = 'bg-blue-500';
             else if (fastingInfo.type === 'Puasa Asyura') color = 'bg-cyan-500';
+            else if (fastingInfo.type === 'Puasa Nisfu Sya\\'ban') color = 'bg-indigo-500';
             else if (fastingInfo.type === 'Puasa Ayyamul Bidh') color = 'bg-violet-500';
             badge = `<span title="${fastingInfo.type}" class="absolute -top-1 -right-1 w-2 h-2 rounded-full ${color}"></span>`;
         }

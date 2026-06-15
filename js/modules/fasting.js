@@ -8,7 +8,11 @@ const FASTING_MAP = {
     "Puasa Kamis": "kamis",
     "Puasa Syawal": "syawal",
     "Puasa Arafah": "arafah",
-    "Puasa Asyura": "asyura"
+    "Puasa Asyura": "asyura",
+    "Puasa Tarwiyah": "tarwiyah",
+    "Puasa Tasu'a": "tasua",
+    "Puasa Dzulhijjah": "dzulhijjah",
+    "Puasa Nisfu Sya'ban": "nisfu_syaban"
 };
 
 export function initFasting() {
@@ -148,8 +152,12 @@ export function getFastingInfo(date, hijri) {
 
     if (hMonth === 9) return { type: "Puasa Ramadhan", category: "wajib", niatKey: FASTING_MAP["Puasa Ramadhan"] };
     if (hMonth === 10 && hDay >= 2 && hDay <= 7) return { type: "Puasa Syawal", category: "sunnah", niatKey: FASTING_MAP["Puasa Syawal"] };
+    if (hMonth === 12 && hDay >= 1 && hDay <= 7) return { type: "Puasa Dzulhijjah", category: "sunnah", niatKey: FASTING_MAP["Puasa Dzulhijjah"] };
+    if (hMonth === 12 && hDay === 8) return { type: "Puasa Tarwiyah", category: "sunnah", niatKey: FASTING_MAP["Puasa Tarwiyah"] };
     if (hMonth === 12 && hDay === 9) return { type: "Puasa Arafah", category: "sunnah", niatKey: FASTING_MAP["Puasa Arafah"] };
+    if (hMonth === 1 && hDay === 9) return { type: "Puasa Tasu'a", category: "sunnah", niatKey: FASTING_MAP["Puasa Tasu'a"] };
     if (hMonth === 1 && hDay === 10) return { type: "Puasa Asyura", category: "sunnah", niatKey: FASTING_MAP["Puasa Asyura"] };
+    if (hMonth === 8 && hDay === 15) return { type: "Puasa Nisfu Sya'ban", category: "sunnah", niatKey: FASTING_MAP["Puasa Nisfu Sya'ban"] };
     if (hDay === 13 || hDay === 14 || hDay === 15) return { type: "Puasa Ayyamul Bidh", category: "sunnah", niatKey: FASTING_MAP["Puasa Ayyamul Bidh"] };
     if (day === 1) return { type: "Puasa Senin", category: "sunnah", niatKey: FASTING_MAP["Puasa Senin"] };
     if (day === 4) return { type: "Puasa Kamis", category: "sunnah", niatKey: FASTING_MAP["Puasa Kamis"] };
@@ -163,7 +171,11 @@ const NIAT_DATA = {
     'ramadhan': { judul: 'Puasa Ramadhan', arab: 'نَوَيْتُ صَوْمَ غَدٍ عَنْ أَدَاءِ فَرْضِ شَهْرِ رَمَضَانَ هَذِهِ السَّنَةِ لِلهِ تَعَالَى', latin: 'Nawaitu sauma ghadin \'an ada\'i fardhi syahri ramadhana hadzihis sanati lillahi ta\'ala.', arti: 'Saya niat puasa esok hari untuk menunaikan fardhu di bulan Ramadhan tahun ini, karena Allah Ta\'ala.' },
     'syawal': { judul: 'Puasa Syawal', arab: 'نَوَيْتُ صَوْمَ غَدٍ عَنْ أَدَاءِ سُنَّةِ الشَّوَّالِ لِلهِ تَعَالَى', latin: 'Nawaitu sauma ghadin \'an ada\'i sunnatis syawwali lillahi ta\'ala.', arti: 'Saya niat puasa sunnah Syawal esok hari karena Allah Ta\'ala.' },
     'arafah': { judul: 'Puasa Arafah', arab: 'نَوَيْتُ صَوْمَ غَدٍ عَنْ أَدَاءِ سُنَّةِ يَوْمِ عَرَفَةَ لِلهِ تَعَالَى', latin: 'Nawaitu sauma ghadin \'an ada\'i sunnati yaumi \'arafata lillahi ta\'ala.', arti: 'Saya niat puasa sunnah Arafah esok hari karena Allah Ta\'ala.' },
-    'asyura': { judul: 'Puasa Asyura', arab: 'نَوَيْتُ صَوْمَ غَدٍ عَنْ أَدَاءِ سُنَّةِ عَاشُورَاءَ لِلهِ تَعَالَى', latin: 'Nawaitu sauma ghadin \'an ada\'i sunnati \'asyura-a lillahi ta\'ala.', arti: 'Saya niat puasa sunnah Asyura esok hari karena Allah Ta\'ala.' }
+    'tarwiyah': { judul: 'Puasa Tarwiyah', arab: 'نَوَيْتُ صَوْمَ غَدٍ عَنْ أَدَاءِ سُنَّةِ يَوْمِ التَّرْوِيَةِ لِلهِ تَعَالَى', latin: 'Nawaitu sauma ghadin \'an ada\'i sunnati yaumit tarwiyati lillahi ta\'ala.', arti: 'Saya niat puasa sunnah Tarwiyah esok hari karena Allah Ta\'ala.' },
+    'asyura': { judul: 'Puasa Asyura', arab: 'نَوَيْتُ صَوْمَ غَدٍ عَنْ أَدَاءِ سُنَّةِ عَاشُورَاءَ لِلهِ تَعَالَى', latin: 'Nawaitu sauma ghadin \'an ada\'i sunnati \'asyura-a lillahi ta\'ala.', arti: 'Saya niat puasa sunnah Asyura esok hari karena Allah Ta\'ala.' },
+    'tasua': { judul: 'Puasa Tasu\'a', arab: 'نَوَيْتُ صَوْمَ غَدٍ عَنْ أَدَاءِ سُنَّةِ تَاسُوعَاءَ لِلهِ تَعَالَى', latin: 'Nawaitu sauma ghadin \'an ada\'i sunnati tasu\'a-a lillahi ta\'ala.', arti: 'Saya niat puasa sunnah Tasu\'a esok hari karena Allah Ta\'ala.' },
+    'dzulhijjah': { judul: 'Puasa Dzulhijjah', arab: 'نَوَيْتُ صَوْمَ شَهْرِ ذِيْ الْحِجَّةِ سُنَّةً لِلّٰهِ تَعَالَى', latin: 'Nawaitu shauma syahri dzil hijjah sunnatan lillahi ta\'ala.', arti: 'Saya niat puasa sunnah di bulan Dzulhijjah karena Allah Ta\'ala.' },
+    'nisfu_syaban': { judul: 'Puasa Nisfu Sya\'ban', arab: 'نَوَيْتُ صَوْمَ غَدٍ عَنْ أَدَاءِ سُنَّةِ نِصْفِ شَعْبَانَ لِلّٰهِ تَعَالَى', latin: 'Nawaitu shauma ghadin \'an ada\'i sunnati nishfi sya\'baana lillahi ta\'ala.', arti: 'Saya niat puasa sunnah Nisfu Sya\'ban esok hari karena Allah Ta\'ala.' }
 };
 
 function openNiatModal(types) {
