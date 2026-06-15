@@ -69,7 +69,16 @@ export function initAsmaulHusna() {
 
     window.addEventListener('viewExit', (e) => {
         if (e.detail.viewId === 'asmaulHusnaView') {
-            closeAsmaDetail();
+            closeAsmaDetail(true);
+        }
+    });
+
+    window.addEventListener('popstate', (e) => {
+        const modal = document.getElementById('asmaDetailModal');
+        if (modal && !modal.classList.contains('invisible')) {
+            if (!e.state || !e.state.asmaModalOpen) {
+                closeAsmaDetail(true);
+            }
         }
     });
 }
@@ -152,10 +161,13 @@ function openAsmaDetail(index) {
     if (nextBtn) nextBtn.disabled = (index === allAsma.length - 1);
 
     if (modal && content && backdrop) {
+        if (!history.state || !history.state.asmaModalOpen) {
+            history.pushState({ asmaModalOpen: true }, '', window.location.href);
+        }
         modal.classList.remove('invisible', 'pointer-events-none');
         requestAnimationFrame(() => {
             backdrop.classList.add('opacity-100');
-            content.classList.remove('translate-y-full');
+            content.classList.remove('translate-y-full', 'sm:translate-y-10', 'sm:scale-95', 'sm:opacity-0');
             content.classList.add('translate-y-0');
         });
     }
@@ -169,13 +181,16 @@ function changeAsma(direction) {
     }
 }
 
-function closeAsmaDetail() {
+function closeAsmaDetail(fromPopState = false) {
     const modal = document.getElementById('asmaDetailModal');
     const backdrop = document.getElementById('asmaBackdrop');
     const content = document.getElementById('asmaDetailContent');
     if (modal && content && backdrop) {
+        if (!fromPopState && history.state && history.state.asmaModalOpen) {
+            history.back();
+        }
         backdrop.classList.remove('opacity-100');
-        content.classList.add('translate-y-full');
+        content.classList.add('translate-y-full', 'sm:translate-y-10', 'sm:scale-95', 'sm:opacity-0');
         content.classList.remove('translate-y-0');
         setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 500);
     }

@@ -77,6 +77,15 @@ export function initQuran() {
         renderSurahList(allSurahs);
     }
 
+    window.addEventListener('popstate', (e) => {
+        const ayahContainer = document.getElementById('ayahListContainer');
+        if (ayahContainer && !ayahContainer.classList.contains('translate-x-full')) {
+            if (!e.state || !e.state.surahDetail) {
+                forceCloseSurahDetail();
+            }
+        }
+    });
+
     window.addEventListener('viewExit', (e) => {
         if (e.detail.viewId === 'quranView') {
             forceCloseSurahDetail();
@@ -266,6 +275,10 @@ async function openSurah(nomor, targetAyah = null, surahName = null) {
     if (prevBtn) prevBtn.style.display = (nomor === 1) ? 'none' : 'flex';
     if (nextBtn) nextBtn.style.display = (nomor === 114) ? 'none' : 'flex';
 
+    if (!history.state || !history.state.surahDetail) {
+        history.pushState({ surahDetail: true }, '', window.location.href);
+    }
+
     stopCurrentAudio(true);
     try {
         const response = await fetch(`https://equran.id/api/v2/surat/${nomor}`);
@@ -296,7 +309,11 @@ async function openSurah(nomor, targetAyah = null, surahName = null) {
 function handleQuranBack() {
     const ayahContainer = document.getElementById('ayahListContainer');
     if (ayahContainer && !ayahContainer.classList.contains('translate-x-full')) {
-        forceCloseSurahDetail();
+        if (history.state && history.state.surahDetail) {
+            history.back();
+        } else {
+            forceCloseSurahDetail();
+        }
     } else {
         if (window.goBack) window.goBack();
     }

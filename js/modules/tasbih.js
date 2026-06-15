@@ -21,6 +21,18 @@ export function initTasbih() {
     window.removeDhikr = removeDhikr;
     window.isTasbihVibroEnabled = isVibroEnabled;
 
+    window.addEventListener('viewExit', (e) => {
+        if (e.detail.viewId === 'tasbihView') closeDhikrMenu(true);
+    });
+    window.addEventListener('popstate', (e) => {
+        const modal = document.getElementById('dhikrMenuModal');
+        if (modal && !modal.classList.contains('invisible')) {
+            if (!e.state || !e.state.dhikrModalOpen) {
+                closeDhikrMenu(true);
+            }
+        }
+    });
+
     updateDisplay();
     renderDhikrList();
 }
@@ -94,18 +106,24 @@ function openDhikrMenu() {
     if (isVibroEnabled && typeof vibrateSoft === 'function') vibrateSoft();
     const modal = document.getElementById('dhikrMenuModal');
     if (!modal) return;
+    if (!history.state || !history.state.dhikrModalOpen) {
+        history.pushState({ dhikrModalOpen: true }, '', window.location.href);
+    }
     modal.classList.remove('invisible', 'pointer-events-none');
     requestAnimationFrame(() => {
         document.getElementById('dhikrMenuBackdrop').classList.add('opacity-100');
-        document.getElementById('dhikrModalContent').classList.remove('translate-y-full');
+        document.getElementById('dhikrModalContent').classList.remove('translate-y-full', 'sm:translate-y-10', 'sm:scale-95', 'sm:opacity-0');
     });
 }
 
-function closeDhikrMenu() {
+function closeDhikrMenu(fromPopState = false) {
     const modal = document.getElementById('dhikrMenuModal');
     if (!modal) return;
+    if (!fromPopState && history.state && history.state.dhikrModalOpen) {
+        history.back();
+    }
     document.getElementById('dhikrMenuBackdrop').classList.remove('opacity-100');
-    document.getElementById('dhikrModalContent').classList.add('translate-y-full');
+    document.getElementById('dhikrModalContent').classList.add('translate-y-full', 'sm:translate-y-10', 'sm:scale-95', 'sm:opacity-0');
     setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 500);
 }
 

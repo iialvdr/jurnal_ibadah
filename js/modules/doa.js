@@ -55,8 +55,17 @@ export function initDoa() {
 
     window.addEventListener('viewExit', (e) => {
         if (e.detail.viewId === 'doaView') {
-            closeDoaDetail();
+            closeDoaDetail(true);
             closeAllDropdowns();
+        }
+    });
+
+    window.addEventListener('popstate', (e) => {
+        const modal = document.getElementById('doaDetailModal');
+        if (modal && !modal.classList.contains('invisible')) {
+            if (!e.state || !e.state.doaModalOpen) {
+                closeDoaDetail(true);
+            }
         }
     });
 
@@ -265,10 +274,13 @@ async function openDoaDetail(id, title) {
     if (titleEl) titleEl.innerText = title;
 
     if (modal && content && backdrop) {
+        if (!history.state || !history.state.doaModalOpen) {
+            history.pushState({ doaModalOpen: true }, '', window.location.href);
+        }
         modal.classList.remove('invisible', 'pointer-events-none');
         requestAnimationFrame(() => {
             backdrop.classList.add('opacity-100');
-            content.classList.remove('translate-y-full');
+            content.classList.remove('translate-y-full', 'sm:translate-y-10', 'sm:scale-95', 'sm:opacity-0');
             content.classList.add('translate-y-0');
         });
     }
@@ -303,13 +315,16 @@ function updateDetailContent(data) {
     }
 }
 
-function closeDoaDetail() {
+function closeDoaDetail(fromPopState = false) {
     const modal = document.getElementById('doaDetailModal');
     const backdrop = document.getElementById('doaBackdrop');
     const content = document.getElementById('doaDetailContent');
     if (modal && content && backdrop) {
+        if (!fromPopState && history.state && history.state.doaModalOpen) {
+            history.back();
+        }
         backdrop.classList.remove('opacity-100');
-        content.classList.add('translate-y-full');
+        content.classList.add('translate-y-full', 'sm:translate-y-10', 'sm:scale-95', 'sm:opacity-0');
         content.classList.remove('translate-y-0');
         setTimeout(() => { if (modal) modal.classList.add('invisible', 'pointer-events-none'); }, 500);
     }

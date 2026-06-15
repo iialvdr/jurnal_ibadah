@@ -33,9 +33,24 @@ export function initProfile() {
 
     window.addEventListener('viewExit', (e) => {
         if (e.detail.viewId === 'profileView') {
-            closeEditProfile();
-            toggleLogoutModal(false);
+            closeEditProfile(true);
+            toggleLogoutModal(false, true);
             resetPasswordChangeArea();
+        }
+    });
+
+    window.addEventListener('popstate', (e) => {
+        const editModal = document.getElementById('editProfileModal');
+        if (editModal && !editModal.classList.contains('invisible')) {
+            if (!e.state || !e.state.editProfileModalOpen) {
+                closeEditProfile(true);
+            }
+        }
+        const logoutModal = document.getElementById('logoutModal');
+        if (logoutModal && !logoutModal.classList.contains('invisible')) {
+            if (!e.state || !e.state.logoutModalOpen) {
+                toggleLogoutModal(false, true);
+            }
         }
     });
 }
@@ -613,6 +628,9 @@ function openEditProfile() {
     });
 
     if (modal) { 
+        if (!history.state || !history.state.editProfileModalOpen) {
+            history.pushState({ editProfileModalOpen: true }, '', window.location.href);
+        }
         modal.classList.remove('invisible', 'pointer-events-none'); 
         document.getElementById('editProfileBackdrop').classList.add('opacity-100');
         requestAnimationFrame(() => {
@@ -621,5 +639,5 @@ function openEditProfile() {
     } 
 }
 
-function closeEditProfile() { const modal = document.getElementById('editProfileModal'); const content = document.getElementById('editProfileContent'); if (modal) { document.getElementById('editProfileBackdrop').classList.remove('opacity-100'); content?.classList.add('translate-y-full', 'sm:translate-y-4', 'sm:scale-95', 'sm:opacity-0'); setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 300); } }
-function toggleLogoutModal(show) { const modal = document.getElementById('logoutModal'); const content = document.getElementById('logoutModalContent'); if (!modal) return; if (show) { modal.classList.remove('invisible', 'pointer-events-none'); document.getElementById('logoutBackdrop').classList.add('opacity-100'); content.classList.remove('scale-90', 'opacity-0'); } else { document.getElementById('logoutBackdrop').classList.remove('opacity-100'); content.classList.add('scale-90', 'opacity-0'); setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 300); } }
+function closeEditProfile(fromPopState = false) { const modal = document.getElementById('editProfileModal'); const content = document.getElementById('editProfileContent'); if (modal) { if (!fromPopState && history.state && history.state.editProfileModalOpen) { history.back(); } document.getElementById('editProfileBackdrop').classList.remove('opacity-100'); content?.classList.add('translate-y-full', 'sm:translate-y-4', 'sm:scale-95', 'sm:opacity-0'); setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 300); } }
+function toggleLogoutModal(show, fromPopState = false) { const modal = document.getElementById('logoutModal'); const content = document.getElementById('logoutModalContent'); if (!modal) return; if (show) { if (!history.state || !history.state.logoutModalOpen) { history.pushState({ logoutModalOpen: true }, '', window.location.href); } modal.classList.remove('invisible', 'pointer-events-none'); document.getElementById('logoutBackdrop').classList.add('opacity-100'); content.classList.remove('scale-90', 'opacity-0'); } else { if (!fromPopState && history.state && history.state.logoutModalOpen) { history.back(); } document.getElementById('logoutBackdrop').classList.remove('opacity-100'); content.classList.add('scale-90', 'opacity-0'); setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 300); } }

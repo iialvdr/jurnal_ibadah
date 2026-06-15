@@ -219,7 +219,6 @@ export function initAuth() {
                 }
             } catch (error) {
                 handleAuthError(error);
-            } finally {
                 showLoading(false);
             }
         });
@@ -240,7 +239,6 @@ export function initAuth() {
                 await createUserWithEmailAndPassword(auth, email, password);
             } catch (error) {
                 handleAuthError(error);
-            } finally {
                 showLoading(false);
             }
         });
@@ -262,7 +260,6 @@ export function initAuth() {
                 } else {
                     handleAuthError(error);
                 }
-            } finally {
                 showLoading(false);
             }
         });

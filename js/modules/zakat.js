@@ -11,7 +11,16 @@ export function initZakat() {
     window.addEventListener('viewExit', (e) => {
         if (e.detail.viewId === 'zakatView') {
             switchZakatTab('maal');
-            closeZakatResult();
+            closeZakatResult(true);
+        }
+    });
+
+    window.addEventListener('popstate', (e) => {
+        const modal = document.getElementById('zakatResultModal');
+        if (modal && !modal.classList.contains('invisible')) {
+            if (!e.state || !e.state.zakatModalOpen) {
+                closeZakatResult(true);
+            }
         }
     });
 }
@@ -57,22 +66,28 @@ function showZakatResult(title, amount, details) {
     amountEl.innerText = amount.replace('Rp ', '');
 
     const modal = document.getElementById('zakatResultModal');
+    if (!history.state || !history.state.zakatModalOpen) {
+        history.pushState({ zakatModalOpen: true }, '', window.location.href);
+    }
     modal.classList.remove('invisible', 'pointer-events-none');
 
     requestAnimationFrame(() => {
         document.getElementById('zakatResultBackdrop').classList.add('opacity-100');
-        document.getElementById('zakatResultContent').classList.remove('translate-y-full');
+        document.getElementById('zakatResultContent').classList.remove('translate-y-full', 'sm:translate-y-10', 'sm:scale-95', 'sm:opacity-0');
     });
 
     if (window.lucide) lucide.createIcons({ root: modal });
     if (typeof window.showAppToast === 'function') window.showAppToast("Perhitungan selesai", "success");
 }
 
-function closeZakatResult() {
+function closeZakatResult(fromPopState = false) {
     const modal = document.getElementById('zakatResultModal');
     if (!modal) return;
+    if (!fromPopState && history.state && history.state.zakatModalOpen) {
+        history.back();
+    }
     document.getElementById('zakatResultBackdrop').classList.remove('opacity-100');
-    document.getElementById('zakatResultContent').classList.add('translate-y-full');
+    document.getElementById('zakatResultContent').classList.add('translate-y-full', 'sm:translate-y-10', 'sm:scale-95', 'sm:opacity-0');
     setTimeout(() => modal.classList.add('invisible', 'pointer-events-none'), 500);
 }
 
