@@ -13,7 +13,11 @@
     </div>
 
     <div class="flex-1 relative z-10">
-        <div id="doaSearchContainer" class="sticky top-[85px] z-40 px-5 pt-2 pb-4 space-y-4 md:px-8 md:max-w-7xl md:mx-auto md:w-full transition-transform duration-500 ease-in-out will-change-transform">
+        <div class="px-5 pt-2 md:px-8 md:max-w-7xl md:mx-auto md:w-full">
+            <p class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Cari berdasarkan judul doa, lalu gunakan filter bila perlu.</p>
+        </div>
+        
+        <div id="doaSearchContainer" class="sticky top-[85px] z-40 px-5 pt-3 pb-4 space-y-4 md:px-8 md:max-w-7xl md:mx-auto md:w-full transition-transform duration-500 ease-in-out will-change-transform">
             
             <div id="doaSearchWrapper" class="relative group" style="will-change: transform;">
                 <div class="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-[1.8rem] border border-white dark:border-slate-800 flex items-center px-5 py-4 transition-all duration-300 group-focus-within:ring-4 group-focus-within:ring-emerald-500/10 shadow-sm">
@@ -21,7 +25,6 @@
                     <input type="text" id="doaSearchInput" onkeyup="searchDoa(this.value)" placeholder="Cari doa sehari-hari..." class="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 ml-4 outline-none">
                 </div>
             </div>
-            <p class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Cari berdasarkan judul doa, lalu gunakan filter bila perlu.</p>
 
             <div class="grid grid-cols-2 gap-3 relative z-30">
                 <div class="relative" id="filterGrupWrapper">
