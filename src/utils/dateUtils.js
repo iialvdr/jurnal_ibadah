@@ -1,5 +1,5 @@
 // src/utils/dateUtils.js
-export function getHijriDate(date = new Date(), adjustment = -1) {
+export function getHijriDate(date = new Date(), adjustment = 0) {
     let d = new Date(date);
     d.setDate(d.getDate() + adjustment);
 
@@ -53,6 +53,46 @@ export function getHijriDate(date = new Date(), adjustment = -1) {
         year: iy,
         full: `${id} ${iMonthNames[im - 1]} ${iy} H`
     };
+}
+
+/**
+ * Fetch Hijri date from API Muslim v3.
+ * Endpoint: GET /cal/hijr/{YYYY-MM-DD}  → konversi CE ke Hijriah
+ * Response: data.hijr.today = "Rabu, 9 Muharam 1448 H"
+ * Caches per date in localStorage. Falls back to local getHijriDate() on failure.
+ * Returns the same shape as getHijriDate(): { day, month, monthName, year, full }
+ */
+export async function fetchHijriDateAPI(date = new Date()) {
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+    const dateStr = localDate.toISOString().split('T')[0]; // YYYY-MM-DD
+    const cacheKey = `hijri_api3_${dateStr}`;
+
+    // Check cache
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+        try { return JSON.parse(cached); } catch { /* ignore */ }
+    }
+
+    try {
+        const res = await fetch(`https://api.myquran.com/v3/cal/hijr/${dateStr}`);
+        const json = await res.json();
+        if (json.status && json.data?.hijr) {
+            const h = json.data.hijr;
+            const result = {
+                day: h.day,
+                month: h.month,
+                monthName: h.monthName,
+                year: h.year,
+                full: `${h.day} ${h.monthName} ${h.year} H`
+            };
+            localStorage.setItem(cacheKey, JSON.stringify(result));
+            return result;
+        }
+    } catch { /* fallback below */ }
+
+    // Fallback to local calculation
+    return getHijriDate(date);
 }
 
 export function formatDateKey(date) {

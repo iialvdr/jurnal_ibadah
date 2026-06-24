@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/store/AppContext';
 import { ArrowLeft, Search, X, UtensilsCrossed, ChevronRight, Layers, ShieldCheck, Repeat, CalendarHeart, Bookmark, SearchX } from 'lucide-react';
 import { getFastingInfo, getUpcomingFasting, NIAT_DATA, NIAT_CATALOG, COLOR_MAP, CATEGORY_LABELS } from '@/modules/fasting';
-import { getHijriDate } from '@/utils/dateUtils';
+import { getHijriDate, fetchHijriDateAPI } from '@/utils/dateUtils';
 
 function NiatModal({ niatKey, onClose }) {
     const [activeKey, setActiveKey] = useState(niatKey || 'senin'); 
@@ -20,6 +20,13 @@ function NiatModal({ niatKey, onClose }) {
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => setIsAnimating(true));
             });
+        } else if (shouldRender) {
+            // Parent set niatKey to null (e.g. from back button)
+            setIsAnimating(false);
+            const timer = setTimeout(() => {
+                setShouldRender(false);
+            }, 450);
+            return () => clearTimeout(timer);
         }
     }, [niatKey]);
 
@@ -123,7 +130,33 @@ export default function Fasting() {
         setTodayInfo(getFastingInfo(displayDate, hijri));
         setIsBesok(besok);
         setUpcomingList(getUpcomingFasting(30));
+        // Upgrade hijri display with API data
+        fetchHijriDateAPI(displayDate).then(h => setHijriToday(h)).catch(() => {});
     }, [prayerTimes]);
+
+    // Handle back button for Niat Modal
+    useEffect(() => {
+        let isPopped = false;
+        
+        const handlePopState = () => {
+            isPopped = true;
+            setSelectedNiatKey(null);
+        };
+
+        if (selectedNiatKey) {
+            window.history.pushState({ modal: 'niatModal' }, '');
+            window.addEventListener('popstate', handlePopState);
+        }
+
+        return () => {
+            if (selectedNiatKey) {
+                window.removeEventListener('popstate', handlePopState);
+                if (!isPopped) {
+                    window.history.back();
+                }
+            }
+        };
+    }, [selectedNiatKey]);
 
     const allNiatKeys = Object.keys(NIAT_DATA);
     const filteredNiat = allNiatKeys.filter(key => {
@@ -146,7 +179,7 @@ export default function Fasting() {
             {/* Sticky Header */}
             <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
                 <div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
-                    <button onClick={() => navigate('/')} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
+                    <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
                     <h2 className="text-sm font-black text-slate-800 dark:text-white tracking-tight text-center flex-1">Kalender Puasa</h2>

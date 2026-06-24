@@ -46,6 +46,7 @@ export default function Qibla() {
     const [error, setError] = useState(null);
     const [location, setLocation] = useState(null);
     const [permissionState, setPermissionState] = useState('checking'); // checking | idle | requesting | granted | denied
+    const [apiVerified, setApiVerified] = useState(false);
 
     const rawHeadingRef = useRef(null);
     const smoothHeadingRef = useRef(null);
@@ -158,15 +159,26 @@ export default function Qibla() {
     };
 
     useEffect(() => {
-        // Ambil lokasi
+        // Ambil lokasi via GPS
         navigator.geolocation?.getCurrentPosition(
-            (pos) => {
+            async (pos) => {
                 const { latitude, longitude } = pos.coords;
                 setLocation({ lat: latitude, lng: longitude });
-                const angle = calcQiblaAngle(latitude, longitude);
-                setQiblaAngle(angle);
-                qiblaAngleRef.current = angle;
+                // Hitung lokal dulu
+                const localAngle = calcQiblaAngle(latitude, longitude);
+                setQiblaAngle(localAngle);
+                qiblaAngleRef.current = localAngle;
                 setDistance(calcDistance(latitude, longitude));
+                // Verifikasi via API
+                try {
+                    const res = await fetch(`https://api.myquran.com/v3/qibla/${latitude}/${longitude}`);
+                    const json = await res.json();
+                    if (json.status && json.data?.direction) {
+                        setQiblaAngle(json.data.direction);
+                        qiblaAngleRef.current = json.data.direction;
+                        setApiVerified(true);
+                    }
+                } catch { /* tetap pakai lokal */ }
             },
             () => setError('Tidak bisa mendapatkan lokasi. Aktifkan GPS.')
         );
@@ -226,7 +238,7 @@ export default function Qibla() {
             {/* Header */}
             <div className="sticky top-0 z-[100] px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
                 <div className="flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
-                    <button onClick={() => { if (navigator.vibrate) navigator.vibrate(10); navigate('/'); }}
+                    <button onClick={() => { if (navigator.vibrate) navigator.vibrate(10); navigate(-1); }}
                         className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
@@ -326,6 +338,9 @@ export default function Qibla() {
                             <div className="flex items-center gap-1.5 mt-3 justify-center md:justify-start">
                                 <MapPin className="w-3 h-3 text-teal-500" />
                                 <span className="text-[10px] font-bold text-slate-400">{location.lat.toFixed(4)}, {location.lng.toFixed(4)}</span>
+                                {apiVerified && (
+                                    <span className="text-[8px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">API ✓</span>
+                                )}
                             </div>
                         )}
                     </div>

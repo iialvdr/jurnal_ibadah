@@ -5,7 +5,7 @@ import { useApp } from '@/store/AppContext';
 import { db } from '@/config/firebase';
 import * as adhan from 'adhan';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
-import { getHijriDate } from '@/utils/dateUtils';
+import { getHijriDate, fetchHijriDateAPI } from '@/utils/dateUtils';
 import { APP_VERSION } from '@/utils/version';
 import { syncPushSubscription } from '@/modules/push';
 import { calculateStreak, getStreakData, getEarnedBadges, getNextBadge } from '@/modules/streak';
@@ -93,23 +93,174 @@ function usePrayerTimes(currentDate) {
     const [nextPrayer, setNextPrayer] = useState({ name: '...', time: '--:--' });
     const [countdown, setCountdown] = useState('--:--:--');
 
-    const fetchJadwal = useCallback((lat, lng) => {
-        if (typeof adhan === 'undefined') return;
-        const coordinates = new adhan.Coordinates(lat, lng);
-        const params = adhan.CalculationMethod.Singapore();
-        const times = new adhan.PrayerTimes(coordinates, currentDate, params);
-        const fmt = t => t.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
-        const dhuhaTime = new Date(times.sunrise.getTime() + (20 * 60000));
-        setPrayerTimes({
-            Subuh: fmt(times.fajr),
-            Dhuha: fmt(dhuhaTime),
-            Dzuhur: fmt(times.dhuhr),
-            Ashar: fmt(times.asr),
-            Maghrib: fmt(times.maghrib),
-            Isya: fmt(times.isha),
-            Tahajud: '03:00'
-        });
-    }, [currentDate, setPrayerTimes]);
+    // Fetch jadwal sholat via API Muslim (Kemenag)
+    // Flow: koordinat → cari kota via geocode → cari ID kota Kemenag → ambil jadwal hari ini
+    const fetchJadwal = useCallback(async (lat, lng) => {
+        // Helper: fallback ke adhan.js lokal
+        const fallbackAdhan = (fallbackCityName) => {
+            if (typeof adhan === 'undefined') return;
+            const coordinates = new adhan.Coordinates(lat, lng);
+            const params = adhan.CalculationMethod.Singapore();
+            const times = new adhan.PrayerTimes(coordinates, currentDate, params);
+            const fmt = t => t.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+            const dhuhaTime = new Date(times.sunrise.getTime() + (20 * 60000));
+            setPrayerTimes({
+                Subuh: fmt(times.fajr), Dhuha: fmt(dhuhaTime),
+                Dzuhur: fmt(times.dhuhr), Ashar: fmt(times.asr),
+                Maghrib: fmt(times.maghrib), Isya: fmt(times.isha), Tahajud: '03:00'
+            });
+            if (fallbackCityName) {
+                const formattedCity = fallbackCityName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+                setLastCity(formattedCity);
+                localStorage.setItem('last_city_name', formattedCity);
+            }
+        };
+        let tempCityName = null;
+        let kotaId = null;
+        let kotaName = null;
+
+        let geoJson = null;
+
+        try {
+            // Cek cache ID kota (valid 7 hari)
+            const cachedKota = localStorage.getItem('kemenag_kota_cache');
+            if (cachedKota) {
+                const parsed = JSON.parse(cachedKota);
+                if (parsed.ts && Date.now() - parsed.ts < 7 * 24 * 3600 * 1000) {
+                    kotaId = parsed.id;
+                    kotaName = parsed.displayName || parsed.name;
+                    if (!window.hasLoggedCache) {
+                        console.log(`⚡ [Jadwal Sholat] Memuat dari Cache: "${kotaName}" (Data Kemenag: ${parsed.name})`);
+                        window.hasLoggedCache = true;
+                    }
+                }
+            }
+
+            if (!kotaId) {
+                try {
+                    // Step 1: Geocode koordinat via BigDataCloud API
+                    const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=id`);
+                    geoJson = await geoRes.json();
+                    
+                    const candidates = [];
+                    const addCand = (c) => {
+                        if (!c) return;
+                        if (!candidates.includes(c)) candidates.push(c);
+                        const clean = c.replace(/pusat|selatan|barat|timur|utara|kabupaten|kota/gi, '').trim();
+                        if (clean && !candidates.includes(clean)) candidates.push(clean);
+                    };
+                    
+                    addCand(geoJson.locality);
+                    addCand(geoJson.city);
+                    
+                    if (geoJson.localityInfo?.administrative) {
+                        const admins = [...geoJson.localityInfo.administrative].sort((a, b) => (b.adminLevel || 0) - (a.adminLevel || 0));
+                        admins.forEach(adm => addCand(adm.name));
+                    }
+                    
+                    addCand(geoJson.principalSubdivision);
+
+                    // Ambil master data kota untuk menghindari 404 dari API (dan lebih cepat)
+                    let allCities = [];
+                    const cachedAll = localStorage.getItem('kemenag_all_cities');
+                    if (cachedAll) {
+                        try { allCities = JSON.parse(cachedAll); } catch(e){}
+                    }
+                    if (!allCities.length) {
+                        try {
+                            const resAll = await fetch('https://api.myquran.com/v3/sholat/kabkota/semua');
+                            const jsonAll = await resAll.json();
+                            if (jsonAll.status && jsonAll.data) {
+                                allCities = jsonAll.data;
+                                localStorage.setItem('kemenag_all_cities', JSON.stringify(allCities));
+                            }
+                        } catch(e) {}
+                    }
+
+                    // Step 2: Cari ID kota di data master dengan cascade
+                    for (const cand of candidates) {
+                        const matches = allCities.filter(c => c.lokasi.toLowerCase().includes(cand.toLowerCase()));
+                        if (matches.length > 0) {
+                            let selected = matches[0];
+                            
+                            // Jika ada Kota vs Kabupaten dengan nama yang sama (misal Bogor)
+                            if (matches.length > 1) {
+                                const rawNames = [geoJson.locality, geoJson.city];
+                                if (geoJson.localityInfo?.administrative) {
+                                    geoJson.localityInfo.administrative.forEach(a => {
+                                        if (a.name) rawNames.push(a.name);
+                                        if (a.description) rawNames.push(a.description);
+                                    });
+                                }
+                                const rawString = rawNames.filter(Boolean).join(' ').toLowerCase();
+                                
+                                const isKabupaten = rawString.includes('kabupaten') || rawString.includes('kab.');
+                                const isKota = rawString.includes('kota') || rawString.includes('city');
+                                
+                                let wantKota = false;
+                                if (isKota && !isKabupaten) {
+                                    wantKota = true;
+                                } else if (isKota && isKabupaten) {
+                                    wantKota = rawString.includes(`kota ${cand.toLowerCase()}`) || rawString.includes(`${cand.toLowerCase()} city`);
+                                }
+                                
+                                const exactMatch = matches.find(d => d.lokasi.toLowerCase().includes(wantKota ? 'kota' : 'kab.'));
+                                
+                                if (exactMatch) selected = exactMatch;
+                            }
+
+                            kotaId = selected.id;
+                            kotaName = selected.lokasi;
+                            
+                            const displayName = geoJson?.locality || geoJson?.city || cand;
+                            localStorage.setItem('kemenag_kota_cache', JSON.stringify({ 
+                                id: kotaId, 
+                                name: kotaName,
+                                displayName: displayName,
+                                ts: Date.now() 
+                            }));
+                            
+                            tempCityName = cand;
+                            if (!window.hasLoggedFresh) {
+                                console.log(`✅ [Jadwal Sholat] Wilayah Asli: "${displayName}" -> Cocok dengan API Kemenag: "${kotaName}"`);
+                                window.hasLoggedFresh = true;
+                            }
+                            break;
+                        }
+                    }
+                    
+                    if (!tempCityName) tempCityName = geoJson?.locality || geoJson?.city || geoJson?.principalSubdivision || 'Jakarta';
+                } catch (e) { }
+            }
+
+            if (!kotaId) { fallbackAdhan(tempCityName || kotaName || 'Lokasi Anda'); return; }
+
+            try {
+                const jadwalRes = await fetch(`https://api.myquran.com/v3/sholat/jadwal/${kotaId}/today`);
+                const jadwalJson = await jadwalRes.json();
+                if (jadwalJson.status && jadwalJson.data?.jadwal) {
+                    const j = Object.values(jadwalJson.data.jadwal)[0];
+                    if (j) {
+                        setPrayerTimes({
+                            Subuh: j.subuh, Dhuha: j.dhuha,
+                            Dzuhur: j.dzuhur, Ashar: j.ashar,
+                            Maghrib: j.maghrib, Isya: j.isya, Tahajud: '03:00'
+                        });
+                        const nameToDisplay = geoJson?.locality || geoJson?.city || kotaName || tempCityName;
+                        if (nameToDisplay) {
+                            const formattedCity = nameToDisplay.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+                            setLastCity(formattedCity);
+                            localStorage.setItem('last_city_name', formattedCity);
+                        }
+                        return;
+                    }
+                }
+                fallbackAdhan(geoJson?.locality || geoJson?.city || tempCityName || kotaName || 'Lokasi Anda');
+            } catch (e) {
+                fallbackAdhan(geoJson?.locality || geoJson?.city || tempCityName || kotaName || 'Lokasi Anda');
+            }
+        } catch (e) { fallbackAdhan(tempCityName || kotaName || 'Lokasi Anda'); }
+    }, [currentDate, setPrayerTimes, setLastCity]);
 
     const updateNextPrayer = useCallback(() => {
         const now = new Date();
@@ -152,23 +303,31 @@ function usePrayerTimes(currentDate) {
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 const { latitude, longitude } = pos.coords;
+                const prevLat = parseFloat(localStorage.getItem('last_lat'));
+                const prevLng = parseFloat(localStorage.getItem('last_lng'));
+                
+                if (prevLat && prevLng) {
+                    const diffLat = Math.abs(prevLat - latitude);
+                    const diffLng = Math.abs(prevLng - longitude);
+                    // Jika pindah lebih dari ~5km (0.05 derajat)
+                    if (diffLat > 0.05 || diffLng > 0.05) {
+                        localStorage.removeItem('kemenag_kota_cache');
+                    }
+                }
+                
                 window.lastLat = latitude;
                 window.lastLng = longitude;
                 localStorage.setItem('last_lat', latitude);
                 localStorage.setItem('last_lng', longitude);
+                
+                // Hapus cache kota jika tombol ditekan manual
+                if (manual) localStorage.removeItem('kemenag_kota_cache');
+                
                 fetchJadwal(latitude, longitude);
-                fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=id`)
-                    .then(r => r.json())
-                    .then(d => {
-                        const city = d.locality || d.city || 'Lokasi Anda';
-                        setLastCity(city);
-                        localStorage.setItem('last_city_name', city);
-                    }).catch(() => {});
             },
             () => { if (!lastCity) setLastCity('Lokasi Belum Diatur'); }
         );
     }, [fetchJadwal, setLastCity, lastCity]);
-
     // Load cached location on mount
     useEffect(() => {
         const cachedCity = localStorage.getItem('last_city_name');
@@ -270,8 +429,8 @@ function HadithWidget({ navigate }) {
 
     useEffect(() => {
         const today = new Date().toISOString().split('T')[0];
-        const cached = localStorage.getItem('daily_hadith_v3');
-        const cachedDate = localStorage.getItem('daily_had_date');
+        const cached = localStorage.getItem('daily_hadith_enc');
+        const cachedDate = localStorage.getItem('daily_had_enc_date');
 
         if (cached && cachedDate === today) {
             setHadith(JSON.parse(cached));
@@ -279,33 +438,27 @@ function HadithWidget({ navigate }) {
             return;
         }
 
-        const narrators = ['bukhari', 'muslim', 'abu-daud', 'tirmidzi', 'nasai', 'ibnu-majah', 'ahmad', 'darimi', 'malik'];
-        const randomNarrator = narrators[Math.floor(Math.random() * narrators.length)];
-        const randomNum = Math.floor(Math.random() * 20) + 1;
-
-        fetch(`https://api.hadith.gading.dev/books/${randomNarrator}/${randomNum}`)
+        fetch('https://api.myquran.com/v3/hadis/enc/random')
             .then(r => r.json())
             .then(result => {
-                if (result.code === 200 && result.data?.contents) {
+                if (result.status && result.data) {
+                    const d = result.data;
                     const data = {
-                        name: result.data.name,
-                        number: result.data.contents.number,
-                        arab: result.data.contents.arab,
-                        text: result.data.contents.id
+                        id: d.id,
+                        arab: d.text?.ar || '',
+                        text: d.text?.id || '',
+                        grade: d.grade || null,
+                        takhrij: d.takhrij || null,
+                        hikmah: d.hikmah || null
                     };
-                    localStorage.setItem('daily_hadith_v3', JSON.stringify(data));
-                    localStorage.setItem('daily_had_date', today);
+                    localStorage.setItem('daily_hadith_enc', JSON.stringify(data));
+                    localStorage.setItem('daily_had_enc_date', today);
                     setHadith(data);
                 }
             })
             .catch(() => setHadith(null))
             .finally(() => setLoading(false));
     }, []);
-
-    const formatText = (text) => {
-        if (!text) return '';
-        return text.replace(/\[([^\]]+)\]/g, '<b class="text-emerald-700 dark:text-emerald-400 font-bold">$1</b>');
-    };
 
     if (loading) {
         return (
@@ -332,7 +485,7 @@ function HadithWidget({ navigate }) {
                     </div>
                     <div>
                         <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em]">Hadits Hari Ini</span>
-                        <p className="text-[9px] font-bold text-slate-400 leading-none mt-0.5">{hadith.name} • No. {hadith.number}</p>
+                        <p className="text-[9px] font-bold text-slate-400 leading-none mt-0.5">Ensiklopedia Hadis{hadith.grade ? ` • ${hadith.grade}` : ''}</p>
                     </div>
                 </div>
 
@@ -344,8 +497,12 @@ function HadithWidget({ navigate }) {
 
                 <div className="relative">
                     <p className={`text-[13px] md:text-sm font-medium text-slate-700 dark:text-slate-200 leading-relaxed transition-all duration-500 ${isLong && !expanded ? 'line-clamp-3' : ''}`}
-                        dangerouslySetInnerHTML={{ __html: `"${formatText(hadith.text)}"` }} />
+                        dangerouslySetInnerHTML={{ __html: `"${hadith.text}"` }} />
                 </div>
+
+                {expanded && hadith.takhrij && (
+                    <p className="mt-3 text-[11px] font-bold text-emerald-600/70 dark:text-emerald-400/70 italic">{hadith.takhrij}</p>
+                )}
 
                 {isLong && (
                     <button onClick={() => setExpanded(v => !v)}
@@ -431,7 +588,7 @@ export default function Home() {
 
     // Update hijri date when prayer times change
     useEffect(() => {
-        setHijriDate(getHijriDate(currentDate).full);
+        fetchHijriDateAPI(currentDate).then(h => setHijriDate(h.full)).catch(() => setHijriDate(getHijriDate(currentDate).full));
     }, [currentDate, prayerTimes]);
 
     // Load today's records

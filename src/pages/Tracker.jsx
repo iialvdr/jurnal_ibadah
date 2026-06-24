@@ -10,7 +10,7 @@ import {
     BookOpen, Heart, Sparkles, Zap, PenTool, CloudCheck, CalendarCheck, ChevronDown, CheckCircle2, Clock3
 } from 'lucide-react';
 import { updateStreak } from '@/modules/streak';
-import { getHijriDate } from '@/utils/dateUtils';
+import { getHijriDate, fetchHijriDateAPI } from '@/utils/dateUtils';
 import { getFastingInfo } from '@/modules/fasting';
 
 const PRAYER_CONFIG = [
@@ -73,8 +73,11 @@ export default function Tracker() {
     const loadRecords = useCallback((date) => {
         if (!currentUser) return;
         const key = formatDateKey(date);
+        // Use local hijri for fasting logic, async API for display
         const hijri = getHijriDate(date);
         setHijriDisplay(`${hijri.day} ${hijri.monthName} ${hijri.year} H`);
+        // Upgrade display with API data if available
+        fetchHijriDateAPI(date).then(h => setHijriDisplay(h.full)).catch(() => {});
 
         if (unsubRef.current) unsubRef.current();
         setLoading(true);
@@ -268,7 +271,7 @@ export default function Tracker() {
 
             <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
                 <div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
-                    <button onClick={() => navigate('/')} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
+                    <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
                     <h2 className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2">Jurnal Harian</h2>
