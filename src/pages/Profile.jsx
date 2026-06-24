@@ -83,10 +83,24 @@ export default function Profile() {
             const fetchPrefs = async () => {
                 try {
                     const snap = await getDoc(doc(db, "users", currentUser.uid, "settings", "preferences"));
-                    if (snap.exists() && typeof snap.data().notifications === 'boolean') {
-                        const cloudNotif = snap.data().notifications;
-                        setNotifEnabled(cloudNotif);
-                        localStorage.setItem('jurnal_notifications', cloudNotif);
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        if (typeof data.notifications === 'boolean') {
+                            setNotifEnabled(data.notifications);
+                            localStorage.setItem('jurnal_notifications', data.notifications);
+                        }
+                        if (data.theme) {
+                            setThemeVal(data.theme);
+                            localStorage.setItem('jurnal_theme', data.theme);
+                            
+                            // Apply theme class to DOM to stay strictly in sync
+                            const html = document.documentElement;
+                            if (data.theme === 'dark' || (data.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                                html.classList.add('dark');
+                            } else {
+                                html.classList.remove('dark');
+                            }
+                        }
                     } else {
                         const localNotif = localStorage.getItem('jurnal_notifications') !== 'false';
                         setNotifEnabled(localNotif);

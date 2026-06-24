@@ -279,10 +279,10 @@ export default function Tracker() {
             <div className="relative z-10 px-5 pt-4 pb-28 md:pb-10 md:px-8 w-full max-w-7xl mx-auto md:grid md:grid-cols-12 md:gap-6 md:items-start">
                 
                 {/* Left Column */}
-                <div className="md:col-span-7 lg:col-span-8 flex flex-col gap-4 animate-fade-in-up stagger-1">
+                <div className="md:col-span-7 lg:col-span-8 flex flex-col gap-4">
                     
                     {/* Tabs */}
-                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2.5rem)] max-w-md z-50 md:static md:translate-x-0 md:w-full md:max-w-none bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-1.5 rounded-full flex shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-white/50 dark:border-slate-700/50">
+                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2.5rem)] max-w-md z-[120] md:static md:translate-x-0 md:w-full md:max-w-none bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-1.5 rounded-full flex shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-white/50 dark:border-slate-700/50">
                         <div className="absolute inset-1.5 flex pointer-events-none">
                             <div className="w-1/2 h-full transition-transform duration-300 ease-in-out" 
                                  style={{ transform: activeTab === 'daily' ? 'translateX(0)' : 'translateX(100%)' }}>
@@ -294,7 +294,7 @@ export default function Tracker() {
                     </div>
 
                     {/* Content Container */}
-                    <div className="w-full mt-2">
+                    <div className="w-full mt-2 animate-fade-in-up stagger-1">
                         
                         {/* DAILY TAB */}
                         {activeTab === 'daily' && (

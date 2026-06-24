@@ -17,8 +17,7 @@ import {
     HelpCircle, ChevronRight, Bookmark, ArrowRight, BookOpenCheck,
     Quote, ChevronDown, ChevronUp, Sparkles, RefreshCw
 } from 'lucide-react';
-
-const THEME_KEY = 'valdi_theme';
+const THEME_KEY = 'jurnal_theme';
 
 function useTheme() {
     const [themeMode, setThemeModeState] = useState(() => {
@@ -48,7 +47,7 @@ function useTheme() {
         return () => mq.removeEventListener('change', handler);
     }, [themeMode, applyTheme]);
 
-    const toggleDarkMode = useCallback(async (currentUser) => {
+    const toggleDarkMode = useCallback(async (currentUser, origin) => {
         const isDark = document.documentElement.classList.contains('dark');
         const nextMode = isDark ? 'light' : 'dark';
 
@@ -57,7 +56,7 @@ function useTheme() {
             localStorage.setItem(THEME_KEY, nextMode);
         };
 
-        runThemeCircle(nextMode === 'dark', updateDOM);
+        runThemeCircle(nextMode === 'dark', updateDOM, origin);
 
         if (currentUser) {
             try {
@@ -416,7 +415,7 @@ function LastReadCard({ currentUser, navigate }) {
 export default function Home() {
     const navigate = useNavigate();
     const { currentUser, prayerTimes, todayRecords, setTodayRecords, currentDate, showAppToast, lastCity } = useApp();
-    const { toggleDarkMode, syncThemeWithCloud } = useTheme();
+    const { themeMode, toggleDarkMode, syncThemeWithCloud } = useTheme();
     const { nextPrayer, countdown, refreshLocation } = usePrayerTimes(currentDate);
     const [hijriDate, setHijriDate] = useState('');
     const [streakData, setStreakData] = useState({ current: 0, longest: 0 });
@@ -481,7 +480,7 @@ export default function Home() {
             <ChevronRight className="w-4 h-4 text-slate-300" />
         </button>;
 
-    const isDark = document.documentElement.classList.contains('dark');
+    const isDark = themeMode === 'dark' || (themeMode === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches);
     const photoUrl = currentUser?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.displayName || 'User')}&background=10b981&color=fff`;
 
     const earnedBadges = getEarnedBadges(streakData.current);
@@ -513,8 +512,25 @@ export default function Home() {
                                 <span className={`text-[11px] font-black tabular-nums ${streakData.current >= 30 ? 'text-blue-600 dark:text-blue-400' : streakData.current >= 14 ? 'text-emerald-600 dark:text-emerald-400' : streakData.current >= 7 ? 'text-yellow-600 dark:text-yellow-400' : 'text-orange-600 dark:text-orange-400'}`}>{streakData.current}</span>
                             </div>
                         )}
-                        <button onClick={() => toggleDarkMode(currentUser)} className="w-9 h-9 rounded-full hover:bg-black/5 dark:hover:bg-white/10 flex items-center justify-center text-slate-600 dark:text-slate-400 transition active:scale-90">
-                            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                        <button
+                            onClick={(e) => {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const origin = {
+                                    x: rect.left + rect.width / 2,
+                                    y: rect.top + rect.height / 2
+                                };
+                                toggleDarkMode(currentUser, origin);
+                            }}
+                            className="relative w-9 h-9 rounded-full hover:bg-black/5 dark:hover:bg-white/10 flex items-center justify-center text-slate-600 dark:text-slate-400 overflow-hidden transition active:scale-90"
+                        >
+                            <span className={`absolute transition-all duration-500 ${isDark ? 'rotate-0 scale-100 opacity-100 translate-y-0' : 'rotate-[135deg] scale-0 opacity-0 translate-y-2'}`}
+                                style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
+                                <Sun className="w-5 h-5" />
+                            </span>
+                            <span className={`absolute transition-all duration-500 ${isDark ? '-rotate-[135deg] scale-0 opacity-0 -translate-y-2' : 'rotate-0 scale-100 opacity-100 translate-y-0'}`}
+                                style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
+                                <Moon className="w-5 h-5" />
+                            </span>
                         </button>
                     </div>
                 </div>

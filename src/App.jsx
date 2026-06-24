@@ -100,7 +100,7 @@ function AppShell() {
   }, []);
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-950 block h-[100dvh] text-slate-800 dark:text-slate-200 transition-colors duration-300 overflow-hidden relative selection:bg-emerald-500 selection:text-white">
+    <div className="bg-slate-50 dark:bg-slate-950 block h-[100dvh] text-slate-800 dark:text-slate-200 overflow-hidden relative selection:bg-emerald-500 selection:text-white">
       <SplashScreen visible={showSplash} />
 
       {/* Background Decorations */}
