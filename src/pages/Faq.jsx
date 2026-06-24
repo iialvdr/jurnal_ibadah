@@ -64,7 +64,7 @@ const FAQ_CATEGORIES = [
             { q: 'Cara mencari nomor hadits?', a: 'Buka kitab pilihanmu, lalu gunakan kotak pencarian di bagian atas untuk memasukkan nomor hadits yang spesifik.' },
             { q: 'Bagaimana cara mencari surah tertentu?', a: 'Pada daftar surah Al-Qur\'an, tersedia fitur pencarian yang memudahkan Anda menemukan surah berdasarkan nama dengan cepat.' },
             { q: 'Bagaimana jika saya lupa ayat terakhir yang dibaca?', a: 'Aplikasi secara otomatis menyimpan ayat terakhir yang Anda buka. Informasi ini ditampilkan di bagian "Terakhir Dibaca" pada halaman beranda.' },
-            { q: 'Dari mana sumber haditsnya?', a: 'Data hadits disuplai secara real-time melalui **Gading Hadith API** untuk memastikan keakuratan nomor dan teks hadits yang ditampilkan.' }
+            { q: 'Dari mana sumber haditsnya?', a: 'Data hadits disuplai secara real-time melalui **MyQuran API (Ensiklopedia Hadis)** untuk memastikan keakuratan nomor dan teks hadits yang ditampilkan.' }
         ]
     },
     {
@@ -74,7 +74,8 @@ const FAQ_CATEGORIES = [
         color: 'teal',
         faqs: [
             { q: 'Bagaimana cara melihat jadwal puasa?', a: 'Aplikasi menyediakan menu "Jadwal Puasa" yang menampilkan informasi hari-hari disunnahkan berpuasa, seperti Ayyamul Bidh, Senin-Kamis, dan hari besar Islam lainnya.' },
-            { q: 'Mengapa jadwal sholat saya berbeda dengan masjid sekitar?', a: 'Aplikasi menggunakan lokasi GPS perangkat Anda secara real-time untuk akurasi koordinat. Pastikan izin lokasi aktif agar jadwal yang ditampilkan sesuai dengan posisi Anda saat ini.' }
+            { q: 'Dari mana sumber jadwal sholatnya?', a: 'Aplikasi ini menggunakan **Jadwal Sholat Resmi Kementerian Agama RI (Kemenag)** secara real-time berdasarkan titik lokasi Anda, sehingga dijamin sama dengan kalender resmi masjid setempat.' },
+            { q: 'Mengapa jadwal sholat saya berbeda dengan masjid sekitar?', a: 'Karena menggunakan standar Kemenag, jadwal ini sangat akurat. Jika masih ada perbedaan, pastikan izin lokasi GPS (Lokasi Anda) sudah menyala agar aplikasi bisa menyesuaikan waktu dengan kota Anda secara persis.' }
         ]
     }
 ];

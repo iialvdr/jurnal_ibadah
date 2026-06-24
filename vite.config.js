@@ -33,11 +33,19 @@ export default defineConfig({
             options: { cacheName: 'google-fonts-cache', expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 } }
           },
           {
-            urlPattern: /^https:\/\/api\.hadith\.gading\.dev\/.*/i,
+            urlPattern: /^https:\/\/api\.myquran\.com\/.*/i,
             handler: 'NetworkFirst',
-            options: { cacheName: 'hadith-api-cache', expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 } }
+            options: { cacheName: 'myquran-api-cache', expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 } }
+          },
+          {
+            urlPattern: /^https:\/\/equran\.id\/.*/i,
+            handler: 'NetworkFirst',
+            options: { cacheName: 'equran-api-cache', expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 } }
           }
         ]
+      },
+      devOptions: {
+        enabled: true
       }
     })
   ],

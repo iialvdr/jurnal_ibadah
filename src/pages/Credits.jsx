@@ -96,12 +96,12 @@ export default function Credits() {
                             
                             {[
                                 { title: 'EQuran.id API', desc: 'Al-Qur\'an & Doa', icon: BookOpen, color: 'emerald' },
-                                { title: 'Gading Hadith API', desc: 'Hadits Harian', icon: Quote, color: 'rose' },
-                                { title: 'Adhan.js', desc: 'Waktu Sholat', icon: Clock, color: 'amber' },
-                                { title: 'Firebase', desc: 'Database & Auth', icon: Flame, color: 'orange' },
-                                { title: 'BigDataCloud', desc: 'Lokasi API', icon: MapPin, color: 'blue' },
-                                { title: 'Lucide Icons', desc: 'Visual Assets', icon: Feather, color: 'indigo' },
-                                { title: 'Tailwind CSS', desc: 'Styling Framework', icon: Palette, color: 'sky' }
+                                { title: 'MyQuran Hadis API', desc: 'Ensiklopedia Hadis', icon: Quote, color: 'rose' },
+                                { title: 'Kemenag API', desc: 'Jadwal Sholat Resmi', icon: Clock, color: 'amber' },
+                                { title: 'BigDataCloud', desc: 'Satelit Geocoder', icon: MapPin, color: 'blue' },
+                                { title: 'Adhan.js', desc: 'Jadwal (Offline)', icon: Clock, color: 'indigo' },
+                                { title: 'Lucide Icons', desc: 'Visual Assets', icon: Feather, color: 'sky' },
+                                { title: 'Firebase', desc: 'Database & Auth', icon: Flame, color: 'orange' }
                             ].map((api, idx) => {
                                 const Icon = api.icon;
                                 return (
