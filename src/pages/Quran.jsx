@@ -29,13 +29,16 @@ export default function Quran() {
     const [bookmarked, setBookmarked] = useState(null); 
 
     // Audio & Tafsir States
-    const [activeAudio, setActiveAudio] = useState(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isBuffering, setIsBuffering] = useState(false);
     const [playingAyat, setPlayingAyat] = useState(null);
     const [tafsirData, setTafsirData] = useState({});
     const [loadingTafsir, setLoadingTafsir] = useState({});
-    const audioRef = useRef(null);
+    const audioRef = useRef(null);       // Audio element aktif (sedang bermain)
+    const nextAudioRef = useRef(null);   // Audio element buffer (preload ayat berikutnya)
+    const playingAyatRef = useRef(null); // Sinkron dengan playingAyat, bisa dibaca di closure tanpa stale
+    const ayatsRef = useRef([]);         // Sinkron dengan ayats state, bisa dibaca di closure tanpa stale
+    const scrolledAheadRef = useRef(false); // Mencegah scroll dobel dalam satu ayat
 
     // Initial Load
     useEffect(() => {
@@ -78,52 +81,132 @@ export default function Quran() {
         }
     }, [searchParams, surahList]);
 
-    // Setup Audio Player
+    // Sinkron ayatsRef setiap kali ayats berubah (tidak recreate audio element!)
     useEffect(() => {
-        audioRef.current = new Audio();
-        const aud = audioRef.current;
-        
-        aud.onplay = () => { setIsPlaying(true); setIsBuffering(false); };
-        aud.onpause = () => { setIsPlaying(false); setIsBuffering(false); };
+        ayatsRef.current = ayats;
+    }, [ayats]);
+
+    // Helper: pasang event listener ke sebuah audio element
+    const setupAudioEvents = (aud) => {
+        // Reset flag scroll-ahead setiap ganti ayat
+        scrolledAheadRef.current = false;
+
+        aud.onplay    = () => { setIsPlaying(true);  setIsBuffering(false); };
+        aud.onpause   = () => { setIsPlaying(false); setIsBuffering(false); };
         aud.onwaiting = () => setIsBuffering(true);
         aud.onstalled = () => setIsBuffering(true);
         aud.onplaying = () => setIsBuffering(false);
-        aud.onended = () => {
-            setPlayingAyat(curr => {
-                if (!curr) return null;
-                const nextAyat = ayats.find(a => a.nomorAyat === curr + 1);
-                if (nextAyat) {
-                    const url = nextAyat.audio['05'] || nextAyat.audio['01'];
-                    if (url) {
-                        aud.src = url;
-                        aud.play();
-                        
-                        // Preload the next-next ayat immediately
-                        const nextNext = ayats.find(a => a.nomorAyat === curr + 2);
-                        if (nextNext) {
-                            const nnUrl = nextNext.audio['05'] || nextNext.audio['01'];
-                            if (nnUrl) {
-                                const preloader = new Audio();
-                                preloader.preload = 'auto';
-                                preloader.src = nnUrl;
-                            }
-                        }
 
-                        setTimeout(() => {
-                            const el = document.getElementById(`ayat-${nextAyat.nomorAyat}`);
-                            const container = document.getElementById('quranDetailContainer');
-                            if (el && container) {
-                                container.scrollTo({ top: el.offsetTop - 40, behavior: 'smooth' });
-                            }
-                        }, 100);
-                        return nextAyat.nomorAyat;
-                    }
-                }
-                setIsPlaying(false);
-                return null;
-            });
+        // Scroll ke ayat berikutnya 0.8 detik sebelum audio habis
+        const SCROLL_AHEAD_SEC = 0.8;
+        aud.ontimeupdate = () => {
+            if (scrolledAheadRef.current) return; // Sudah scroll, skip
+            const { duration, currentTime } = aud;
+            if (!duration || !isFinite(duration)) return;
+            if (duration - currentTime > SCROLL_AHEAD_SEC) return;
+
+            // Tandai sudah scroll agar tidak scroll lagi
+            scrolledAheadRef.current = true;
+
+            const curr = playingAyatRef.current;
+            if (curr === null) return;
+            const list = ayatsRef.current;
+            const nextAyat = list.find(a => a.nomorAyat === curr + 1);
+            if (!nextAyat) return;
+
+            const el = document.getElementById(`ayat-${nextAyat.nomorAyat}`);
+            const container = document.getElementById('quranDetailContainer');
+            if (el && container) {
+                const elRect = el.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                const scrollTop = container.scrollTop + elRect.top - containerRect.top - 100;
+                container.scrollTo({ top: scrollTop, behavior: 'smooth' });
+            }
         };
-        return () => { aud.pause(); aud.src = ''; };
+    };
+
+    // Helper: preload ayat berikutnya ke buffer — membaca dari ayatsRef (selalu fresh)
+    const preloadNextAyat = (currentAyatNum) => {
+        const list = ayatsRef.current;
+        const next = list.find(a => a.nomorAyat === currentAyatNum + 1);
+        if (!next) { nextAudioRef.current = null; return; }
+        const url = next.audio['05'] || next.audio['01'];
+        if (!url)  { nextAudioRef.current = null; return; }
+        const buf = new Audio();
+        buf.preload = 'auto';
+        buf.src = url;
+        nextAudioRef.current = buf;
+    };
+
+    // Handler: dipanggil saat ayat selesai — membaca ayatsRef (selalu fresh, tidak stale)
+    const handleAudioEnded = () => {
+        const curr = playingAyatRef.current;
+        if (curr === null) return;
+
+        const list = ayatsRef.current;
+        const nextAyat = list.find(a => a.nomorAyat === curr + 1);
+        if (!nextAyat) {
+            setIsPlaying(false);
+            setPlayingAyat(null);
+            playingAyatRef.current = null;
+            return;
+        }
+
+        const expectedUrl = nextAyat.audio['05'] || nextAyat.audio['01'];
+        if (!expectedUrl) { setIsPlaying(false); setPlayingAyat(null); playingAyatRef.current = null; return; }
+
+        // Cek apakah buffer sudah preload ayat ini
+        const buf = nextAudioRef.current;
+        const fname = expectedUrl.split('/').pop().split('?')[0];
+        const useBuffer = buf && buf.src && buf.src.includes(fname) && buf.readyState > 0;
+
+        // Lepaskan onended dari element lama sebelum swap
+        const oldAud = audioRef.current;
+        if (oldAud) oldAud.onended = null;
+
+        let nextAud;
+        if (useBuffer) {
+            nextAud = buf;
+        } else {
+            nextAud = new Audio();
+            nextAud.src = expectedUrl;
+        }
+
+        setupAudioEvents(nextAud);
+        nextAud.onended = handleAudioEnded;
+        audioRef.current = nextAud;
+
+        nextAud.play().catch(() => {});
+        playingAyatRef.current = nextAyat.nomorAyat;
+        setPlayingAyat(nextAyat.nomorAyat);
+        preloadNextAyat(nextAyat.nomorAyat);
+        // Scroll sudah ditangani oleh ontimeupdate (0.8 detik sebelum audio selesai)
+    };
+
+    // Setup Audio Player — dibuat SEKALI saja, tidak di-recreate saat ayats berubah
+    useEffect(() => {
+        const aud = new Audio();
+        audioRef.current = aud;
+        setupAudioEvents(aud);
+        aud.onended = handleAudioEnded;
+        return () => {
+            aud.onended = null;
+            aud.pause();
+            aud.src = '';
+            if (nextAudioRef.current) {
+                nextAudioRef.current.src = '';
+                nextAudioRef.current = null;
+            }
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // <- empty deps: buat audio element SEKALI, bukan setiap ayats berubah
+
+    // Update onended saat ayats/handler berubah (tanpa recreate element audio)
+    useEffect(() => {
+        const aud = audioRef.current;
+        if (!aud) return;
+        aud.onended = handleAudioEnded;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ayats]);
 
     // Deteksi Scroll untuk Sembunyikan Search
@@ -178,31 +261,51 @@ export default function Quran() {
         if (navigator.vibrate) navigator.vibrate(10);
         const url = ayat.audio['05'] || ayat.audio['01'];
         if (!url) return;
-        
+
+        const currentAud = audioRef.current;
+        if (!currentAud) return;
+
         if (playingAyat === ayat.nomorAyat && isPlaying) {
-            audioRef.current.pause();
+            currentAud.pause();
         } else if (playingAyat === ayat.nomorAyat && !isPlaying) {
-            audioRef.current.play();
+            currentAud.play().catch(() => {});
         } else {
-            audioRef.current.src = url;
-            audioRef.current.play();
-            setPlayingAyat(ayat.nomorAyat);
-            
-            // Preload next ayat manually triggered
-            const nextAyat = ayats.find(a => a.nomorAyat === ayat.nomorAyat + 1);
-            if (nextAyat) {
-                const nextUrl = nextAyat.audio['05'] || nextAyat.audio['01'];
-                if (nextUrl) {
-                    const preloader = new Audio();
-                    preloader.preload = 'auto';
-                    preloader.src = nextUrl;
-                }
+            // Hentikan audio sebelumnya
+            currentAud.pause();
+
+            // Cek apakah buffer sudah preload ayat ini
+            const buf = nextAudioRef.current;
+            const fname = url.split('/').pop().split('?')[0];
+            const useBuffer = buf && buf.src && buf.src.includes(fname) && buf.readyState > 0;
+
+            let aud;
+            if (useBuffer) {
+                aud = buf;
+                setupAudioEvents(aud);
+                aud.onended = handleAudioEnded;
+                audioRef.current = aud;
+            } else {
+                const newAud = new Audio();
+                newAud.src = url;
+                setupAudioEvents(newAud);
+                newAud.onended = handleAudioEnded;
+                audioRef.current = newAud;
+                aud = newAud;
             }
+
+            aud.play().catch(() => {});
+            playingAyatRef.current = ayat.nomorAyat;
+            setPlayingAyat(ayat.nomorAyat);
+
+            // Langsung preload ayat berikutnya
+            preloadNextAyat(ayat.nomorAyat);
         }
     };
 
     const stopAudio = () => {
-        if (audioRef.current) audioRef.current.pause();
+        if (audioRef.current) { audioRef.current.pause(); }
+        nextAudioRef.current = null;
+        playingAyatRef.current = null;
         setPlayingAyat(null);
         setIsPlaying(false);
     };
@@ -217,7 +320,10 @@ export default function Quran() {
                 const el = document.getElementById(`ayat-${target.nomorAyat}`);
                 const container = document.getElementById('quranDetailContainer');
                 if (el && container) {
-                    container.scrollTo({ top: el.offsetTop - 40, behavior: 'smooth' });
+                    const elRect = el.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+                    const scrollTop = container.scrollTop + elRect.top - containerRect.top - 100;
+                    container.scrollTo({ top: scrollTop, behavior: 'smooth' });
                 }
             }, 100);
         }
@@ -246,7 +352,10 @@ export default function Quran() {
                     const el = document.getElementById(`ayat-${scrollToAyat}`);
                     const container = document.getElementById('quranDetailContainer');
                     if (el && container) {
-                        container.scrollTo({ top: el.offsetTop - 40, behavior: 'smooth' });
+                        const elRect = el.getBoundingClientRect();
+                        const containerRect = container.getBoundingClientRect();
+                        const scrollTop = container.scrollTop + elRect.top - containerRect.top - 100;
+                        container.scrollTo({ top: scrollTop, behavior: 'smooth' });
                     }
                 }, 600);
             }
