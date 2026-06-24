@@ -24,10 +24,17 @@ function calcDistance(lat1, lng1) {
     return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
-// Interpolasi sudut melalui jalur terpendek
-function shortestAngleLerp(current, target, amount) {
-    let diff = ((target - current + 540) % 360) - 180; // range [-180, 180]
-    return current + diff * amount;
+// Interpolasi sudut melalui jalur terpendek agar tidak memutar balik di 0°/360°
+function shortestAngleLerp(current, target, t) {
+    // Normalisasi kedua sudut ke [0,360) terlebih dahulu
+    const c = ((current % 360) + 360) % 360;
+    const tgt = ((target % 360) + 360) % 360;
+    // diff selalu dalam range [-180, 180] — ambil jalur terpendek
+    let diff = tgt - c;
+    if (diff > 180) diff -= 360;
+    else if (diff < -180) diff += 360;
+    // Normalisasi hasil ke [0, 360)
+    return ((c + diff * t) % 360 + 360) % 360;
 }
 
 export default function Qibla() {
@@ -50,18 +57,20 @@ export default function Qibla() {
 
     const handleSensorData = (e) => {
         let heading = null;
-        // iOS: webkitCompassHeading (sudah true north, clockwise)
+
+        // iOS Safari: webkitCompassHeading sudah true north, clockwise dari North
+        // Ini tersedia di event 'deviceorientation' maupun 'deviceorientationabsolute' di iOS
         if (typeof e.webkitCompassHeading === 'number' && e.webkitCompassHeading >= 0) {
             heading = e.webkitCompassHeading;
         }
-        // Android: alpha dari deviceorientationabsolute (sudah true north)
-        else if (e.isTrusted && e.absolute && e.alpha !== null && e.alpha !== undefined) {
+        // Android / browser modern: gunakan HANYA jika event benar-benar absolute
+        // e.absolute === true menjamin alpha diukur relatif ke North, bukan startup orientation
+        else if (e.absolute === true && typeof e.alpha === 'number' && e.alpha !== null) {
             heading = (360 - e.alpha) % 360;
         }
-        // Fallback: deviceorientation biasa
-        else if (e.alpha !== null && e.alpha !== undefined) {
-            heading = (360 - e.alpha) % 360;
-        }
+        // JANGAN gunakan e.alpha dari deviceorientation biasa (e.absolute !== true) karena
+        // nilainya relatif ke posisi awal HP dinyalakan, BUKAN ke Utara geografis.
+
         if (heading !== null) rawHeadingRef.current = heading;
     };
 
@@ -100,13 +109,18 @@ export default function Qibla() {
     const startListening = () => {
         isCompassActiveRef.current = true;
         isAlignedRef.current = false;
-        smoothHeadingRef.current = null; // reset agar tidak ada lompatan
+        smoothHeadingRef.current = null; // reset agar tidak ada lompatan awal
 
-        orientationHandlerRef.current = handleSensorData;
+        const handler = handleSensorData;
+        orientationHandlerRef.current = handler;
+
+        // Tambahkan listener deviceorientationabsolute (Android/modern)
+        // DAN deviceorientation (iOS webkitCompassHeading).
+        // Handler sudah aman — hanya menerima data valid sesuai kondisi di atas.
         if ('ondeviceorientationabsolute' in window) {
-            window.addEventListener('deviceorientationabsolute', handleSensorData, true);
+            window.addEventListener('deviceorientationabsolute', handler, true);
         }
-        window.addEventListener('deviceorientation', handleSensorData, true);
+        window.addEventListener('deviceorientation', handler, true);
         updateCompassUI();
     };
 
