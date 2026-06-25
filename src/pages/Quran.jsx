@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useApp } from '@/store/AppContext';
 import { db } from '@/config/firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { 
     ArrowLeft, Search, Bookmark, BookmarkCheck, ChevronDown, ChevronUp, X, 
     Play, Pause, Loader2, SkipBack, SkipForward, Volume2, BookOpen, ChevronRight, ChevronLeft 
@@ -57,13 +57,17 @@ export default function Quran() {
         }
     }, [currentUser]);
 
+    const processedStateKey = useRef(null);
+
     // Navigate from Last Read
     useEffect(() => {
-        if (location.state?.surah && surahList.length > 0) {
+        if (location.state?.surah && location.key !== processedStateKey.current && surahList.length > 0) {
+            processedStateKey.current = location.key;
             const surah = surahList.find(s => s.nomor === location.state.surah);
-            if (surah) openSurah(surah, location.state.ayat);
+            // Use replaceHistory = true to prevent adding an extra history stack
+            if (surah) openSurah(surah, location.state.ayat, false, true);
         }
-    }, [location.state, surahList]);
+    }, [location.state, location.key, surahList]);
 
     // Sinkronisasi dengan tombol Back Browser / Perangkat (mendeteksi perubahan URL param 's')
     useEffect(() => {
@@ -448,6 +452,7 @@ export default function Quran() {
         
         try {
             if (isDeleting) {
+                await deleteDoc(doc(db, "users", currentUser.uid, "quran", "last_read"));
                 setBookmarked(null);
                 showAppToast('Bookmark dihapus', 'success');
             } else {

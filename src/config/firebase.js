@@ -1,7 +1,7 @@
 // src/config/firebase.js
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDX2VOndgMEIHOGnRA2O1dDa1AKmNV3H08",
@@ -14,6 +14,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = initializeFirestore(app, {
+    localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+});
 export const provider = new GoogleAuthProvider();
-export const WEB_PUSH_VAPID_PUBLIC_KEY = "BN2gGu-94U0pPYjnlvieAwvPK8mIr7rqJFUBqoMMjbPZFYdb9d7M4p8wTMTkEwOEn-WECZD91Qzy-6ewSmFDGS0";
+export const WEB_PUSH_VAPID_PUBLIC_KEY = "BP6hUL5kC9_IBif3EhfY4Tisz7V5sjGSmd6VVu6cUWbgZI3qb2shssNZc6y4OeDYFVdiHtEnkFFdU29XQID4htc";

@@ -324,6 +324,14 @@ function usePrayerTimes(currentDate) {
                 if (manual) localStorage.removeItem('kemenag_kota_cache');
                 
                 fetchJadwal(latitude, longitude);
+
+                // Sinkronkan lokasi baru ke Firebase jika notifikasi aktif
+                const notifEnabled = localStorage.getItem('jurnal_notifications') === 'true';
+                if (notifEnabled && window._currentUserForPush) {
+                    import('@/modules/push').then(({ syncPushSubscription }) => {
+                        syncPushSubscription(window._currentUserForPush, true).catch(() => {});
+                    });
+                }
             },
             () => { if (!lastCity) setLastCity('Lokasi Belum Diatur'); }
         );
@@ -580,6 +588,11 @@ export default function Home() {
     const unsubscribeRef = useRef(null);
 
     const vib = () => { if (navigator.vibrate) navigator.vibrate(10); };
+
+    // Hack for accessing currentUser inside useCallback without breaking deps
+    useEffect(() => {
+        window._currentUserForPush = currentUser;
+    }, [currentUser]);
 
     // Sync theme from cloud on mount
     useEffect(() => {

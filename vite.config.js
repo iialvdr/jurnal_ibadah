@@ -9,6 +9,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'script',
       includeAssets: ['img/**/*', 'assets/fonts/**/*'],
       manifest: {
         name: 'Jurnal Ibadah',
@@ -24,26 +25,9 @@ export default defineConfig({
           { src: 'img/favicon/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' }
         ]
       },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,ttf,woff,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: { cacheName: 'google-fonts-cache', expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 } }
-          },
-          {
-            urlPattern: /^https:\/\/api\.myquran\.com\/.*/i,
-            handler: 'NetworkFirst',
-            options: { cacheName: 'myquran-api-cache', expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 } }
-          },
-          {
-            urlPattern: /^https:\/\/equran\.id\/.*/i,
-            handler: 'NetworkFirst',
-            options: { cacheName: 'equran-api-cache', expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 } }
-          }
-        ]
-      },
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       devOptions: {
         enabled: true
       }

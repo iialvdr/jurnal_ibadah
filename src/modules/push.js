@@ -21,10 +21,17 @@ function base64ToUint8Array(base64String) {
 
 async function saveSubscription(uid, subscription) {
     const pushRef = doc(db, 'users', uid, 'settings', PUSH_DOC_ID);
+    const lat = localStorage.getItem('last_lat');
+    const lng = localStorage.getItem('last_lng');
+    const city = localStorage.getItem('last_city_name');
+
     await setDoc(pushRef, {
         endpoint: subscription.endpoint,
         keys: subscription.keys || {},
         subscription,
+        latitude: lat ? parseFloat(lat) : null,
+        longitude: lng ? parseFloat(lng) : null,
+        city: city || '',
         updated_at: new Date(),
         user_agent: navigator.userAgent || ''
     }, { merge: true });
