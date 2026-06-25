@@ -1,6 +1,27 @@
 import { Activity } from 'lucide-react';
 import { Line } from 'react-chartjs-2';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Filler,
+    Legend
+} from 'chart.js';
 
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Filler,
+    Legend
+);
 export function ProfileChart({ chartDays, setChartDays, chartLoading, chartData }) {
     return (
         <div className="mt-5 md:mt-6 md:order-3 order-2">
