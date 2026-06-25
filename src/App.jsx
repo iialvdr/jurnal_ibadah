@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from '@/store/AppContext';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { GooeyToaster } from 'goey-toast';
 import 'goey-toast/styles.css';
 
@@ -114,26 +115,28 @@ function AppShell() {
       {/* Main App Container */}
       <div className="relative z-10 w-full h-full md:max-w-[95%] xl:max-w-[1400px] md:mx-auto md:h-[95vh] md:mt-[2.5vh] md:rounded-3xl md:border md:border-white/50 md:dark:border-slate-800 md:shadow-2xl md:backdrop-blur-2xl bg-white/40 dark:bg-slate-900/40 overflow-hidden flex flex-col transition-all duration-500">
         <div className="flex-1 relative h-full overflow-hidden flex flex-col" id="appContainer">
-          <Suspense fallback={null}>
-            <Routes>
-              <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-              <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-              <Route path="/tracker" element={<ProtectedRoute><Tracker /></ProtectedRoute>} />
-              <Route path="/tasbih" element={<ProtectedRoute><Tasbih /></ProtectedRoute>} />
-              <Route path="/qibla" element={<ProtectedRoute><Qibla /></ProtectedRoute>} />
-              <Route path="/quran" element={<ProtectedRoute><Quran /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/doa" element={<ProtectedRoute><Doa /></ProtectedRoute>} />
-              <Route path="/asmaul-husna" element={<ProtectedRoute><AsmaulHusna /></ProtectedRoute>} />
-              <Route path="/fasting" element={<ProtectedRoute><Fasting /></ProtectedRoute>} />
-              <Route path="/credits" element={<ProtectedRoute><Credits /></ProtectedRoute>} />
-              <Route path="/changelog" element={<ProtectedRoute><Changelog /></ProtectedRoute>} />
-              <Route path="/zakat" element={<ProtectedRoute><Zakat /></ProtectedRoute>} />
-              <Route path="/faq" element={<ProtectedRoute><Faq /></ProtectedRoute>} />
-              <Route path="/hadith" element={<ProtectedRoute><Hadith /></ProtectedRoute>} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={null}>
+              <Routes>
+                <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+                <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                <Route path="/tracker" element={<ProtectedRoute><Tracker /></ProtectedRoute>} />
+                <Route path="/tasbih" element={<ProtectedRoute><Tasbih /></ProtectedRoute>} />
+                <Route path="/qibla" element={<ProtectedRoute><Qibla /></ProtectedRoute>} />
+                <Route path="/quran" element={<ProtectedRoute><Quran /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/doa" element={<ProtectedRoute><Doa /></ProtectedRoute>} />
+                <Route path="/asmaul-husna" element={<ProtectedRoute><AsmaulHusna /></ProtectedRoute>} />
+                <Route path="/fasting" element={<ProtectedRoute><Fasting /></ProtectedRoute>} />
+                <Route path="/credits" element={<ProtectedRoute><Credits /></ProtectedRoute>} />
+                <Route path="/changelog" element={<ProtectedRoute><Changelog /></ProtectedRoute>} />
+                <Route path="/zakat" element={<ProtectedRoute><Zakat /></ProtectedRoute>} />
+                <Route path="/faq" element={<ProtectedRoute><Faq /></ProtectedRoute>} />
+                <Route path="/hadith" element={<ProtectedRoute><Hadith /></ProtectedRoute>} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
         </div>
         
         {/* Global Toast (Constrained to container) */}

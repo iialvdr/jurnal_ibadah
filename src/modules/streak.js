@@ -1,6 +1,7 @@
 // src/modules/streak.js
 import { db } from '@/config/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { formatDateKey } from '@/utils/dateUtils';
 
 const STREAK_CACHE_KEY = 'jurnal_streak_v1';
 const WAJIB_PRAYERS = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
@@ -14,12 +15,6 @@ export const BADGES = [
     { threshold: 100, emoji: '🏆', label: 'Centurion',           color: 'from-amber-400 to-orange-500',   bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800/40', text: 'text-amber-600 dark:text-amber-400' },
     { threshold: 365, emoji: '👑', label: 'Setahun Istiqomah',   color: 'from-yellow-300 to-yellow-500',  bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-200 dark:border-yellow-800/40', text: 'text-yellow-600 dark:text-yellow-400' }
 ];
-
-function formatDateKey(date) {
-    const offset = date.getTimezoneOffset();
-    const localDate = new Date(date.getTime() - (offset * 60000));
-    return localDate.toISOString().split('T')[0];
-}
 
 function isPerfectDay(record) {
     if (!record) return false;
@@ -90,28 +85,46 @@ export async function calculateStreak(uid) {
     const todayRecord = await getRecordForDate(uid, todayKey);
     const todayPerfect = isPerfectDay(todayRecord);
 
-    if (todayPerfect) {
-        currentStreak = 1;
-        checkDate.setDate(checkDate.getDate() - 1);
+    // OPTIMIZED: Reduce Firestore reads
+    // If we have a cached perfect date from yesterday or today, we can calculate incrementally
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = formatDateKey(yesterday);
+    
+    if (streakData.lastPerfectDate === yesterdayKey && todayPerfect) {
+        currentStreak = streakData.current + 1;
+    } else if (streakData.lastPerfectDate === todayKey) {
+        currentStreak = streakData.current;
     } else {
-        checkDate.setDate(checkDate.getDate() - 1);
-    }
-
-    for (let i = 0; i < 400; i++) {
-        const dateKey = formatDateKey(checkDate);
-        const record = await getRecordForDate(uid, dateKey);
-        if (isPerfectDay(record)) {
-            currentStreak++;
+        // Fallback: Read up to a maximum of 30 days backward if cache is broken/missing, instead of 400
+        if (todayPerfect) {
+            currentStreak = 1;
             checkDate.setDate(checkDate.getDate() - 1);
         } else {
-            break;
+            checkDate.setDate(checkDate.getDate() - 1);
+        }
+
+        for (let i = 0; i < 30; i++) {
+            const dateKey = formatDateKey(checkDate);
+            const record = await getRecordForDate(uid, dateKey);
+            if (isPerfectDay(record)) {
+                currentStreak++;
+                checkDate.setDate(checkDate.getDate() - 1);
+            } else {
+                break;
+            }
+        }
+        
+        // If we hit 30, use the cached longest streak if it's bigger (prevent losing huge streaks)
+        if (currentStreak === 30 && streakData.current > 30) {
+            currentStreak = streakData.current;
         }
     }
 
     const oldStreak = streakData.current;
     streakData.current = currentStreak;
     streakData.longest = Math.max(streakData.longest, currentStreak);
-    streakData.lastPerfectDate = todayPerfect ? todayKey : (currentStreak > 0 ? formatDateKey(new Date(today.getTime() - 86400000)) : null);
+    streakData.lastPerfectDate = todayPerfect ? todayKey : (currentStreak > 0 ? formatDateKey(yesterday) : null);
 
     cacheStreak(streakData);
 

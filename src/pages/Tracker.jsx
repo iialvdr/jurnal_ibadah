@@ -10,7 +10,7 @@ import {
     BookOpen, Heart, Sparkles, Zap, PenTool, CloudCheck, CalendarCheck, ChevronDown, CheckCircle2, Clock3
 } from 'lucide-react';
 import { updateStreak } from '@/modules/streak';
-import { getHijriDate, fetchHijriDateAPI } from '@/utils/dateUtils';
+import { getHijriDate, fetchHijriDateAPI, formatDateKey } from '@/utils/dateUtils';
 import { getFastingInfo } from '@/modules/fasting';
 
 const PRAYER_CONFIG = [
@@ -29,12 +29,6 @@ const EXTRA_IBADAH = [
     { id: 'Sholawat', label: 'Sholawat Nabi', icon: Sparkles, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-500' },
     { id: 'Dzikir', label: 'Dzikir Pagi/Petang', icon: Zap, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-500' }
 ];
-
-function formatDateKey(date) {
-    const offset = date.getTimezoneOffset();
-    const local = new Date(date.getTime() - offset * 60000);
-    return local.toISOString().split('T')[0];
-}
 
 function formatDateDisplay(date) {
     return date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });

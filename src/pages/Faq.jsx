@@ -5,6 +5,7 @@ import {
     ArrowLeft, Search, ChevronDown, ChevronUp, HelpCircle, 
     Sparkles, Shield, Calculator, ListChecks, BookOpenCheck, Clock3 
 } from 'lucide-react';
+import DOMPurify from 'dompurify';
 
 const FAQ_CATEGORIES = [
     {
@@ -92,7 +93,7 @@ function FaqItem({ item, isOpen, onClick }) {
                 style={{ maxHeight: isOpen ? '500px' : '0', opacity: isOpen ? 1 : 0 }}
             >
                 <div className="px-4 pb-4">
-                    <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400" dangerouslySetInnerHTML={{ __html: item.a.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>') }} />
+                    <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.a.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>')) }} />
                 </div>
             </div>
         </div>

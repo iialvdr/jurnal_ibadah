@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'script',
+      injectRegister: 'auto',
       includeAssets: ['img/**/*', 'assets/fonts/**/*'],
       manifest: {
         name: 'Jurnal Ibadah',
@@ -29,7 +29,8 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.js',
       devOptions: {
-        enabled: true
+        enabled: true,
+        type: 'module'
       }
     })
   ],

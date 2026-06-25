@@ -31,12 +31,7 @@ export function AppProvider({ children }) {
         }
     }, []);
 
-    // Vibration helpers
-    useEffect(() => {
-        window.vibrateSoft = () => { if (navigator.vibrate) navigator.vibrate(10); };
-        window.vibrateSuccess = () => { if (navigator.vibrate) navigator.vibrate([10, 30, 10]); };
-        window.showAppToast = showAppToast;
-    }, [showAppToast]);
+    // Removed unused window bindings
 
     // Auth listener
     useEffect(() => {

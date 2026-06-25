@@ -24,6 +24,9 @@ dev-dist/
 .DS_Store
 Thumbs.db
 
+# Documentation
+DESIGN.md
+
 # Logs
 *.log
 npm-debug.log*

@@ -13,26 +13,9 @@ import {
     Hourglass, Activity, CheckCircle2, HelpCircle, History,
     Info, LogOut, X, Palette, Bell, ChevronDown, Check
 } from 'lucide-react';
-import { runThemeCircle } from '@/utils/themeTransition';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Filler
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Filler
-);
+import { useProfileStats } from '@/hooks/useProfileStats';
+import { ProfileChart } from '@/components/profile/ProfileChart';
+import { LogoutModal } from '@/components/profile/LogoutModal';
 
 export default function Profile() {
     const navigate = useNavigate();
@@ -53,14 +36,11 @@ export default function Profile() {
     const [themeOpen, setThemeOpen] = useState(false);
     const [themeVal, setThemeVal] = useState(localStorage.getItem('jurnal_theme') || 'system');
     
-    // Chart state
-    const [chartDays, setChartDays] = useState(7);
-    const [chartData, setChartData] = useState({ labels: [], datasets: [] });
-    const [chartLoading, setChartLoading] = useState(true);
-    
-    // Stats states
-    const [consistencyPercent, setConsistencyPercent] = useState(0);
-    const [todayIbadahCount, setTodayIbadahCount] = useState(0);
+    const {
+        chartDays, setChartDays,
+        chartData, chartLoading,
+        consistencyPercent, todayIbadahCount
+    } = useProfileStats(currentUser);
     
     // Security states
     const providerData = currentUser?.providerData || [];
@@ -116,69 +96,7 @@ export default function Profile() {
         }
     }, [currentUser]);
 
-    useEffect(() => {
-        if (!currentUser) return;
-        const fetchChartData = async () => {
-            const today = new Date();
-            const tasks = [];
-            for (let i = chartDays - 1; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(today.getDate() - i);
-                
-                const offset = d.getTimezoneOffset();
-                const localDate = new Date(d.getTime() - (offset * 60 * 1000));
-                const dateKey = localDate.toISOString().split('T')[0];
-                const label = d.toLocaleDateString('id-ID', { weekday: 'short' });
-                
-                tasks.push(
-                    getDoc(doc(db, "users", currentUser.uid, "daily_records", dateKey))
-                        .then(snap => ({ snap, label }))
-                );
-            }
-            try {
-                const results = await Promise.all(tasks);
-                const labels = [];
-                const dataPoints = [];
-                let totalCompletedInPeriod = 0;
-                let todayCount = 0;
-                
-                results.forEach(({ snap, label }, idx) => {
-                    labels.push(label);
-                    let count = 0;
-                    if (snap.exists()) {
-                        const data = snap.data();
-                        ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'].forEach(p => { if (data[p]) count++; });
-                    }
-                    dataPoints.push(count);
-                    totalCompletedInPeriod += count;
-                    if (idx === results.length - 1) {
-                        todayCount = count;
-                    }
-                });
-                
-                const percent = Math.round((totalCompletedInPeriod / (chartDays * 5)) * 100);
-                setConsistencyPercent(Math.min(100, percent));
-                setTodayIbadahCount(todayCount);
-                
-                setChartData({
-                    labels,
-                    datasets: [{
-                        label: 'Sholat Wajib',
-                        data: dataPoints,
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                        borderWidth: 2,
-                        pointBackgroundColor: '#ffffff',
-                        pointRadius: 4,
-                        tension: 0.4,
-                        fill: true
-                    }]
-                });
-            } catch (err) { console.error("Gagal load chart data", err); }
-            finally { setChartLoading(false); }
-        };
-        fetchChartData();
-    }, [currentUser, chartDays]);
+    // Chart fetch logic moved to useProfileStats
 
     // Handle back button for Edit Modal (Pengaturan)
     useEffect(() => {
@@ -555,56 +473,12 @@ export default function Profile() {
                     </div>
                 </div>
 
-                {/* Chart Section */}
-                <div className="mt-5 md:mt-6 md:order-3 order-2">
-                    <div className="bento-card bg-white dark:bg-slate-900 p-5 md:p-8 rounded-[1.8rem] md:rounded-[2.5rem] border border-white dark:border-slate-800 shadow-sm flex flex-col min-h-[280px] md:min-h-[400px]">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-5 md:mb-10">
-                            <div>
-                                <h3 className="font-bold text-slate-800 dark:text-white text-sm md:text-lg">Tren Ibadah</h3>
-                                <p className="text-[8px] md:text-[10px] text-slate-400 uppercase tracking-[0.2em] mt-0.5">Grafik ketepatan sholat wajib</p>
-                            </div>
-
-                            <div className="relative flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-full w-full sm:w-56 shadow-inner border border-slate-200 dark:border-slate-700">
-                                <div className="absolute inset-1.5 flex pointer-events-none">
-                                    <div className="w-1/2 h-full transition-transform duration-300 ease-in-out" 
-                                         style={{ transform: chartDays === 7 ? 'translateX(0)' : 'translateX(100%)' }}>
-                                        <div className="w-full h-full bg-white dark:bg-slate-700 rounded-full shadow-sm border border-slate-200/50 dark:border-slate-600"></div>
-                                    </div>
-                                </div>
-                                <button onClick={() => setChartDays(7)} className={`relative z-10 flex-1 px-4 py-1.5 text-[8px] md:text-[10px] rounded-full uppercase tracking-widest transition-colors duration-300 whitespace-nowrap ${chartDays === 7 ? 'text-emerald-600 font-black' : 'text-slate-400 font-bold hover:text-emerald-500'}`}>
-                                    7 Hari
-                                </button>
-                                <button onClick={() => setChartDays(14)} className={`relative z-10 flex-1 px-4 py-1.5 text-[8px] md:text-[10px] rounded-full uppercase tracking-widest transition-colors duration-300 whitespace-nowrap ${chartDays === 14 ? 'text-emerald-600 font-black' : 'text-slate-400 font-bold hover:text-emerald-500'}`}>
-                                    14 Hari
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="relative flex-1 w-full min-h-[160px] flex items-center justify-center">
-                            {chartLoading ? (
-                                <div className="text-center opacity-40">
-                                    <Activity className="w-10 h-10 mx-auto text-emerald-500 mb-2 opacity-50 animate-pulse" />
-                                    <p className="text-xs font-bold text-slate-500">Memuat riwayat...</p>
-                                </div>
-                            ) : (
-                                <div className="absolute inset-0 pb-2">
-                                    <Line 
-                                        data={chartData} 
-                                        options={{
-                                            responsive: true,
-                                            maintainAspectRatio: false,
-                                            plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                                            scales: {
-                                                y: { min: 0, max: 5, ticks: { stepSize: 1 }, display: false },
-                                                x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#94a3b8' } }
-                                            }
-                                        }} 
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                <ProfileChart 
+                    chartDays={chartDays} 
+                    setChartDays={setChartDays} 
+                    chartLoading={chartLoading} 
+                    chartData={chartData} 
+                />
 
                 {/* Mobile Menu Grid */}
                 <div className="mt-4 md:mt-6 grid grid-cols-2 gap-3 md:hidden md:order-last order-3">
@@ -809,32 +683,11 @@ export default function Profile() {
                 </div>
             </div>
 
-            {/* Logout Modal */}
-            <div className={`fixed inset-0 z-[250] flex items-center justify-center pointer-events-none`}>
-                <div 
-                    className={`absolute inset-0 bg-slate-950/60 backdrop-blur-sm ${showLogoutModal ? 'opacity-100 pointer-events-auto' : 'opacity-0'}`}
-                    onClick={() => setShowLogoutModal(false)}
-                    style={{ transition: 'opacity 0.4s ease-in-out' }}
-                ></div>
-                <div 
-                    className={`relative w-[85%] max-w-[320px] bg-white dark:bg-slate-950 p-8 rounded-[3rem] shadow-2xl border border-white/10 dark:border-slate-800 transform text-center ${showLogoutModal ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-90 opacity-0'}`}
-                    style={{ transition: 'all 0.4s cubic-bezier(0.32,0.72,0,1)' }}
-                >
-                    <div className="relative w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center border border-red-100 mx-auto mb-6">
-                        <LogOut className="w-6 h-6 ml-1" />
-                    </div>
-                    <h3 className="text-lg font-black text-slate-800 dark:text-white mb-2">Ingin Keluar?</h3>
-                    <p className="text-[10px] text-slate-500 mb-8 leading-relaxed">Pastikan ibadah hari ini sudah tercatat ya!</p>
-                    <div className="flex flex-col gap-3">
-                        <button onClick={handleSignOut} className="w-full py-4 rounded-2xl bg-red-500 text-white font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-red-500/30 active:scale-95 transition">
-                            Ya, Keluar
-                        </button>
-                        <button onClick={() => setShowLogoutModal(false)} className="w-full py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold text-[10px] uppercase tracking-widest active:scale-95 transition">
-                            Batal
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <LogoutModal 
+                showLogoutModal={showLogoutModal} 
+                setShowLogoutModal={setShowLogoutModal} 
+                handleSignOut={handleSignOut} 
+            />
 
         </div>
     );

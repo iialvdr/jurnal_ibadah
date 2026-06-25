@@ -4,12 +4,12 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDX2VOndgMEIHOGnRA2O1dDa1AKmNV3H08",
-    authDomain: "jurnalibadah.firebaseapp.com",
-    projectId: "jurnalibadah",
-    storageBucket: "jurnalibadah.firebasestorage.app",
-    messagingSenderId: "142461877640",
-    appId: "1:142461877640:web:0ac0b0353bde1f32ac0e3d"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
@@ -18,4 +18,4 @@ export const db = initializeFirestore(app, {
     localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
 });
 export const provider = new GoogleAuthProvider();
-export const WEB_PUSH_VAPID_PUBLIC_KEY = "BP6hUL5kC9_IBif3EhfY4Tisz7V5sjGSmd6VVu6cUWbgZI3qb2shssNZc6y4OeDYFVdiHtEnkFFdU29XQID4htc";
+export const WEB_PUSH_VAPID_PUBLIC_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY;
