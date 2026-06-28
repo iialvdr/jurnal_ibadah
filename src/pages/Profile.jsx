@@ -16,6 +16,7 @@ import {
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { ProfileChart } from '@/components/profile/ProfileChart';
 import { LogoutModal } from '@/components/profile/LogoutModal';
+import { runThemeCircle } from '@/utils/themeTransition';
 
 export default function Profile() {
     const navigate = useNavigate();
@@ -289,7 +290,7 @@ export default function Profile() {
         };
 
         const targetDark = val === 'dark' || (val === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        runThemeCircle(targetDark, updateDOM);
+        runThemeCircle(targetDark, updateDOM, { x: window.innerWidth / 2, y: window.innerHeight / 2 });
 
         // Sync with firebase
         if (currentUser) {

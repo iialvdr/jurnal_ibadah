@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback } f
 import { auth } from '@/config/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { gooeyToast } from 'goey-toast';
+import { startReminderLoop, stopReminderLoop } from '@/modules/reminder';
 
 const AppContext = createContext(null);
 
@@ -18,6 +19,15 @@ export function AppProvider({ children }) {
     const [currentDate] = useState(new Date());
     const [trackerDate, setTrackerDate] = useState(new Date());
 
+    // Refs for reminder loop to access latest state
+    const prayerTimesRef = useRef(prayerTimes);
+    const todayRecordsRef = useRef(todayRecords);
+    const lastCityRef = useRef(lastCity);
+
+    useEffect(() => { prayerTimesRef.current = prayerTimes; }, [prayerTimes]);
+    useEffect(() => { todayRecordsRef.current = todayRecords; }, [todayRecords]);
+    useEffect(() => { lastCityRef.current = lastCity; }, [lastCity]);
+
     // Global toast function with goey-toast wrapper
     const showAppToast = useCallback((message, type = 'info') => {
         if (type === 'success') {
@@ -31,14 +41,22 @@ export function AppProvider({ children }) {
         }
     }, []);
 
-    // Removed unused window bindings
-
     // Auth listener
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setCurrentUser(user ?? null);
         });
         return () => unsubscribe();
+    }, []);
+
+    // Start local reminder loop
+    useEffect(() => {
+        startReminderLoop(
+            () => prayerTimesRef.current,
+            () => todayRecordsRef.current,
+            () => lastCityRef.current
+        );
+        return () => stopReminderLoop();
     }, []);
 
     const value = {
