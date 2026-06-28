@@ -1,3 +1,4 @@
+import React, { memo } from 'react';
 import { Activity } from 'lucide-react';
 import { Line } from 'react-chartjs-2';
 import {
@@ -22,7 +23,8 @@ ChartJS.register(
     Filler,
     Legend
 );
-export function ProfileChart({ chartDays, setChartDays, chartLoading, chartData }) {
+
+export const ProfileChart = memo(function ProfileChart({ chartDays, setChartDays, chartLoading, chartData }) {
     return (
         <div className="mt-5 md:mt-6 md:order-3 order-2">
             <div className="bento-card bg-white dark:bg-slate-900 p-5 md:p-8 rounded-[1.8rem] md:rounded-[2.5rem] border border-white dark:border-slate-800 shadow-sm flex flex-col min-h-[280px] md:min-h-[400px]">
@@ -74,4 +76,4 @@ export function ProfileChart({ chartDays, setChartDays, chartLoading, chartData 
             </div>
         </div>
     );
-}
+});

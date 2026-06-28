@@ -277,7 +277,6 @@ export default function Profile() {
         if (navigator.vibrate) navigator.vibrate(10);
         
         const updateDOM = () => {
-            setThemeVal(val);
             localStorage.setItem('jurnal_theme', val);
             
             const html = document.documentElement;
@@ -286,7 +285,13 @@ export default function Profile() {
             } else {
                 html.classList.remove('dark');
             }
-            setThemeOpen(false);
+            
+            // Tunda update state React (yang berat karena Chart) sampai animasi transisi CSS selesai (~600ms)
+            // agar main thread tidak terblokir dan animasi tetap mulus
+            setTimeout(() => {
+                setThemeVal(val);
+                setThemeOpen(false);
+            }, 600);
         };
 
         const targetDark = val === 'dark' || (val === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
