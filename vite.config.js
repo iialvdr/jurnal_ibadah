@@ -2,9 +2,38 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import basicSsl from '@vitejs/plugin-basic-ssl'
+
+const commonProxyConfig = {
+  changeOrigin: true,
+  configure: (proxy, options) => {
+    proxy.on('proxyReq', (proxyReq, req, res) => {
+      proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36');
+      proxyReq.setHeader('Referer', 'https://www.google.com/');
+      proxyReq.setHeader('Origin', 'https://www.google.com');
+    });
+  }
+};
 
 export default defineConfig({
+  server: {
+    proxy: {
+      '/api/artikel-islam': {
+        target: 'https://artikel-islam.netlify.app',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/artikel-islam/, '/.netlify/functions/api')
+      },
+      '/proxy/fir': { target: 'https://firanda.com', ...commonProxyConfig, rewrite: (p) => p.replace(/^\/proxy\/fir/, '') },
+      '/proxy/rum': { target: 'https://rumaysho.com', ...commonProxyConfig, rewrite: (p) => p.replace(/^\/proxy\/rum/, '') },
+      '/proxy/ks': { target: 'https://konsultasisyariah.com', ...commonProxyConfig, rewrite: (p) => p.replace(/^\/proxy\/ks/, '') },
+      '/proxy/msh': { target: 'https://muslimah.or.id', ...commonProxyConfig, rewrite: (p) => p.replace(/^\/proxy\/msh/, '') },
+      '/proxy/ms': { target: 'https://muslim.or.id', ...commonProxyConfig, rewrite: (p) => p.replace(/^\/proxy\/ms(?:\/|$)/, '/') },
+      '/proxy/maf': { target: 'https://muslimafiyah.com', ...commonProxyConfig, rewrite: (p) => p.replace(/^\/proxy\/maf/, '') },
+      '/proxy/kj': { target: 'https://khotbahjumat.com', ...commonProxyConfig, rewrite: (p) => p.replace(/^\/proxy\/kj/, '') }
+    }
+  },
   plugins: [
+    basicSsl(),
     tailwindcss(),
     react(),
     VitePWA({
@@ -29,7 +58,7 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.js',
       devOptions: {
-        enabled: true,
+        enabled: false,
         type: 'module'
       }
     })

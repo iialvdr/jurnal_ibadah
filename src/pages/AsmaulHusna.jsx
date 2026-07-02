@@ -1,12 +1,13 @@
 // src/pages/AsmaulHusna.jsx
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Search, X, Volume2, ChevronRight, ChevronLeft } from 'lucide-react';
+import "@aejkatappaja/phantom-ui";
 import { useApp } from '@/store/AppContext';
 
 export default function AsmaulHusna() {
     const navigate = useNavigate();
-    const { showAppToast } = useApp();
+    const { showAppToast, setModalOpen } = useApp();
     const [asmaList, setAsmaList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -18,22 +19,24 @@ export default function AsmaulHusna() {
 
     // Handle back button for Modal
     useEffect(() => {
-        let isPopped = false;
-        
-        const handlePopState = () => {
-            isPopped = true;
-            setShowModal(false);
+        const handlePopState = (e) => {
+            if (e.state?.modal !== 'asmaulHusnaModal') {
+                setShowModal(false);
+                setModalOpen(false);
+            }
         };
 
         if (showModal) {
-            window.history.pushState({ modal: 'asmaulHusnaModal' }, '');
+            if (window.history.state?.modal !== 'asmaulHusnaModal') {
+                window.history.pushState({ modal: 'asmaulHusnaModal' }, '');
+            }
             window.addEventListener('popstate', handlePopState);
         }
 
         return () => {
             if (showModal) {
                 window.removeEventListener('popstate', handlePopState);
-                if (!isPopped) {
+                if (window.history.state?.modal === 'asmaulHusnaModal') {
                     window.history.back();
                 }
             }
@@ -42,6 +45,7 @@ export default function AsmaulHusna() {
 
     useEffect(() => {
         // Gunakan dynamic import atau set langsung jika file berada di public
+import { motion } from 'framer-motion';
         fetch('/asmaul-husna.json')
             .then(r => {
                 if (!r.ok) throw new Error('Network response was not ok');
@@ -136,8 +140,12 @@ export default function AsmaulHusna() {
         if (navigator.vibrate) navigator.vibrate(10);
         setSelectedIdx(idx);
         setShowModal(true);
+        setModalOpen(true);
     };
-    const closeModal = () => setShowModal(false);
+    const closeModal = () => {
+        setShowModal(false);
+        setModalOpen(false);
+    };
     
     const changeAsma = (delta) => {
         if (navigator.vibrate) navigator.vibrate(10);
@@ -159,14 +167,14 @@ export default function AsmaulHusna() {
 
             {/* Header - glass pill */}
             <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+                <motion.div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
                     <button onClick={() => { if (navigator.vibrate) navigator.vibrate(10); navigate(-1); }}
                         className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
-                    <h2 className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2">Asmaul Husna</h2>
+                    <motion.h2 layoutId="navbar-title" className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2 animate-nav-title">Asmaul Husna</motion.h2>
                     <div className="w-10"></div>
-                </div>
+                </motion.div>
             </div>
 
             <div className="relative z-10 w-full mx-auto">
@@ -203,7 +211,12 @@ export default function AsmaulHusna() {
 
                 {/* List Container */}
                 <div className="px-5 pb-4 scroll-smooth no-scrollbar md:px-8 max-w-7xl mx-auto">
-                    <div className="space-y-3 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-4 md:space-y-0">
+                    <phantom-ui
+                        loading={loading ? '' : undefined}
+                        count={12}
+                        animation="pulse"
+                        class="space-y-3 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-4 md:space-y-0 block"
+                    >
                         {loading ? (
                             Array.from({length: 12}).map((_, i) => (
                                 <div key={i} className="animate-pulse bg-white/50 dark:bg-slate-900/50 p-5 rounded-[1.8rem] border border-white dark:border-slate-800 flex items-center gap-4">
@@ -236,7 +249,7 @@ export default function AsmaulHusna() {
                                 );
                             })
                         )}
-                    </div>
+                    </phantom-ui>
                 </div>
                 <div className="h-8"></div>
             </div>

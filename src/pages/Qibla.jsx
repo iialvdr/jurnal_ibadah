@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Compass, MapPin, Info, ChevronDown } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const KAABA_LAT = 21.422487;
 const KAABA_LNG = 39.826206;
@@ -242,7 +243,7 @@ export default function Qibla() {
                         className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
-                    <h2 className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2">Arah Kiblat</h2>
+                    <motion.h2 layoutId="navbar-title" className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2 animate-nav-title">Arah Kiblat</motion.h2>
                     <div className="w-10"></div>
                 </div>
             </div>

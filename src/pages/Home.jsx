@@ -11,7 +11,7 @@ import { calculateStreak, getStreakData, getEarnedBadges, getNextBadge } from '@
 import {
     MapPin, Moon, Sun, Timer, ListChecks, BookOpen,
     Compass, Grip, Calculator, UtensilsCrossed, BookHeart, Grid,
-    HelpCircle, ChevronRight, Sparkles, RefreshCw, Library
+    HelpCircle, ChevronRight, Sparkles, RefreshCw, Library, Newspaper
 } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { usePrayerTimes } from '@/hooks/usePrayerTimes';
@@ -19,6 +19,7 @@ import { HadithWidget } from '@/components/widgets/HadithWidget';
 import { FastingWidget } from '@/components/widgets/FastingWidget';
 import { LastReadCard } from '@/components/widgets/LastReadCard';
 import { TodayPrayerGrid } from '@/components/widgets/TodayPrayerGrid';
+import { motion } from 'framer-motion';
 
 export default function Home() {
     const navigate = useNavigate();
@@ -106,7 +107,7 @@ export default function Home() {
 
             {/* Navbar */}
             <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <div className="glass-pill flex items-center justify-between p-2 pl-3 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+                <motion.div className="glass-pill flex items-center justify-between p-2 pl-3 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
                     <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { vib(); navigate('/profile'); }}>
                         <div className="relative">
                             <img src={photoUrl} referrerPolicy="no-referrer" className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-slate-800 bg-slate-200 transition-transform group-hover:scale-105" alt="Photo" />
@@ -147,11 +148,11 @@ export default function Home() {
                             </span>
                         </button>
                     </div>
-                </div>
+                </motion.div>
             </div>
 
             {/* Content */}
-            <div className="px-5 pt-1 pb-6 space-y-5 relative z-10 md:px-8 max-w-7xl mx-auto w-full md:grid md:grid-cols-12 md:gap-6 md:space-y-0 md:items-start">
+            <div className="px-5 pt-1 pb-24 space-y-5 relative z-10 md:px-8 max-w-7xl mx-auto w-full md:grid md:grid-cols-12 md:gap-6 md:space-y-0 md:items-start">
                 {/* Left Column */}
                 <div className="flex flex-col gap-4 w-full md:col-span-5 lg:col-span-4 md:sticky md:top-24">
                     {/* Location / Prayer Card */}
@@ -195,38 +196,6 @@ export default function Home() {
 
                     {/* Feature Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 animate-fade-in-up stagger-4">
-                        <button onClick={() => { vib(); navigate('/tracker'); }}
-                            className="col-span-2 bento-card hover-emerald bg-white dark:bg-slate-900 p-5 rounded-[2rem] text-left group h-[120px] flex flex-col justify-center border border-white dark:border-slate-800 shadow-sm relative overflow-hidden">
-                            <div className="absolute right-[-10px] top-[-10px] opacity-10 group-hover:opacity-20 transition-opacity">
-                                <ListChecks className="w-24 h-24 text-emerald-500" />
-                            </div>
-                            <div className="flex items-center gap-4 relative z-10">
-                                <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800/30">
-                                    <ListChecks className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight">Jurnal Ibadah</h4>
-                                    <p className="text-[11px] font-medium text-slate-500 mt-0.5">Checklist harian</p>
-                                </div>
-                            </div>
-                        </button>
-
-                        <button onClick={() => { vib(); navigate('/quran'); }}
-                            className="col-span-2 bento-card hover-purple bg-white dark:bg-slate-900 p-5 rounded-[2rem] text-left group h-[120px] flex flex-col justify-center border border-white dark:border-slate-800 shadow-sm relative overflow-hidden">
-                            <div className="absolute right-[-10px] top-[-10px] opacity-10 group-hover:opacity-20 transition-opacity">
-                                <BookOpen className="w-24 h-24 text-purple-500" />
-                            </div>
-                            <div className="flex items-center gap-4 relative z-10">
-                                <div className="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100 dark:border-purple-800/30">
-                                    <BookOpen className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight">Al-Qur'an</h4>
-                                    <p className="text-[11px] font-medium text-slate-500 mt-0.5">Baca & terjemah</p>
-                                </div>
-                            </div>
-                        </button>
-
                         {navBtn('/hadith', 'Hadits', 'rose', Library)}
                         {navBtn('/qibla', 'Kiblat', 'teal', Compass)}
                         {navBtn('/tasbih', 'Tasbih', 'blue', Grip)}

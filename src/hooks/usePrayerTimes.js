@@ -11,13 +11,15 @@ export function usePrayerTimes(currentDate, currentUserForPushRef) {
     const [nextPrayer, setNextPrayer] = useState({ name: '...', time: '--:--' });
     const [countdown, setCountdown] = useState('--:--:--');
 
-    // Fetch jadwal sholat via API Muslim (Kemenag)
-    // Flow: koordinat → cari kota via geocode → cari ID kota Kemenag → ambil jadwal hari ini
+    // Fetch jadwal sholat via API Muslim (Kemenag) — dengan support internasional via adhan.js
+    // Flow: koordinat → deteksi negara → jika Indonesia: cari kota Kemenag → jika luar negeri / gagal: adhan.js
     const fetchJadwal = useCallback(async (lat, lng) => {
-        // Helper: fallback ke adhan.js lokal
+        // Helper: fallback ke adhan.js lokal (berlaku global, semua koordinat di dunia)
         const fallbackAdhan = (fallbackCityName) => {
             if (typeof adhan === 'undefined') return;
             const coordinates = new adhan.Coordinates(lat, lng);
+            // Pilih metode kalkulasi berdasarkan koordinat (Indonesia & Asia Tenggara → Singapore)
+            // adhan.js menghitung waktu dalam UTC, lalu device timezone menentukan tampilan lokal
             const params = adhan.CalculationMethod.Singapore();
             const times = new adhan.PrayerTimes(coordinates, currentDate, params);
             const fmt = t => t.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
@@ -27,11 +29,10 @@ export function usePrayerTimes(currentDate, currentUserForPushRef) {
                 Dzuhur: fmt(times.dhuhr), Ashar: fmt(times.asr),
                 Maghrib: fmt(times.maghrib), Isya: fmt(times.isha), Tahajud: '03:00'
             });
-            if (fallbackCityName) {
-                const formattedCity = fallbackCityName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-                setLastCity(formattedCity);
-                localStorage.setItem('last_city_name', formattedCity);
-            }
+            const cityLabel = fallbackCityName || 'Lokasi Anda';
+            const formattedCity = cityLabel.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+            setLastCity(formattedCity);
+            localStorage.setItem('last_city_name', formattedCity);
         };
         let tempCityName = null;
         let kotaId = null;
@@ -40,17 +41,24 @@ export function usePrayerTimes(currentDate, currentUserForPushRef) {
         let geoJson = null;
 
         try {
-            // Cek cache ID kota (valid 7 hari)
+            // Cek cache ID kota (valid 7 hari, dan koordinat tidak bergeser > ~50km)
             const cachedKota = localStorage.getItem('kemenag_kota_cache');
             if (cachedKota) {
                 const parsed = JSON.parse(cachedKota);
-                if (parsed.ts && Date.now() - parsed.ts < 7 * 24 * 3600 * 1000) {
+                const stillFresh = parsed.ts && Date.now() - parsed.ts < 7 * 24 * 3600 * 1000;
+                // Cek apakah lokasi bergeser signifikan (> ~0.5 derajat ≈ 55km)
+                const locChanged = parsed.lat != null && parsed.lng != null &&
+                    (Math.abs(parsed.lat - lat) > 0.5 || Math.abs(parsed.lng - lng) > 0.5);
+                if (stillFresh && !locChanged) {
                     kotaId = parsed.id;
                     kotaName = parsed.displayName || parsed.name;
                     if (lastLoggedKota !== parsed.name) {
                         console.log(`⚡ [Jadwal Sholat] Memuat dari Cache: "${kotaName}" (Data Kemenag: ${parsed.name})`);
                         lastLoggedKota = parsed.name;
                     }
+                } else if (locChanged) {
+                    console.log('📍 [Jadwal Sholat] Lokasi berubah signifikan, reset cache kota.');
+                    localStorage.removeItem('kemenag_kota_cache');
                 }
             }
 
@@ -59,7 +67,21 @@ export function usePrayerTimes(currentDate, currentUserForPushRef) {
                     // Step 1: Geocode koordinat via BigDataCloud API
                     const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=id`);
                     geoJson = await geoRes.json();
-                    
+
+                    // Deteksi negara — hanya coba API Kemenag kalau di Indonesia
+                    const countryCode = geoJson?.countryCode || '';
+                    const isIndonesia = countryCode === 'ID';
+
+                    // Ambil nama kota terbaik dari respons geocode
+                    tempCityName = geoJson?.locality || geoJson?.city || geoJson?.principalSubdivision || null;
+
+                    if (!isIndonesia) {
+                        // Luar negeri: langsung fallback ke adhan.js, skip API Kemenag
+                        console.log(`🌏 [Jadwal Sholat] Lokasi di luar Indonesia (${countryCode || 'unknown'}), gunakan adhan.js.`);
+                        fallbackAdhan(tempCityName);
+                        return;
+                    }
+
                     const candidates = [];
                     const addCand = (c) => {
                         if (!c) return;
@@ -135,18 +157,19 @@ export function usePrayerTimes(currentDate, currentUserForPushRef) {
                                 id: kotaId, 
                                 name: kotaName,
                                 displayName: displayName,
+                                lat: lat,
+                                lng: lng,
                                 ts: Date.now() 
                             }));
                             
                             tempCityName = cand;
-                            if (!tempCityName) {
-                                console.log(`✅ [Jadwal Sholat] Wilayah Asli: "${displayName}" -> Cocok dengan API Kemenag: "${kotaName}"`);
-                            }
+                            console.log(`✅ [Jadwal Sholat] Wilayah Asli: "${displayName}" -> Cocok dengan API Kemenag: "${kotaName}"`);
                             break;
                         }
                     }
                     
-                    if (!tempCityName) tempCityName = geoJson?.locality || geoJson?.city || geoJson?.principalSubdivision || 'Jakarta';
+                    // Jika tidak ketemu di Kemenag (kota kecil/pelosok), fallback ke adhan.js
+                    if (!kotaId) tempCityName = geoJson?.locality || geoJson?.city || geoJson?.principalSubdivision || null;
                 } catch (e) { }
             }
 

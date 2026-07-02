@@ -18,6 +18,7 @@ export function AppProvider({ children }) {
     const [todayRecords, setTodayRecords] = useState({});
     const [currentDate] = useState(new Date());
     const [trackerDate, setTrackerDate] = useState(new Date());
+    const [modalOpen, setModalOpen] = useState(false);
 
     // Refs for reminder loop to access latest state
     const prayerTimesRef = useRef(prayerTimes);
@@ -67,6 +68,7 @@ export function AppProvider({ children }) {
         todayRecords, setTodayRecords,
         currentDate, trackerDate, setTrackerDate,
         showAppToast,
+        modalOpen, setModalOpen,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

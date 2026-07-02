@@ -5,6 +5,7 @@ import { useApp } from '@/store/AppContext';
 import { ArrowLeft, Search, X, UtensilsCrossed, ChevronRight, Layers, ShieldCheck, Repeat, CalendarHeart, Bookmark, SearchX } from 'lucide-react';
 import { getFastingInfo, getUpcomingFasting, NIAT_DATA, NIAT_CATALOG, COLOR_MAP, CATEGORY_LABELS } from '@/modules/fasting';
 import { getHijriDate, fetchHijriDateAPI } from '@/utils/dateUtils';
+import { motion } from 'framer-motion';
 
 function NiatModal({ niatKey, onClose }) {
     const [activeKey, setActiveKey] = useState(niatKey || 'senin'); 
@@ -104,7 +105,7 @@ function NiatModal({ niatKey, onClose }) {
 
 export default function Fasting() {
     const navigate = useNavigate();
-    const { prayerTimes } = useApp();
+    const { prayerTimes, setModalOpen } = useApp();
     const [todayInfo, setTodayInfo] = useState(null);
     const [upcomingList, setUpcomingList] = useState([]);
     const [isBesok, setIsBesok] = useState(false);
@@ -113,6 +114,18 @@ export default function Fasting() {
     const [category, setCategory] = useState('semua');
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] = useState('jadwal');
+
+    const openNiatModal = (key) => {
+        if (key) {
+            setSelectedNiatKey(key);
+            setModalOpen(true);
+        }
+    };
+
+    const closeNiatModal = () => {
+        setSelectedNiatKey(null);
+        setModalOpen(false);
+    };
 
     useEffect(() => {
         const now = new Date();
@@ -136,22 +149,23 @@ export default function Fasting() {
 
     // Handle back button for Niat Modal
     useEffect(() => {
-        let isPopped = false;
-        
-        const handlePopState = () => {
-            isPopped = true;
-            setSelectedNiatKey(null);
+        const handlePopState = (e) => {
+            if (e.state?.modal !== 'niatModal') {
+                closeNiatModal();
+            }
         };
 
         if (selectedNiatKey) {
-            window.history.pushState({ modal: 'niatModal' }, '');
+            if (window.history.state?.modal !== 'niatModal') {
+                window.history.pushState({ modal: 'niatModal' }, '');
+            }
             window.addEventListener('popstate', handlePopState);
         }
 
         return () => {
             if (selectedNiatKey) {
                 window.removeEventListener('popstate', handlePopState);
-                if (!isPopped) {
+                if (window.history.state?.modal === 'niatModal') {
                     window.history.back();
                 }
             }
@@ -178,13 +192,13 @@ export default function Fasting() {
 
             {/* Sticky Header */}
             <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+                <motion.div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
                     <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
-                    <h2 className="text-sm font-black text-slate-800 dark:text-white tracking-tight text-center flex-1">Kalender Puasa</h2>
+                    <motion.h2 layoutId="navbar-title" className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2 animate-nav-title">Kalender Puasa</motion.h2>
                     <div className="w-10"></div> 
-                </div>
+                </motion.div>
             </div>
 
             <div className="relative z-10 px-5 pt-4 pb-28 md:pb-10 w-full max-w-7xl mx-auto flex flex-col gap-4 md:gap-5">
@@ -211,7 +225,7 @@ export default function Fasting() {
                     </div>
                     <div className="w-full">
                         {todayInfo ? (
-                            <div onClick={() => todayInfo.niatKey && setSelectedNiatKey(todayInfo.niatKey)}
+                            <div onClick={() => openNiatModal(todayInfo.niatKey)}
                                 className={`group animate-fade-in-up bg-white dark:bg-slate-900 rounded-[2rem] p-5 border border-white dark:border-slate-800 shadow-sm flex items-center gap-4 transition-all duration-300 ${todayInfo.niatKey ? 'cursor-pointer active:scale-[0.97] hover:shadow-md' : ''}`}
                                 style={{ animationFillMode: 'both', animationDelay: '0.05s' }}>
                                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border shadow-sm ${todayInfo.category === 'haram' ? 'text-rose-600 bg-rose-50 dark:bg-rose-900/20 border-rose-100' : 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-100'}`}>
@@ -298,7 +312,7 @@ export default function Fasting() {
                                 const catalog = NIAT_CATALOG[key];
                                 const c = COLOR_MAP[catalog?.color] || COLOR_MAP.emerald;
                                 return (
-                                    <button key={key} onClick={() => setSelectedNiatKey(key)}
+                                    <button key={key} onClick={() => openNiatModal(key)}
                                         className={`animate-fade-in-up bg-white dark:bg-slate-900 p-4 rounded-2xl border shadow-sm flex flex-col items-start text-left active:scale-[0.97] transition-all group overflow-hidden relative ${c.border} hover:shadow-md`}
                                         style={{ animationFillMode: 'both', animationDelay: `${index * 0.04}s`, minHeight: '120px' }}>
                                         
@@ -348,7 +362,7 @@ export default function Fasting() {
                         {upcomingList.map(({ date, hijri, info }, i) => {
                             const isHaram = info.category === 'haram';
                             return (
-                                <div key={i} onClick={() => !isHaram && info.niatKey && setSelectedNiatKey(info.niatKey)}
+                                <div key={i} onClick={() => !isHaram && info.niatKey && openNiatModal(info.niatKey)}
                                     className={`group animate-fade-in-up bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between transition-all duration-300 ${!isHaram ? 'cursor-pointer active:scale-[0.97] hover:shadow-md' : ''}`}
                                     style={{ animationFillMode: 'both', animationDelay: `${i * 0.04}s` }}>
                                     <div className="flex items-center gap-3">
@@ -381,7 +395,7 @@ export default function Fasting() {
             </div>
 
             {/* Modal Pop-up Niat Puasa */}
-            <NiatModal niatKey={selectedNiatKey} onClose={() => setSelectedNiatKey(null)} />
+            {selectedNiatKey && <NiatModal niatKey={selectedNiatKey} onClose={closeNiatModal} />}
         </div>
     );
 }

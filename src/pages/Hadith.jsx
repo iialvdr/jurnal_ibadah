@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, Quote, BookOpenCheck, ChevronLeft, ChevronRight, Search, Star, Info, BookOpen } from 'lucide-react';
+import "@aejkatappaja/phantom-ui";
+import { motion } from 'framer-motion';
 
 const API_BASE = 'https://api.myquran.com/v3/hadis/enc';
 
@@ -98,15 +100,15 @@ export default function Hadith() {
 
             {/* Header */}
             <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+                <motion.div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
                     <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
-                    <h1 className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2">Ensiklopedia Hadis</h1>
+                    <motion.h1 layoutId="navbar-title" className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2">Ensiklopedia Hadis</motion.h1>
                     <div className="w-10 flex items-center justify-center">
                         <BookOpenCheck className="w-4 h-4 text-emerald-500" />
                     </div>
-                </div>
+                </motion.div>
             </div>
 
             <div className="relative z-10 px-5 pt-4 pb-28 md:pb-10 w-full max-w-2xl mx-auto flex flex-col gap-4 md:gap-6">
@@ -149,6 +151,12 @@ export default function Hadith() {
                                 Hasil pencarian: "{searchKeyword}"
                             </p>
                         )}
+                        <phantom-ui
+                            loading={browseLoading ? '' : undefined}
+                            count={3}
+                            animation="pulse"
+                            class="block space-y-4"
+                        >
                         {browseLoading ? (
                             <div className="space-y-4">
                                 {[1,2,3].map(i => (
@@ -219,6 +227,7 @@ export default function Hadith() {
                                 <p className="font-bold text-slate-500 dark:text-slate-400">Tidak ada data hadis</p>
                             </div>
                         )}
+                        </phantom-ui>
                     </div>
                 )}
 
@@ -233,6 +242,12 @@ export default function Hadith() {
                                 Kembali ke {activeTab === 'browse' ? 'Jelajahi' : 'Pencarian'}
                             </button>
                         )}
+                        <phantom-ui
+                            loading={loading ? '' : undefined}
+                            count={1}
+                            animation="pulse"
+                            class="block"
+                        >
                         {loading ? (
                             <div className="bento-card bg-white dark:bg-slate-900 rounded-[2rem] border border-white dark:border-slate-800 p-8 shadow-sm animate-pulse">
                                 <div className="flex items-center gap-3 mb-6">
@@ -342,6 +357,7 @@ export default function Hadith() {
                                 <p className="text-[11px] mt-1">Coba masukkan ID yang lain</p>
                             </div>
                         )}
+                        </phantom-ui>
                     </div>
                 )}
 

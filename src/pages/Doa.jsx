@@ -1,12 +1,14 @@
 // src/pages/Doa.jsx
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, X, Info, ChevronDown, BookHeart, ChevronRight, Check } from 'lucide-react';
+import { Heart, BookHeart, Search, ArrowLeft, X, Filter, Check, Tag, ChevronDown, ChevronRight, Info } from 'lucide-react';
+import "@aejkatappaja/phantom-ui";
 import { useApp } from '@/store/AppContext';
+import { motion } from 'framer-motion';
 
 export default function Doa() {
     const navigate = useNavigate();
-    const { showAppToast } = useApp();
+    const { showAppToast, setModalOpen } = useApp();
     const [allDoa, setAllDoa] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -30,22 +32,24 @@ export default function Doa() {
 
     // Handle back button for Modal
     useEffect(() => {
-        let isPopped = false;
-        
-        const handlePopState = () => {
-            isPopped = true;
-            setShowModal(false);
+        const handlePopState = (e) => {
+            if (e.state?.modal !== 'doaModal') {
+                setShowModal(false);
+                setModalOpen(false);
+            }
         };
 
         if (showModal) {
-            window.history.pushState({ modal: 'doaModal' }, '');
+            if (window.history.state?.modal !== 'doaModal') {
+                window.history.pushState({ modal: 'doaModal' }, '');
+            }
             window.addEventListener('popstate', handlePopState);
         }
 
         return () => {
             if (showModal) {
                 window.removeEventListener('popstate', handlePopState);
-                if (!isPopped) {
+                if (window.history.state?.modal === 'doaModal') {
                     window.history.back();
                 }
             }
@@ -158,8 +162,12 @@ export default function Doa() {
         if (navigator.vibrate) navigator.vibrate(10);
         setSelected(doa); 
         setShowModal(true); 
+        setModalOpen(true);
     };
-    const closeModal = () => setShowModal(false);
+    const closeModal = () => {
+        setShowModal(false);
+        setModalOpen(false);
+    };
 
     return (
         <div id="doaContainer" className="app-view active flex flex-col h-full bg-slate-100 dark:bg-slate-950 overflow-y-auto no-scrollbar">
@@ -174,7 +182,7 @@ export default function Doa() {
                         className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
-                    <h2 className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2">Kumpulan Doa</h2>
+                    <motion.h2 layoutId="navbar-title" className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2 animate-nav-title">Kumpulan Doa</motion.h2>
                     <div className="w-10"></div>
                 </div>
             </div>
@@ -264,7 +272,12 @@ export default function Doa() {
                 </div>
 
                 {/* Doa list */}
-                <div className="px-5 pt-2 space-y-3 pb-6 md:px-8 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0 md:content-start max-w-7xl mx-auto w-full">
+                <phantom-ui
+                    loading={loading ? '' : undefined}
+                    count={8}
+                    animation="pulse"
+                    class="px-5 pt-2 space-y-3 pb-6 md:px-8 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0 md:content-start max-w-7xl mx-auto w-full block"
+                >
                     {loading ? (
                         Array.from({length: 8}).map((_, i) => (
                             <div key={i} className="animate-pulse bg-white/50 dark:bg-slate-900/50 p-5 rounded-[1.8rem] border border-white dark:border-slate-800 flex items-center gap-4">
@@ -303,7 +316,7 @@ export default function Doa() {
                         </div>
                     )}
                     <div className="h-4 md:col-span-3"></div>
-                </div>
+                </phantom-ui>
             </div>
 
             {/* Modal - Bottom Sheet */}

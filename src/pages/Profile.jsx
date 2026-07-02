@@ -17,17 +17,26 @@ import { useProfileStats } from '@/hooks/useProfileStats';
 import { ProfileChart } from '@/components/profile/ProfileChart';
 import { LogoutModal } from '@/components/profile/LogoutModal';
 import { runThemeCircle } from '@/utils/themeTransition';
+import { setViewTransitionActive } from '@/App';
+import { motion } from 'framer-motion';
 
 export default function Profile() {
     const navigate = useNavigate();
-    const { currentUser, showAppToast } = useApp();
+    const { currentUser, showAppToast, setModalOpen } = useApp();
     const [streakData, setStreakData] = useState({ current: 0, longest: 0 });
     const [notifEnabled, setNotifEnabled] = useState(false);
     const [pushSupported, setPushSupported] = useState(false);
+    const themeTimeoutRef = useRef(null);
     
     // Modal states
     const [showEditModal, setShowEditModal] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+    // Sync global modalOpen flag so BottomNav hides while any modal is open
+    useEffect(() => {
+        setModalOpen(showEditModal || showLogoutModal);
+        return () => setModalOpen(false); // reset on unmount
+    }, [showEditModal, showLogoutModal]);
     
     // Edit Form states
     const [newName, setNewName] = useState('');
@@ -273,42 +282,51 @@ export default function Profile() {
         showAppToast(val ? 'Notifikasi diaktifkan' : 'Notifikasi dinonaktifkan', val ? 'success' : 'info');
     };
 
-    const changeTheme = async (val) => {
+    const changeTheme = (val) => {
+        if (val === themeVal) {
+            setThemeOpen(false);
+            return;
+        }
+
         if (navigator.vibrate) navigator.vibrate(10);
         
+        // Bersihkan timeout sebelumnya jika nge-spam
+        if (themeTimeoutRef.current) clearTimeout(themeTimeoutRef.current);
+        
         const updateDOM = () => {
+            // Langsung update class DOM untuk view transition snapshot
             localStorage.setItem('jurnal_theme', val);
-            
             const html = document.documentElement;
             if (val === 'dark' || (val === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 html.classList.add('dark');
             } else {
                 html.classList.remove('dark');
             }
-            
-            // Tunda update state React (yang berat karena Chart) sampai animasi transisi CSS selesai (~600ms)
-            // agar main thread tidak terblokir dan animasi tetap mulus
-            setTimeout(() => {
-                setThemeVal(val);
-                setThemeOpen(false);
-            }, 600);
         };
 
-        const targetDark = val === 'dark' || (val === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        runThemeCircle(targetDark, updateDOM, { x: window.innerWidth / 2, y: window.innerHeight / 2 });
-
-        // Sync with firebase
-        if (currentUser) {
-            try {
-                const docRef = doc(db, "users", currentUser.uid, "settings", "preferences");
-                await setDoc(docRef, { theme: val }, { merge: true });
-            } catch (err) {
-                console.error("Gagal sinkron tema ke cloud:", err);
-            }
-        }
+        // Aktifkan flag: blokir MutationObserver di ThemeAwareToaster selama animasi
+        setViewTransitionActive(true);
         
-        const themeNames = { 'dark': 'Gelap', 'light': 'Terang', 'system': 'Sistem' };
-        showAppToast(`Tema diubah ke mode ${themeNames[val]}`, 'success');
+        const targetDark = val === 'dark' || (val === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        const finished = runThemeCircle(targetDark, updateDOM, { x: window.innerWidth / 2, y: window.innerHeight / 2 });
+
+        // Setelah animasi View Transition BENAR-BENAR selesai, update React state
+        finished.then(() => {
+            setViewTransitionActive(false);
+            setThemeVal(val);
+            setThemeOpen(false);
+
+            const themeNames = { 'dark': 'Gelap', 'light': 'Terang', 'system': 'Sistem' };
+            showAppToast(`Tema diubah ke mode ${themeNames[val]}`, 'success');
+
+            // Sync with firebase
+            if (currentUser) {
+                const docRef = doc(db, "users", currentUser.uid, "settings", "preferences");
+                setDoc(docRef, { theme: val }, { merge: true }).catch(err => {
+                    console.error("Gagal sinkron tema ke cloud:", err);
+                });
+            }
+        });
     };
 
     const photoUrl = currentUser?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.displayName || 'U')}&background=10b981&color=fff&size=200`;
@@ -333,7 +351,7 @@ export default function Profile() {
 
             {/* Header */}
             <div className="sticky top-0 z-[100] px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+                <motion.div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
                     <button onClick={() => { if (navigator.vibrate) navigator.vibrate(10); navigate(-1); }}
                         className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
@@ -343,10 +361,10 @@ export default function Profile() {
                         className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90">
                         <Settings2 className="w-5 h-5" />
                     </button>
-                </div>
+                </motion.div>
             </div>
 
-            <div className="relative z-10 px-5 pt-5 pb-10 w-full max-w-7xl mx-auto md:px-8">
+            <div className="relative z-10 px-5 pt-5 pb-32 w-full max-w-7xl mx-auto md:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
                     
                     {/* Main Profile Card */}

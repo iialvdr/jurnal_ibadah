@@ -1,7 +1,8 @@
 // src/pages/Credits.jsx
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Info, BookOpen, Quote, Clock, Flame, MapPin, Feather, Palette, Heart } from 'lucide-react';
+import { ArrowLeft, Info, BookOpen, Quote, Clock, Flame, MapPin, Feather, Heart, ExternalLink } from 'lucide-react';
 import { APP_VERSION } from '@/utils/version';
+import { motion } from 'framer-motion';
 
 export default function Credits() {
     const navigate = useNavigate();
@@ -10,29 +11,29 @@ export default function Credits() {
         <div className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
             <div className="fixed top-0 left-0 right-0 h-80 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
-            <div className="sticky top-0 z-[100] px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+            <div className="sticky top-0 z-[100] px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
+                <div className="flex items-center justify-between p-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
                     <button onClick={() => { if (navigator.vibrate) navigator.vibrate(10); navigate(-1); }} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
-                    <h2 className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2">Tentang Aplikasi</h2>
+                    <motion.h2 layoutId="navbar-title" className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2 animate-nav-title">Tentang Aplikasi</motion.h2>
                     <div className="w-10"></div>
                 </div>
             </div>
 
             <div className="relative z-10 px-5 pt-4 pb-12 w-full max-w-7xl mx-auto md:px-8">
                 
-                {/* Hero Header */}
-                <div className="bento-card mb-6 md:mb-8 relative overflow-hidden rounded-[2rem] bg-white dark:bg-slate-900 p-6 md:p-8 shadow-xl border border-white dark:border-slate-800">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                    <div className="absolute -left-8 bottom-0 w-28 h-28 bg-teal-500/10 rounded-full blur-3xl"></div>
-                    <div className="relative z-10 flex flex-col md:flex-row items-center md:items-center gap-5 md:gap-8">
-                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 shrink-0">
-                            <Info className="w-8 h-8 md:w-9 md:h-9" />
+                {/* Hero Banner */}
+                <div className="mb-5 relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 p-5 shadow-lg shadow-emerald-500/20">
+                    <div className="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full" />
+                    <div className="absolute -right-2 -bottom-8 w-20 h-20 bg-white/5 rounded-full" />
+                    <div className="relative z-10 flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-inner shrink-0">
+                            <Info className="w-6 h-6 text-white" />
                         </div>
-                        <div className="flex-1 text-center md:text-left">
-                            <h3 className="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight">Tentang Jurnal Ibadah</h3>
-                            <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl">Profil aplikasi, pembuat, dan sumber daya yang membantu Jurnal Ibadah tetap ringan, akurat, dan bermanfaat.</p>
+                        <div>
+                            <h3 className="text-base font-black text-white tracking-tight">Tentang Aplikasi</h3>
+                            <p className="text-[11px] text-emerald-100/80 mt-0.5 max-w-[250px]">Profil, pembuat, dan sumber daya aplikasi.</p>
                         </div>
                     </div>
                 </div>
@@ -94,31 +95,29 @@ export default function Credits() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             
-                            {[
-                                { title: 'EQuran.id API', desc: 'Al-Qur\'an & Doa', icon: BookOpen, color: 'emerald' },
-                                { title: 'MyQuran Hadis API', desc: 'Ensiklopedia Hadis', icon: Quote, color: 'rose' },
-                                { title: 'Kemenag API', desc: 'Jadwal Sholat Resmi', icon: Clock, color: 'amber' },
-                                { title: 'BigDataCloud', desc: 'Satelit Geocoder', icon: MapPin, color: 'blue' },
-                                { title: 'Adhan.js', desc: 'Jadwal (Offline)', icon: Clock, color: 'indigo' },
-                                { title: 'Lucide Icons', desc: 'Visual Assets', icon: Feather, color: 'sky' },
-                                { title: 'Firebase', desc: 'Database & Auth', icon: Flame, color: 'orange' }
+                        {[
+                                { title: 'EQuran.id API', desc: 'Al-Qur\'an & Doa', icon: BookOpen, color: 'emerald', url: 'https://equran.id' },
+                                { title: 'MyQuran Hadis API', desc: 'Ensiklopedia Hadis', icon: Quote, color: 'rose', url: 'https://myquran.com' },
+                                { title: 'Kemenag API', desc: 'Jadwal Sholat Resmi', icon: Clock, color: 'amber', url: 'https://bimasislam.kemenag.go.id' },
+                                { title: 'BigDataCloud', desc: 'Satelit Geocoder', icon: MapPin, color: 'blue', url: 'https://www.bigdatacloud.com' },
+                                { title: 'Adhan.js', desc: 'Jadwal (Offline)', icon: Clock, color: 'indigo', url: 'https://github.com/batoulapps/adhan-js' },
+                                { title: 'Lucide Icons', desc: 'Visual Assets', icon: Feather, color: 'sky', url: 'https://lucide.dev' },
+                                { title: 'Firebase', desc: 'Database & Auth', icon: Flame, color: 'orange', url: 'https://firebase.google.com' }
                             ].map((api, idx) => {
                                 const Icon = api.icon;
                                 return (
-                                    <div key={idx} className="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group">
+                                    <a key={idx} href={api.url} target="_blank" rel="noreferrer" className="bento-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-white dark:border-slate-800 shadow-sm flex items-center justify-between group hover:border-emerald-500/30 hover:shadow-md transition-all duration-200 cursor-pointer">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-9 h-9 rounded-xl bg-${api.color}-50 dark:bg-${api.color}-900/20 text-${api.color}-600 flex items-center justify-center shrink-0`}>
+                                            <div className={`w-9 h-9 rounded-xl bg-${api.color}-50 dark:bg-${api.color}-900/20 text-${api.color}-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-200`}>
                                                 <Icon className="w-4.5 h-4.5" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-bold text-slate-700 dark:text-white truncate">{api.title}</p>
+                                                <p className="text-xs font-bold text-slate-700 dark:text-white truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{api.title}</p>
                                                 <p className="text-[9px] text-slate-400 font-medium mt-0.5">{api.desc}</p>
                                             </div>
                                         </div>
-                                        <div className="w-4 h-4 rounded-full border-2 border-emerald-500/30 group-hover:bg-emerald-500 transition-colors flex items-center justify-center">
-                                            <svg className="w-2.5 h-2.5 text-white opacity-0 group-hover:opacity-100 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                                        </div>
-                                    </div>
+                                        <ExternalLink className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:text-emerald-500 transition-colors shrink-0 ml-2" />
+                                    </a>
                                 );
                             })}
 

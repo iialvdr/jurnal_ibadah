@@ -11,6 +11,7 @@ import {
 import { APP_VERSION } from '@/utils/version';
 import { Eye, EyeOff } from 'lucide-react';
 import { gooeyToast } from 'goey-toast';
+import { motion } from 'framer-motion';
 
 function getAuthError(error) {
     switch (error.code) {
@@ -149,7 +150,7 @@ export default function Login() {
                 {/* Form Card */}
                 <div className="bento-card bg-white dark:bg-slate-900 rounded-[2rem] p-5 border border-white dark:border-slate-800 shadow-sm">
                     {/* Tab Toggle */}
-                    <div className="glass-pill relative w-full bg-slate-50/70 dark:bg-slate-900/70 backdrop-blur-xl p-1 rounded-full mb-5 flex items-center shadow-sm">
+                    <motion.div className="glass-pill relative w-full bg-slate-50/70 dark:bg-slate-900/70 backdrop-blur-xl p-1 rounded-full mb-5 flex items-center shadow-sm">
                         <div 
                             className="absolute top-1 left-1 h-[calc(100%-8px)] w-[calc(50%-4px)] bg-white dark:bg-slate-800 rounded-full shadow border border-slate-100 dark:border-slate-700"
                             style={{ 
@@ -165,7 +166,7 @@ export default function Login() {
                             className={`relative z-10 flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors duration-300 ${isSignUp ? 'text-slate-800 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}>
                             Daftar
                         </button>
-                    </div>
+                    </motion.div>
 
                     {/* Sliding Form */}
                     <div className="w-full overflow-hidden">

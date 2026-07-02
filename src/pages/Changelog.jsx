@@ -2,9 +2,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, History, GitBranch, Sparkles, GitCommit, ChevronDown } from 'lucide-react';
+import "@aejkatappaja/phantom-ui";
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { useApp } from '@/store/AppContext';
+import { motion } from 'framer-motion';
 
 export default function Changelog() {
     const navigate = useNavigate();
@@ -52,32 +54,41 @@ export default function Changelog() {
         <div className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
             <div className="fixed top-0 left-0 right-0 h-80 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
-            <div className="sticky top-0 z-[100] px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+            <div className="sticky top-0 z-[100] px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
+                <div className="flex items-center justify-between p-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
                     <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
-                    <h2 className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2">Riwayat Update</h2>
-                    <div className="w-10"></div> 
+                    <motion.h2 layoutId="navbar-title" className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2 animate-nav-title">
+                        Riwayat Pembaruan
+                    </motion.h2>
+                    <div className="w-10" />
                 </div>
             </div>
 
             <div className="relative z-10 px-5 pt-4 pb-12 w-full max-w-7xl mx-auto md:px-8">
                 
-                <div className="bento-card mb-6 md:mb-8 relative overflow-hidden rounded-[2rem] bg-white dark:bg-slate-900 p-6 md:p-8 shadow-xl border border-white dark:border-slate-800">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                    <div className="absolute -left-8 bottom-0 w-28 h-28 bg-teal-500/10 rounded-full blur-3xl"></div>
-                    <div className="relative z-10 flex flex-col md:flex-row items-center md:items-center gap-5 md:gap-8">
-                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 shrink-0">
-                            <History className="w-8 h-8 md:w-9 md:h-9" />
+                {/* Hero Banner */}
+                <div className="mb-5 relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 p-5 shadow-lg shadow-emerald-500/20">
+                    <div className="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full" />
+                    <div className="absolute -right-2 -bottom-8 w-20 h-20 bg-white/5 rounded-full" />
+                    <div className="relative z-10 flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-inner shrink-0">
+                            <History className="w-6 h-6 text-white" />
                         </div>
-                        <div className="flex-1 text-center md:text-left">
-                            <h3 className="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight">Riwayat Update</h3>
-                            <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl">Catatan perubahan dan peningkatan terbaru di Jurnal Ibadah.</p>
+                        <div>
+                            <h3 className="text-base font-black text-white tracking-tight">Riwayat Pembaruan</h3>
+                            <p className="text-[11px] text-emerald-100/80 mt-0.5">Catatan perubahan di Jurnal Ibadah.</p>
                         </div>
                     </div>
                 </div>
 
+                <phantom-ui
+                    loading={loading ? '' : undefined}
+                    count={2}
+                    animation="pulse"
+                    class="block"
+                >
                 {loading ? (
                     <div className="space-y-6 md:space-y-8 ml-3 border-l-2 border-slate-200 dark:border-slate-800 pl-8 relative">
                         {[1, 2].map(i => (
@@ -146,6 +157,7 @@ export default function Changelog() {
                         })}
                     </div>
                 )}
+                </phantom-ui>
             </div>
         </div>
     );

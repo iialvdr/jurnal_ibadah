@@ -12,6 +12,7 @@ import {
 import { updateStreak } from '@/modules/streak';
 import { getHijriDate, fetchHijriDateAPI, formatDateKey } from '@/utils/dateUtils';
 import { getFastingInfo } from '@/modules/fasting';
+import { motion } from 'framer-motion';
 
 const PRAYER_CONFIG = [
     { id: 'Subuh', type: 'wajib', icon: Sunrise, bgGradient: 'from-sky-400 to-blue-500', activeBg: 'bg-sky-50 dark:bg-sky-900/20', activeBorder: 'border-sky-200 dark:border-sky-800', textActive: 'text-sky-700 dark:text-sky-300' },
@@ -264,13 +265,13 @@ export default function Tracker() {
             <div className="fixed top-0 left-0 right-0 h-64 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
             <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+                <motion.div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
                     <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
-                    <h2 className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2">Jurnal Harian</h2>
+                    <motion.h2 layoutId="navbar-title" className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2 animate-nav-title">Jurnal Harian</motion.h2>
                     <div className="w-10"></div> 
-                </div>
+                </motion.div>
             </div>
 
             <div className="relative z-10 px-5 pt-4 pb-28 md:pb-10 md:px-8 w-full max-w-7xl mx-auto md:grid md:grid-cols-12 md:gap-6 md:items-start">

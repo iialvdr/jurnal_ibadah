@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calculator, Users, Coins, Utensils, CheckCheck, Quote } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const HARGA_EMAS_DEFAULT = 1400000;
 
@@ -112,13 +113,13 @@ export default function Zakat() {
 
             {/* Header */}
             <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+                <motion.div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
                     <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
-                    <h2 className="text-sm md:text-base font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2">Kalkulator Zakat</h2>
+                    <motion.h2 layoutId="navbar-title" className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2 animate-nav-title">Kalkulator Zakat</motion.h2>
                     <div className="w-10"></div> 
-                </div>
+                </motion.div>
             </div>
 
             <div className="relative z-10 px-5 pt-1 pb-28 md:pb-6 w-full max-w-7xl mx-auto md:grid md:grid-cols-12 md:gap-8 md:items-start">

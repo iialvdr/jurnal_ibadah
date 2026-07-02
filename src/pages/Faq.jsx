@@ -6,6 +6,7 @@ import {
     Sparkles, Shield, Calculator, ListChecks, BookOpenCheck, Clock3 
 } from 'lucide-react';
 import DOMPurify from 'dompurify';
+import { motion } from 'framer-motion';
 
 const FAQ_CATEGORIES = [
     {
@@ -153,48 +154,50 @@ export default function Faq() {
             
             <div className="fixed top-0 left-0 right-0 h-64 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
-            {/* Header - Glass Pill */}
-            <div className="sticky top-0 z-[100] px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="sticky top-0 z-[100] px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
+                <div className="flex items-center justify-between p-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
                     <button onClick={() => { if (navigator.vibrate) navigator.vibrate(10); navigate(-1); }} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
-                    <h2 className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 pr-10">Pusat Bantuan</h2>
+                    <motion.h2 layoutId="navbar-title" className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2 animate-nav-title">
+                        Pusat Bantuan
+                    </motion.h2>
+                    <div className="w-10" />
                 </div>
             </div>
 
             <div className="relative z-10 px-5 pt-5 pb-10 w-full max-w-7xl mx-auto md:px-8">
                 
-                {/* Hero Section */}
-                <div className="bento-card mb-6 md:mb-8 relative overflow-hidden rounded-[2rem] bg-white dark:bg-slate-900 p-6 md:p-8 shadow-xl border border-white dark:border-slate-800">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                    <div className="absolute -left-8 bottom-0 w-28 h-28 bg-teal-500/10 rounded-full blur-3xl"></div>
-                    
-                    <div className="relative z-10 flex flex-col md:flex-row items-center md:items-center gap-5 md:gap-8">
-                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                            <HelpCircle className="w-8 h-8 md:w-9 md:h-9" />
+                {/* Hero Banner */}
+                <div className="mb-5 relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 p-5 shadow-lg shadow-emerald-500/20">
+                    <div className="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full" />
+                    <div className="absolute -right-2 -bottom-8 w-20 h-20 bg-white/5 rounded-full" />
+                    <div className="relative z-10 flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-inner shrink-0">
+                            <HelpCircle className="w-6 h-6 text-white" />
                         </div>
-                        <div className="flex-1 text-center md:text-left">
-                            <h3 className="text-xl md:text-2xl font-black text-slate-800 dark:text-white tracking-tight">Pusat Informasi & Bantuan</h3>
-                            <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl">Panduan ringkas dan jawaban penting untuk membantu kamu memakai seluruh fitur Jurnal Ibadah.</p>
-                            
-                            {/* Filter Chips */}
-                            <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-2">
-                                <button onClick={() => setFilter('all')} 
-                                    className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-colors ${filter === 'all' ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>Semua</button>
-                                <button onClick={() => setFilter('akun')} 
-                                    className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-colors ${filter === 'akun' ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>Akun</button>
-                                <button onClick={() => setFilter('ibadah')} 
-                                    className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-colors ${filter === 'ibadah' ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>Ibadah</button>
-                                <button onClick={() => setFilter('zakat')} 
-                                    className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-colors ${filter === 'zakat' ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>Zakat</button>
-                                <button onClick={() => setFilter('quran')} 
-                                    className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-colors ${filter === 'quran' ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>Qur'an & Hadits</button>
-                                <button onClick={() => setFilter('jadwal')} 
-                                    className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-colors ${filter === 'jadwal' ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>Jadwal</button>
-                            </div>
+                        <div>
+                            <h3 className="text-base font-black text-white tracking-tight">Pusat Bantuan</h3>
+                            <p className="text-[11px] text-emerald-100/80 mt-0.5 max-w-[250px]">Panduan ringkas untuk memakai seluruh fitur Jurnal Ibadah.</p>
                         </div>
                     </div>
+                </div>
+
+                {/* Filter Chips */}
+                <div className="mb-4 -mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto no-scrollbar flex gap-2 pb-1">
+                    <button onClick={() => setFilter('all')} 
+                        className={`shrink-0 px-4 py-2 rounded-full text-[11px] font-bold tracking-wide transition-colors ${filter === 'all' ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800'}`}>Semua</button>
+                    <button onClick={() => setFilter('akun')} 
+                        className={`shrink-0 px-4 py-2 rounded-full text-[11px] font-bold tracking-wide transition-colors ${filter === 'akun' ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800'}`}>Akun</button>
+                    <button onClick={() => setFilter('ibadah')} 
+                        className={`shrink-0 px-4 py-2 rounded-full text-[11px] font-bold tracking-wide transition-colors ${filter === 'ibadah' ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800'}`}>Ibadah</button>
+                    <button onClick={() => setFilter('zakat')} 
+                        className={`shrink-0 px-4 py-2 rounded-full text-[11px] font-bold tracking-wide transition-colors ${filter === 'zakat' ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800'}`}>Zakat</button>
+                    <button onClick={() => setFilter('quran')} 
+                        className={`shrink-0 px-4 py-2 rounded-full text-[11px] font-bold tracking-wide transition-colors ${filter === 'quran' ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800'}`}>Al-Qur'an & Hadits</button>
+                    <button onClick={() => setFilter('jadwal')} 
+                        className={`shrink-0 px-4 py-2 rounded-full text-[11px] font-bold tracking-wide transition-colors ${filter === 'jadwal' ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800'}`}>Jadwal</button>
                 </div>
 
                 {/* Search Bar */}

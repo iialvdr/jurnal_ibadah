@@ -1,10 +1,17 @@
 // src/App.jsx
 import { useEffect, useRef, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppProvider, useApp } from '@/store/AppContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import BottomNav from '@/components/BottomNav';
 import { GooeyToaster } from 'goey-toast';
+import { AnimatePresence, motion } from 'framer-motion';
 import 'goey-toast/styles.css';
+
+// Flag global: set ke true saat animasi View Transition sedang berjalan.
+// Ini mencegah MutationObserver memicu React re-render di tengah animasi yang menyebabkan kelap-kelip.
+export let viewTransitionActive = false;
+export function setViewTransitionActive(val) { viewTransitionActive = val; }
 
 // Lazy load pages for performance
 import { lazy, Suspense } from 'react';
@@ -23,6 +30,8 @@ const Changelog = lazy(() => import('@/pages/Changelog'));
 const Zakat = lazy(() => import('@/pages/Zakat'));
 const Faq = lazy(() => import('@/pages/Faq'));
 const Hadith = lazy(() => import('@/pages/Hadith'));
+const Artikel = lazy(() => import('@/pages/Artikel'));
+const ArtikelDetail = lazy(() => import('@/pages/ArtikelDetail'));
 
 function SplashScreen({ visible }) {
   return (
@@ -39,6 +48,34 @@ function SplashScreen({ visible }) {
   );
 }
 
+function ThemeAwareToaster() {
+  const [isDarkTheme, setIsDarkTheme] = useState(
+    () => document.documentElement.classList.contains('dark')
+  );
+  const pendingRef = useRef(null);
+
+  useEffect(() => {
+    const updateTheme = () => {
+      // Jangan update state saat animasi View Transition sedang berjalan!
+      // Mutasi DOM di tengah animasi akan membatalkan/merusak animasi (kelap-kelip).
+      if (viewTransitionActive) {
+        // Tandai bahwa ada update yang tertunda, akan dieksekusi setelah animasi selesai
+        pendingRef.current = document.documentElement.classList.contains('dark');
+        return;
+      }
+      setIsDarkTheme(document.documentElement.classList.contains('dark'));
+    };
+    
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    updateTheme();
+    
+    return () => observer.disconnect();
+  }, []);
+
+  return <GooeyToaster position="top-center" showTimestamp={false} theme={isDarkTheme ? 'dark' : 'light'} />;
+}
+
 function ProtectedRoute({ children }) {
   const { currentUser } = useApp();
   if (currentUser === undefined) return null; // loading
@@ -53,10 +90,25 @@ function PublicRoute({ children }) {
   return children;
 }
 
+function PageWrapper({ children }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="absolute inset-0 w-full h-full z-10"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 function AppShell() {
   const { currentUser } = useApp();
   const [showSplash, setShowSplash] = useState(true);
-  const [isDarkTheme, setIsDarkTheme] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (currentUser !== undefined) {
@@ -65,11 +117,10 @@ function AppShell() {
     }
   }, [currentUser]);
 
-  // Update theme-color meta tag and toast theme
+  // Update theme-color meta tag
   useEffect(() => {
     const updateThemeColor = () => {
       const isDark = document.documentElement.classList.contains('dark');
-      setIsDarkTheme(isDark);
       const color = isDark ? '#020617' : '#f8fafc';
       let metaThemeColor = document.querySelector('meta[name="theme-color"]:not([media])');
       if (!metaThemeColor) {
@@ -100,6 +151,85 @@ function AppShell() {
     };
   }, []);
 
+  useEffect(() => {
+    const container = document.getElementById('appContainer');
+    if (!container) return;
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    const handleTouchStart = (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    };
+
+    const handleTouchEnd = (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      touchEndY = e.changedTouches[0].screenY;
+      handleSwipe(e);
+    };
+
+    const handleSwipe = (e) => {
+      const xDiff = touchStartX - touchEndX;
+      const yDiff = Math.abs(touchStartY - touchEndY);
+      
+      // Jika usapan lebih banyak ke arah vertikal, abaikan (itu adalah scroll biasa)
+      if (yDiff > 40) return;
+
+      // Cek apakah target atau parent-nya bisa di-scroll secara horizontal (misal list kategori)
+      let node = e.target;
+      let isScrollable = false;
+      while (node && node !== container) {
+        if (node.scrollWidth > node.clientWidth) {
+          const style = window.getComputedStyle(node);
+          if (style.overflowX === 'auto' || style.overflowX === 'scroll') {
+            isScrollable = true;
+            break;
+          }
+        }
+        node = node.parentNode;
+      }
+      if (isScrollable) return;
+
+      const MAIN_TABS = ['/', '/tracker', '/quran', '/artikel', '/profile'];
+      const currentPath = location.pathname === '/' ? '/' : '/' + location.pathname.split('/')[1];
+      const currentIndex = MAIN_TABS.indexOf(currentPath);
+      
+      // Hanya aktif jika pengguna berada tepat di salah satu root tab
+      if (currentIndex === -1 || location.pathname !== currentPath) return;
+
+      if (xDiff > 60) {
+        // Swipe ke kiri -> Next tab
+        if (currentIndex < MAIN_TABS.length - 1) {
+          if (navigator.vibrate) navigator.vibrate(10);
+          navigate(MAIN_TABS[currentIndex + 1], { 
+            replace: currentPath !== '/', 
+            state: { fromHome: true } 
+          });
+        }
+      } else if (xDiff < -60) {
+        // Swipe ke kanan -> Prev tab
+        if (currentIndex > 0) {
+          if (navigator.vibrate) navigator.vibrate(10);
+          navigate(MAIN_TABS[currentIndex - 1], { 
+            replace: currentPath !== '/', 
+            state: { fromHome: true } 
+          });
+        }
+      }
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [location.pathname, navigate]);
+
   return (
     <div className="bg-slate-50 dark:bg-slate-950 block h-[100dvh] text-slate-800 dark:text-slate-200 overflow-hidden relative selection:bg-emerald-500 selection:text-white">
       <SplashScreen visible={showSplash} />
@@ -113,35 +243,41 @@ function AppShell() {
       </div>
 
       {/* Main App Container */}
-      <div className="relative z-10 w-full h-full md:max-w-[95%] xl:max-w-[1400px] md:mx-auto md:h-[95vh] md:mt-[2.5vh] md:rounded-3xl md:border md:border-white/50 md:dark:border-slate-800 md:shadow-2xl md:backdrop-blur-2xl bg-white/40 dark:bg-slate-900/40 overflow-hidden flex flex-col transition-all duration-500">
+      <div className="relative z-10 w-full h-full md:max-w-[95%] xl:max-w-[1400px] md:mx-auto md:h-[95vh] md:mt-[2.5vh] md:rounded-3xl md:border md:border-white/50 md:dark:border-slate-800 md:shadow-2xl md:backdrop-blur-2xl bg-white/40 dark:bg-slate-900/40 overflow-hidden flex flex-col">
         <div className="flex-1 relative h-full overflow-hidden flex flex-col" id="appContainer">
           <ErrorBoundary>
             <Suspense fallback={null}>
-              <Routes>
-                <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-                <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-                <Route path="/tracker" element={<ProtectedRoute><Tracker /></ProtectedRoute>} />
-                <Route path="/tasbih" element={<ProtectedRoute><Tasbih /></ProtectedRoute>} />
-                <Route path="/qibla" element={<ProtectedRoute><Qibla /></ProtectedRoute>} />
-                <Route path="/quran" element={<ProtectedRoute><Quran /></ProtectedRoute>} />
-                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                <Route path="/doa" element={<ProtectedRoute><Doa /></ProtectedRoute>} />
-                <Route path="/asmaul-husna" element={<ProtectedRoute><AsmaulHusna /></ProtectedRoute>} />
-                <Route path="/fasting" element={<ProtectedRoute><Fasting /></ProtectedRoute>} />
-                <Route path="/credits" element={<ProtectedRoute><Credits /></ProtectedRoute>} />
-                <Route path="/changelog" element={<ProtectedRoute><Changelog /></ProtectedRoute>} />
-                <Route path="/zakat" element={<ProtectedRoute><Zakat /></ProtectedRoute>} />
-                <Route path="/faq" element={<ProtectedRoute><Faq /></ProtectedRoute>} />
-                <Route path="/hadith" element={<ProtectedRoute><Hadith /></ProtectedRoute>} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+              <AnimatePresence mode="popLayout">
+                <Routes location={location} key={location.pathname}>
+                  <Route path="/login" element={<PublicRoute><PageWrapper><Login /></PageWrapper></PublicRoute>} />
+                  <Route path="/" element={<ProtectedRoute><PageWrapper><Home /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/tracker" element={<ProtectedRoute><PageWrapper><Tracker /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/tasbih" element={<ProtectedRoute><PageWrapper><Tasbih /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/qibla" element={<ProtectedRoute><PageWrapper><Qibla /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/quran" element={<ProtectedRoute><PageWrapper><Quran /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/profile" element={<ProtectedRoute><PageWrapper><Profile /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/doa" element={<ProtectedRoute><PageWrapper><Doa /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/asmaul-husna" element={<ProtectedRoute><PageWrapper><AsmaulHusna /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/fasting" element={<ProtectedRoute><PageWrapper><Fasting /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/credits" element={<ProtectedRoute><PageWrapper><Credits /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/changelog" element={<ProtectedRoute><PageWrapper><Changelog /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/zakat" element={<ProtectedRoute><PageWrapper><Zakat /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/faq" element={<ProtectedRoute><PageWrapper><Faq /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/hadith" element={<ProtectedRoute><PageWrapper><Hadith /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/artikel" element={<ProtectedRoute><PageWrapper><Artikel /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/artikel/:sourceId/:articleId" element={<ProtectedRoute><PageWrapper><ArtikelDetail /></PageWrapper></ProtectedRoute>} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </AnimatePresence>
             </Suspense>
           </ErrorBoundary>
         </div>
         
+        <BottomNav />
+        
         {/* Global Toast (Constrained to container) */}
         <div className="absolute inset-0 pointer-events-none z-[9999] app-toast-container">
-            <GooeyToaster position="top-center" showTimestamp={false} theme={isDarkTheme ? 'dark' : 'light'} />
+            <ThemeAwareToaster />
         </div>
       </div>
     </div>
