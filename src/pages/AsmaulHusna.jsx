@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, X, Volume2, ChevronRight, ChevronLeft } from 'lucide-react';
 import "@aejkatappaja/phantom-ui";
 import { useApp } from '@/store/AppContext';
+import { motion } from 'framer-motion';
 
 export default function AsmaulHusna() {
     const navigate = useNavigate();
@@ -45,7 +46,6 @@ export default function AsmaulHusna() {
 
     useEffect(() => {
         // Gunakan dynamic import atau set langsung jika file berada di public
-import { motion } from 'framer-motion';
         fetch('/asmaul-husna.json')
             .then(r => {
                 if (!r.ok) throw new Error('Network response was not ok');
