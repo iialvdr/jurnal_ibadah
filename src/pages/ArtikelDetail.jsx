@@ -912,8 +912,8 @@ export default function ArtikelDetail() {
         return (
             <div className="app-view active absolute inset-0 z-50 overflow-hidden bg-slate-50 dark:bg-slate-950">
                 <div className="fixed top-0 left-0 right-0 h-64 bg-gradient-to-b from-emerald-500/8 to-transparent pointer-events-none z-0" />
-                <div className="sticky top-0 z-[100] px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                    <div className="relative flex items-center justify-between p-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+                <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
+                    <div className="glass-pill relative flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
                         <button onClick={handleBack} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90">
                             <ArrowLeft className="w-5 h-5" />
                         </button>
@@ -946,8 +946,8 @@ export default function ArtikelDetail() {
     if (error || !detail) {
         return (
             <div className="app-view active flex flex-col h-full absolute inset-0 z-50 overflow-hidden bg-slate-50 dark:bg-slate-950">
-                <div className="sticky top-0 z-[100] px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                    <div className="flex items-center p-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+                <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
+                    <div className="glass-pill flex items-center p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
                         <button onClick={handleBack} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 transition active:scale-90">
                             <ArrowLeft className="w-5 h-5" />
                         </button>
@@ -1033,8 +1033,8 @@ export default function ArtikelDetail() {
             <div className="fixed top-0 left-0 right-0 h-64 bg-gradient-to-b from-emerald-500/8 via-emerald-500/4 to-transparent pointer-events-none z-0" />
 
             {/* ─── Sticky Header ─── */}
-            <div className="sticky top-0 z-[100] px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <div className="relative flex items-center p-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+            <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
+                <div className="glass-pill relative flex items-center p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
                     <button onClick={handleBack} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group shrink-0">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
