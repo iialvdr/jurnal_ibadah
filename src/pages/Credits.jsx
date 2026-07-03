@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Info, BookOpen, Quote, Clock, Flame, MapPin, Feather, Heart, ExternalLink } from 'lucide-react';
 import { APP_VERSION } from '@/utils/version';
 import { motion } from 'framer-motion';
+import TopNavConfig from '@/components/TopNavConfig';
 
 export default function Credits() {
     const navigate = useNavigate();
@@ -11,15 +12,16 @@ export default function Credits() {
         <div className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
             <div className="fixed top-0 left-0 right-0 h-80 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
-            <div className="sticky top-0 z-[100] px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <div className="flex items-center justify-between p-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+            <TopNavConfig 
+                leftNode={
                     <button onClick={() => { if (navigator.vibrate) navigator.vibrate(10); navigate(-1); }} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
-                    <motion.h2 layoutId="navbar-title" className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2 animate-nav-title">Tentang Aplikasi</motion.h2>
-                    <div className="w-10"></div>
-                </div>
-            </div>
+                }
+                titleNode="Tentang Aplikasi"
+                rightNode={<div className="w-10"></div>}
+            />
+            <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
             <div className="relative z-10 px-5 pt-4 pb-12 w-full max-w-7xl mx-auto md:px-8">
                 

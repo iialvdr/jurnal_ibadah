@@ -13,6 +13,7 @@ import {
     Compass, Grip, Calculator, UtensilsCrossed, BookHeart, Grid,
     HelpCircle, ChevronRight, Sparkles, RefreshCw, Library, Newspaper
 } from 'lucide-react';
+import TopNavConfig from '@/components/TopNavConfig';
 import { useTheme } from '@/hooks/useTheme';
 import { usePrayerTimes } from '@/hooks/usePrayerTimes';
 import { HadithWidget } from '@/components/widgets/HadithWidget';
@@ -105,11 +106,11 @@ export default function Home() {
         <div id="homeView" className="app-view active flex flex-col h-full overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar transition-colors duration-300">
             <div className="fixed top-0 left-0 right-0 h-80 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
-            {/* Navbar */}
-            <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <motion.div className="glass-pill flex items-center justify-between p-2 pl-3 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+            {/* Navbar Config */}
+            <TopNavConfig 
+                leftNode={
                     <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { vib(); navigate('/profile'); }}>
-                        <div className="relative">
+                        <div className="relative shrink-0">
                             <img src={photoUrl} referrerPolicy="no-referrer" className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-slate-800 bg-slate-200 transition-transform group-hover:scale-105" alt="Photo" />
                             <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full"></div>
                         </div>
@@ -120,6 +121,8 @@ export default function Home() {
                             <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 leading-tight">{hijriDate || 'Memuat...'}</p>
                         </div>
                     </div>
+                }
+                rightNode={
                     <div className="flex items-center gap-1.5 pr-1">
                         {streakData.current > 0 && (
                             <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full border transition-all duration-300 ${streakData.current >= 30 ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/40' : streakData.current >= 14 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/40' : streakData.current >= 7 ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800/40' : 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800/40'}`}>
@@ -148,8 +151,9 @@ export default function Home() {
                             </span>
                         </button>
                     </div>
-                </motion.div>
-            </div>
+                }
+            />
+            <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
             {/* Content */}
             <div className="px-5 pt-1 pb-24 space-y-5 relative z-10 md:px-8 max-w-7xl mx-auto w-full md:grid md:grid-cols-12 md:gap-6 md:space-y-0 md:items-start">

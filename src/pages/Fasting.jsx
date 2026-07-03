@@ -6,6 +6,7 @@ import { ArrowLeft, Search, X, UtensilsCrossed, ChevronRight, Layers, ShieldChec
 import { getFastingInfo, getUpcomingFasting, NIAT_DATA, NIAT_CATALOG, COLOR_MAP, CATEGORY_LABELS } from '@/modules/fasting';
 import { getHijriDate, fetchHijriDateAPI } from '@/utils/dateUtils';
 import { motion } from 'framer-motion';
+import TopNavConfig from '@/components/TopNavConfig';
 
 function NiatModal({ niatKey, onClose }) {
     const [activeKey, setActiveKey] = useState(niatKey || 'senin'); 
@@ -191,15 +192,16 @@ export default function Fasting() {
             <div className="fixed top-0 left-0 right-0 h-80 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
             {/* Sticky Header */}
-            <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <motion.div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+            <TopNavConfig 
+                leftNode={
                     <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
-                    <motion.h2 layoutId="navbar-title" className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2 animate-nav-title">Kalender Puasa</motion.h2>
-                    <div className="w-10"></div> 
-                </motion.div>
-            </div>
+                }
+                titleNode="Kalender Puasa"
+                rightNode={<div className="w-10"></div>}
+            />
+            <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
             <div className="relative z-10 px-5 pt-4 pb-28 md:pb-10 w-full max-w-7xl mx-auto flex flex-col gap-4 md:gap-5">
                 

@@ -7,6 +7,7 @@ import BottomNav from '@/components/BottomNav';
 import { GooeyToaster } from 'goey-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import 'goey-toast/styles.css';
+import TopNav from '@/components/TopNav';
 
 // Flag global: set ke true saat animasi View Transition sedang berjalan.
 // Ini mencegah MutationObserver memicu React re-render di tengah animasi yang menyebabkan kelap-kelip.
@@ -244,6 +245,7 @@ function AppShell() {
 
       {/* Main App Container */}
       <div className="relative z-10 w-full h-full md:max-w-[95%] xl:max-w-[1400px] md:mx-auto md:h-[95vh] md:mt-[2.5vh] md:rounded-3xl md:border md:border-white/50 md:dark:border-slate-800 md:shadow-2xl md:backdrop-blur-2xl bg-white/40 dark:bg-slate-900/40 overflow-hidden flex flex-col">
+        <TopNav />
         <div className="flex-1 relative h-full overflow-hidden flex flex-col" id="appContainer">
           <ErrorBoundary>
             <Suspense fallback={null}>

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Clock, RefreshCw, AlertCircle, Share2, ExternalLink, Tag } from 'lucide-react';
+import { ArrowLeft, Share2, Tag, Calendar, User, Search, RefreshCw, AlertCircle } from 'lucide-react';
 import "@aejkatappaja/phantom-ui";
+import TopNavConfig from '@/components/TopNavConfig';
 import { motion } from 'framer-motion';
 
 const API_ROOT = import.meta.env.DEV ? '/api/artikel-islam' : 'https://artikel-islam.netlify.app/.netlify/functions/api';
@@ -912,16 +913,14 @@ export default function ArtikelDetail() {
         return (
             <div className="app-view active absolute inset-0 z-50 overflow-hidden bg-slate-50 dark:bg-slate-950">
                 <div className="fixed top-0 left-0 right-0 h-64 bg-gradient-to-b from-emerald-500/8 to-transparent pointer-events-none z-0" />
-                <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                    <div className="glass-pill relative flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
-                        <button onClick={handleBack} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90">
-                            <ArrowLeft className="w-5 h-5" />
-                        </button>
-                        <p className="text-sm font-black text-slate-800 dark:text-white flex-1 text-center px-2 truncate">Memuat...</p>
-                        <div className="w-10" />
-                        <ScrollProgress />
-                    </div>
-                </div>
+                <TopNavConfig 
+                    leftNode={<button onClick={handleBack} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90"><ArrowLeft className="w-5 h-5" /></button>}
+                    titleNode="Memuat..."
+                    rightNode={<div className="w-10" />}
+                    extraNode={<ScrollProgress />}
+                    className="relative"
+                />
+                <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
                 <div className="px-4 pt-2 pb-16 w-full max-w-3xl mx-auto md:px-8 mt-4">
                     <div className="w-full h-52 rounded-2xl bg-slate-200 dark:bg-slate-800/60 animate-pulse mb-6" />
                     <div className="mb-6 space-y-3">
@@ -946,15 +945,12 @@ export default function ArtikelDetail() {
     if (error || !detail) {
         return (
             <div className="app-view active flex flex-col h-full absolute inset-0 z-50 overflow-hidden bg-slate-50 dark:bg-slate-950">
-                <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                    <div className="glass-pill flex items-center p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
-                        <button onClick={handleBack} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 transition active:scale-90">
-                            <ArrowLeft className="w-5 h-5" />
-                        </button>
-                        <p className="text-sm font-black text-slate-800 dark:text-white flex-1 text-center px-2">Gagal Memuat</p>
-                        <div className="w-10" />
-                    </div>
-                </div>
+                <TopNavConfig 
+                    leftNode={<button onClick={handleBack} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 transition active:scale-90"><ArrowLeft className="w-5 h-5" /></button>}
+                    titleNode="Gagal Memuat"
+                    rightNode={<div className="w-10" />}
+                />
+                <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
                 <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
                     <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
                         <AlertCircle className="w-8 h-8 text-red-400" />
@@ -1033,18 +1029,22 @@ export default function ArtikelDetail() {
             <div className="fixed top-0 left-0 right-0 h-64 bg-gradient-to-b from-emerald-500/8 via-emerald-500/4 to-transparent pointer-events-none z-0" />
 
             {/* ─── Sticky Header ─── */}
-            <div className="sticky top-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <div className="glass-pill relative flex items-center p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+            <TopNavConfig 
+                leftNode={
                     <button onClick={handleBack} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group shrink-0">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
-                    <p className="text-sm font-black text-slate-800 dark:text-white flex-1 text-center px-2 truncate">Baca Artikel</p>
+                }
+                titleNode="Baca Artikel"
+                rightNode={
                     <button onClick={handleShare} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group shrink-0" title="Bagikan Artikel">
                         <Share2 className="w-[18px] h-[18px] group-hover:scale-110 transition" />
                     </button>
-                    <ScrollProgress />
-                </div>
-            </div>
+                }
+                extraNode={<ScrollProgress />}
+                className="relative"
+            />
+            <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
             {/* ─── Content ─── */}
             <div className="relative z-10 px-4 pt-2 pb-24 w-full max-w-3xl mx-auto md:px-8 mt-2">

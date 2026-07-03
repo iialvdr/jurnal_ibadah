@@ -19,6 +19,7 @@ import { LogoutModal } from '@/components/profile/LogoutModal';
 import { runThemeCircle } from '@/utils/themeTransition';
 import { setViewTransitionActive } from '@/App';
 import { motion } from 'framer-motion';
+import TopNavConfig from '@/components/TopNavConfig';
 
 export default function Profile() {
     const navigate = useNavigate();
@@ -350,19 +351,22 @@ export default function Profile() {
             <div className="fixed top-0 left-0 right-0 h-64 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
             {/* Header */}
-            <div className="sticky top-0 z-[100] px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <motion.div className="glass-pill flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
+            <TopNavConfig 
+                leftNode={
                     <button onClick={() => { if (navigator.vibrate) navigator.vibrate(10); navigate(-1); }}
                         className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
-                    <h2 className="text-sm font-bold text-slate-800 dark:text-white tracking-tight">Profil Saya</h2>
+                }
+                titleNode="Profil Saya"
+                rightNode={
                     <button onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setShowEditModal(true); }}
                         className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90">
                         <Settings2 className="w-5 h-5" />
                     </button>
-                </motion.div>
-            </div>
+                }
+            />
+            <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
             <div className="relative z-10 px-5 pt-5 pb-32 w-full max-w-7xl mx-auto md:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">

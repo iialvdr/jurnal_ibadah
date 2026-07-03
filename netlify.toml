@@ -3,44 +3,8 @@
   publish = "dist"
 
 [[redirects]]
-  from = "/proxy/fir/*"
-  to = "https://firanda.com/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/proxy/rum/*"
-  to = "https://rumaysho.com/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/proxy/ks/*"
-  to = "https://konsultasisyariah.com/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/proxy/ms/*"
-  to = "https://muslim.or.id/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/proxy/msh/*"
-  to = "https://muslimah.or.id/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/proxy/maf/*"
-  to = "https://muslimafiyah.com/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/proxy/kj/*"
-  to = "https://khotbahjumat.com/:splat"
+  from = "/proxy/*"
+  to = "/.netlify/functions/proxy"
   status = 200
   force = true
 
