@@ -118,6 +118,14 @@ function AppShell() {
     }
   }, [currentUser]);
 
+  const { setBottomNavExtraNode } = useApp();
+  useEffect(() => {
+    const routesWithExtraNode = ['/tracker', '/fasting', '/zakat', '/hadith'];
+    if (!routesWithExtraNode.includes(location.pathname)) {
+      setBottomNavExtraNode(null);
+    }
+  }, [location.pathname, setBottomNavExtraNode]);
+
   // Update theme-color meta tag
   useEffect(() => {
     const updateThemeColor = () => {
@@ -152,84 +160,60 @@ function AppShell() {
     };
   }, []);
 
-  useEffect(() => {
-    const container = document.getElementById('appContainer');
-    if (!container) return;
 
-    let touchStartX = 0;
-    let touchEndX = 0;
-    let touchStartY = 0;
-    let touchEndY = 0;
+  const touchStartRef = useRef({ x: 0, y: 0 });
 
-    const handleTouchStart = (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-      touchStartY = e.changedTouches[0].screenY;
+  const handleGlobalTouchStart = (e) => {
+    touchStartRef.current = {
+      x: e.changedTouches[0].screenX,
+      y: e.changedTouches[0].screenY
     };
+  };
 
-    const handleTouchEnd = (e) => {
-      touchEndX = e.changedTouches[0].screenX;
-      touchEndY = e.changedTouches[0].screenY;
-      handleSwipe(e);
-    };
+  const handleGlobalTouchEnd = (e) => {
+    const touchEndX = e.changedTouches[0].screenX;
+    const touchEndY = e.changedTouches[0].screenY;
+    const touchStartX = touchStartRef.current.x;
+    const touchStartY = touchStartRef.current.y;
+    
+    const xDiff = touchStartX - touchEndX;
+    const yDiff = Math.abs(touchStartY - touchEndY);
+    
+    if (yDiff > 40) return;
 
-    const handleSwipe = (e) => {
-      const xDiff = touchStartX - touchEndX;
-      const yDiff = Math.abs(touchStartY - touchEndY);
-      
-      // Jika usapan lebih banyak ke arah vertikal, abaikan (itu adalah scroll biasa)
-      if (yDiff > 40) return;
-
-      // Cek apakah target atau parent-nya bisa di-scroll secara horizontal (misal list kategori)
-      let node = e.target;
-      let isScrollable = false;
-      while (node && node !== container) {
-        if (node.scrollWidth > node.clientWidth) {
-          const style = window.getComputedStyle(node);
-          if (style.overflowX === 'auto' || style.overflowX === 'scroll') {
-            isScrollable = true;
-            break;
-          }
-        }
-        node = node.parentNode;
-      }
-      if (isScrollable) return;
-
-      const MAIN_TABS = ['/', '/tracker', '/quran', '/artikel', '/profile'];
-      const currentPath = location.pathname === '/' ? '/' : '/' + location.pathname.split('/')[1];
-      const currentIndex = MAIN_TABS.indexOf(currentPath);
-      
-      // Hanya aktif jika pengguna berada tepat di salah satu root tab
-      if (currentIndex === -1 || location.pathname !== currentPath) return;
-
-      if (xDiff > 60) {
-        // Swipe ke kiri -> Next tab
-        if (currentIndex < MAIN_TABS.length - 1) {
-          if (navigator.vibrate) navigator.vibrate(10);
-          navigate(MAIN_TABS[currentIndex + 1], { 
-            replace: currentPath !== '/', 
-            state: { fromHome: true } 
-          });
-        }
-      } else if (xDiff < -60) {
-        // Swipe ke kanan -> Prev tab
-        if (currentIndex > 0) {
-          if (navigator.vibrate) navigator.vibrate(10);
-          navigate(MAIN_TABS[currentIndex - 1], { 
-            replace: currentPath !== '/', 
-            state: { fromHome: true } 
-          });
+    let node = e.target;
+    const container = e.currentTarget;
+    let isScrollable = false;
+    while (node && node !== container) {
+      if (node.scrollWidth > node.clientWidth) {
+        const style = window.getComputedStyle(node);
+        if (style.overflowX === 'auto' || style.overflowX === 'scroll') {
+          isScrollable = true;
+          break;
         }
       }
-    };
+      node = node.parentNode;
+    }
+    if (isScrollable) return;
 
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    const MAIN_TABS = ['/', '/tracker', '/quran', '/artikel', '/profile'];
+    const currentPath = location.pathname === '/' ? '/' : '/' + location.pathname.split('/')[1];
+    const currentIndex = MAIN_TABS.indexOf(currentPath);
+    
+    if (currentIndex === -1 || location.pathname !== currentPath) return;
 
-    return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [location.pathname, navigate]);
+    if (xDiff > 60) {
+      if (currentIndex < MAIN_TABS.length - 1) {
+        if (navigator.vibrate) navigator.vibrate(10);
+        navigate(MAIN_TABS[currentIndex + 1], { replace: currentPath !== '/', state: { fromHome: true } });
+      }
+    } else if (xDiff < -60) {
+      if (currentIndex > 0) {
+        if (navigator.vibrate) navigator.vibrate(10);
+        navigate(MAIN_TABS[currentIndex - 1], { replace: currentPath !== '/', state: { fromHome: true } });
+      }
+    }
+  };
 
   return (
     <div className="bg-slate-50 dark:bg-slate-950 block h-[100dvh] text-slate-800 dark:text-slate-200 overflow-hidden relative selection:bg-emerald-500 selection:text-white">
@@ -245,8 +229,8 @@ function AppShell() {
 
       {/* Main App Container */}
       <div className="relative z-10 w-full h-full md:max-w-[95%] xl:max-w-[1400px] md:mx-auto md:h-[95vh] md:mt-[2.5vh] md:rounded-3xl md:border md:border-white/50 md:dark:border-slate-800 md:shadow-2xl md:backdrop-blur-2xl bg-white/40 dark:bg-slate-900/40 overflow-hidden flex flex-col">
-        <TopNav />
-        <div className="flex-1 relative h-full overflow-hidden flex flex-col" id="appContainer">
+        {location.pathname !== '/login' && <TopNav />}
+        <div className="flex-1 relative h-full overflow-hidden flex flex-col" id="appContainer" onTouchStart={handleGlobalTouchStart} onTouchEnd={handleGlobalTouchEnd}>
           <ErrorBoundary>
             <Suspense fallback={null}>
               <AnimatePresence mode="popLayout">

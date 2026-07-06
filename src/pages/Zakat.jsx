@@ -1,9 +1,11 @@
 // src/pages/Zakat.jsx
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useApp } from '@/store/AppContext';
 import { ArrowLeft, Calculator, Users, Coins, Utensils, CheckCheck, Quote } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
+import useSwipe from '@/hooks/useSwipe';
 
 const HARGA_EMAS_DEFAULT = 1400000;
 
@@ -16,6 +18,8 @@ export default function Zakat() {
     const [activeTab, setActiveTab] = useState('maal');
     const [showModal, setShowModal] = useState(false);
     const [result, setResult] = useState(null);
+    const { setModalOpen } = useApp();
+    const dragControls = useDragControls();
 
     // Handle back button for Modal
     useEffect(() => {
@@ -40,6 +44,12 @@ export default function Zakat() {
             }
         };
     }, [showModal]);
+
+    // Sync global modalOpen flag
+    useEffect(() => {
+        setModalOpen(showModal);
+        return () => setModalOpen(false);
+    }, [showModal, setModalOpen]);
 
     // Form States
     // Maal
@@ -107,8 +117,61 @@ export default function Zakat() {
 
     const tabIndex = activeTab === 'maal' ? 0 : activeTab === 'fitrah' ? 1 : 2;
 
+    const swipeHandlers = useSwipe({
+        onSwipeLeft: () => {
+            if (activeTab === 'maal') {
+                setActiveTab('fitrah');
+                return true;
+            } else if (activeTab === 'fitrah') {
+                setActiveTab('fidyah');
+                return true;
+            }
+            return false;
+        },
+        onSwipeRight: () => {
+            if (activeTab === 'fidyah') {
+                setActiveTab('fitrah');
+                return true;
+            } else if (activeTab === 'fitrah') {
+                setActiveTab('maal');
+                return true;
+            }
+            return false;
+        }
+    });
+
+    const tabSliderContent = (
+        <>
+            <div className="absolute inset-1.5 flex pointer-events-none">
+                <div className="w-[33.333%] h-full transition-transform duration-300 ease-in-out" style={{ transform: `translateX(${tabIndex * 100}%)` }}>
+                    <div className="w-full h-full bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700"></div>
+                </div>
+            </div>
+            
+            <button onClick={() => {if(navigator.vibrate) navigator.vibrate(5); setActiveTab('maal')}} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'maal' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Maal</button>
+            <button onClick={() => {if(navigator.vibrate) navigator.vibrate(5); setActiveTab('fitrah')}} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'fitrah' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Fitrah</button>
+            <button onClick={() => {if(navigator.vibrate) navigator.vibrate(5); setActiveTab('fidyah')}} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'fidyah' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Fidyah</button>
+        </>
+    );
+
+    const { setBottomNavExtraNode } = useApp();
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.pathname !== '/zakat') {
+            setBottomNavExtraNode(null);
+            return;
+        }
+        setBottomNavExtraNode(
+            <div className="md:hidden flex w-full relative">
+                {tabSliderContent}
+            </div>
+        );
+        return () => setBottomNavExtraNode(null);
+    }, [activeTab, setBottomNavExtraNode, location.pathname]);
+
     return (
-        <div className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
+        <div {...swipeHandlers} className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
             {/* Background Gradient */}
             <div className="fixed top-0 left-0 right-0 h-80 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
@@ -124,21 +187,16 @@ export default function Zakat() {
             />
             <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
-            <div className="relative z-10 px-5 pt-1 pb-28 md:pb-6 w-full max-w-7xl mx-auto md:grid md:grid-cols-12 md:gap-8 md:items-start">
+            <div className="relative z-10 px-5 pt-1 pb-[10rem] md:pb-6 w-full max-w-7xl mx-auto md:grid md:grid-cols-12 md:gap-8 md:items-start">
                 
                 <div className="md:col-span-12 lg:col-span-8 flex flex-col gap-6">
                     
                     {/* Tab Navigation */}
-                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2.5rem)] max-w-md z-[120] md:static md:translate-x-0 md:w-full md:max-w-none bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-1.5 rounded-full flex shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-white/50 dark:border-slate-700/50">
-                        <div className="absolute inset-1.5 flex pointer-events-none">
-                            <div className="w-[33.333%] h-full transition-transform duration-300 ease-in-out" style={{ transform: `translateX(${tabIndex * 100}%)` }}>
-                                <div className="w-full h-full bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700"></div>
-                            </div>
-                        </div>
-                        
-                        <button onClick={() => {if(navigator.vibrate) navigator.vibrate(5); setActiveTab('maal')}} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'maal' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Maal</button>
-                        <button onClick={() => {if(navigator.vibrate) navigator.vibrate(5); setActiveTab('fitrah')}} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'fitrah' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Fitrah</button>
-                        <button onClick={() => {if(navigator.vibrate) navigator.vibrate(5); setActiveTab('fidyah')}} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'fidyah' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Fidyah</button>
+                    <div 
+                        className="hidden md:flex w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-1.5 rounded-full border border-white/50 dark:border-slate-700/50 relative"
+                        onPointerDown={(e) => e.stopPropagation()}
+                    >
+                        {tabSliderContent}
                     </div>
 
                     {/* Zakat Maal Form */}
@@ -251,20 +309,37 @@ export default function Zakat() {
             </div>
 
             {/* Zakat Result Modal */}
-            <div className={`fixed inset-0 z-[200] flex items-end sm:items-center justify-center pointer-events-none`}>
-                {/* Backdrop */}
-                <div 
-                    className={`absolute inset-0 bg-slate-950/60 backdrop-blur-md ${showModal ? 'opacity-100 pointer-events-auto' : 'opacity-0'}`} 
-                    onClick={() => setShowModal(false)}
-                    style={{ transition: 'opacity 0.4s ease-out' }}
-                ></div>
-                
-                {/* Modal Content */}
-                <div 
-                    className={`relative w-full sm:w-[92%] sm:max-w-lg bg-white dark:bg-slate-950 rounded-t-[2.5rem] sm:rounded-[2.5rem] px-5 py-6 sm:p-8 shadow-2xl border-t border-white/20 dark:border-slate-800 overflow-hidden pb-[calc(2rem+env(safe-area-inset-bottom))] sm:pb-8 ${showModal ? 'opacity-100 translate-y-0 sm:scale-100 pointer-events-auto' : 'opacity-0 translate-y-full sm:translate-y-10 sm:scale-95'}`}
-                    style={{ transition: 'all 0.5s cubic-bezier(0.32,0.72,0,1)' }}
-                >
-                    <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-5 sm:mb-6 shrink-0"></div>
+            <AnimatePresence>
+            {showModal && (
+                <div className={`fixed inset-0 z-[200] flex items-end sm:items-center justify-center`}>
+                    {/* Backdrop */}
+                    <motion.div 
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
+                        className={`absolute inset-0 bg-slate-950/60 backdrop-blur-md`} 
+                        onClick={() => setShowModal(false)}
+                    ></motion.div>
+                    
+                    {/* Modal Content */}
+                    <motion.div 
+                        initial={{ y: "100%", opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: "100%", opacity: 0 }}
+                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                        drag="y"
+                        dragConstraints={{ top: 0, bottom: 1000 }}
+                        dragElastic={0}
+                        onDragEnd={(e, info) => {
+                            if (info.offset.y > 100 || info.velocity.y > 500) {
+                                setShowModal(false);
+                            }
+                        }}
+                        className={`relative w-full sm:w-[92%] sm:max-w-lg bg-white dark:bg-slate-950 rounded-t-[2.5rem] sm:rounded-[2.5rem] px-5 py-6 sm:p-8 shadow-2xl border-t border-white/20 dark:border-slate-800 overflow-hidden pb-[calc(2rem+env(safe-area-inset-bottom))] sm:pb-8 pointer-events-auto`}
+                    >
+                        <div 
+                            className="w-full sm:hidden flex justify-center pb-5 pt-2 -mt-2 touch-none cursor-grab active:cursor-grabbing"
+                        >
+                            <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto sm:mb-2 shrink-0"></div>
+                        </div>
                     <div className="text-center">
                         <div className="mb-6 sm:mb-8 mt-2">
                             <p className="text-[10px] sm:text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em] mb-1 sm:mb-2">Total Wajib Zakat</p>
@@ -278,8 +353,10 @@ export default function Zakat() {
                         </div>
                         <button onClick={() => setShowModal(false)} className="w-full py-4 sm:py-5 mb-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-black uppercase tracking-widest rounded-[1.5rem] sm:rounded-[1.8rem] shadow-xl transition active:scale-[0.98] hover:opacity-90">Selesai</button>
                     </div>
-                </div>
+                </motion.div>
             </div>
+            )}
+            </AnimatePresence>
             
         </div>
     );

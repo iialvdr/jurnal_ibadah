@@ -18,8 +18,9 @@ import { ProfileChart } from '@/components/profile/ProfileChart';
 import { LogoutModal } from '@/components/profile/LogoutModal';
 import { runThemeCircle } from '@/utils/themeTransition';
 import { setViewTransitionActive } from '@/App';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
+import useSwipe from '@/hooks/useSwipe';
 
 export default function Profile() {
     const navigate = useNavigate();
@@ -32,6 +33,7 @@ export default function Profile() {
     // Modal states
     const [showEditModal, setShowEditModal] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const dragControls = useDragControls();
 
     // Sync global modalOpen flag so BottomNav hides while any modal is open
     useEffect(() => {
@@ -559,19 +561,36 @@ export default function Profile() {
             </div>
 
             {/* Edit Profile Modal */}
-            <div className={`fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-6 pointer-events-none`}>
-                <div 
-                    className={`absolute inset-0 bg-slate-950/60 backdrop-blur-md ${showEditModal ? 'opacity-100 pointer-events-auto' : 'opacity-0'}`}
-                    onClick={() => setShowEditModal(false)}
-                    style={{ transition: 'opacity 0.4s ease-in-out' }}
-                ></div>
-                <div 
-                    className={`relative w-full sm:w-[92%] sm:max-w-lg max-h-[88vh] overflow-y-auto no-scrollbar bg-white dark:bg-slate-950 p-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl border-t sm:border border-white/20 dark:border-slate-800 transform ${showEditModal ? 'translate-y-0 sm:scale-100 opacity-100 pointer-events-auto' : 'translate-y-full sm:translate-y-4 sm:scale-95 opacity-0'}`}
-                    style={{ transition: 'all 0.5s cubic-bezier(0.32,0.72,0,1)' }}
-                >
-                    <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8"></div>
+            <AnimatePresence>
+            {showEditModal && (
+                <div className={`fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-6`}>
+                    <motion.div 
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
+                        className={`absolute inset-0 bg-slate-950/60 backdrop-blur-md`}
+                        onClick={() => setShowEditModal(false)}
+                    ></motion.div>
+                    <motion.div 
+                        initial={{ y: "100%", opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: "100%", opacity: 0 }}
+                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                        drag="y"
+                        dragConstraints={{ top: 0, bottom: 1000 }}
+                        dragElastic={0}
+                        onDragEnd={(e, info) => {
+                            if (info.offset.y > 100 || info.velocity.y > 500) {
+                                setShowEditModal(false);
+                            }
+                        }}
+                        className={`relative w-full sm:w-[92%] sm:max-w-lg max-h-[88vh] flex flex-col bg-white dark:bg-slate-950 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl border-t sm:border border-white/20 dark:border-slate-800 pointer-events-auto`}
+                    >
+                        <div 
+                            className="w-full sm:hidden flex justify-center pb-6 pt-6 shrink-0 z-10 touch-none cursor-grab active:cursor-grabbing"
+                        >
+                            <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto"></div>
+                        </div>
 
-                    <div className="flex justify-between items-start mb-6">
+                    <div className="flex justify-between items-start mb-6 px-8 sm:pt-8 shrink-0 z-10">
                         <div>
                             <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Pengaturan</h3>
                             <p className="text-[10px] text-slate-400 font-medium mt-1">Sesuaikan preferensi akun kamu</p>
@@ -581,7 +600,10 @@ export default function Profile() {
                         </button>
                     </div>
 
-                    <div className="space-y-5">
+                        <div 
+                            className="flex-1 overflow-y-auto px-8 pb-8 space-y-6 no-scrollbar relative z-10"
+                            onPointerDown={(e) => e.stopPropagation()}
+                        >
                         <div>
                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1 mb-2">Nama Tampilan</label>
                             <input type="text" value={newName} onChange={e => setNewName(e.target.value)}
@@ -708,8 +730,10 @@ export default function Profile() {
                             {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
                         </button>
                     </div>
-                </div>
+                </motion.div>
             </div>
+            )}
+            </AnimatePresence>
 
             <LogoutModal 
                 showLogoutModal={showLogoutModal} 

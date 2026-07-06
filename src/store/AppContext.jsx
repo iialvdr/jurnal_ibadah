@@ -60,6 +60,8 @@ export function AppProvider({ children }) {
         return () => stopReminderLoop();
     }, []);
 
+    const [bottomNavExtraNode, setBottomNavExtraNode] = useState(null);
+
     const value = {
         currentUser, setCurrentUser,
         prayerTimes, setPrayerTimes,
@@ -69,6 +71,7 @@ export function AppProvider({ children }) {
         currentDate, trackerDate, setTrackerDate,
         showAppToast,
         modalOpen, setModalOpen,
+        bottomNavExtraNode, setBottomNavExtraNode,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

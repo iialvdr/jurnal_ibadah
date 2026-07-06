@@ -2,16 +2,19 @@
 import { useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { topNavStore } from '@/store/topNavStore';
+import { useApp } from '@/store/AppContext';
 
 export default function TopNav() {
     const { leftNode, titleNode, rightNode, extraNode, className, hide } = useSyncExternalStore(
         topNavStore.subscribe,
         topNavStore.getState
     );
+    const { modalOpen } = useApp();
+    const shouldHide = hide || modalOpen;
 
     return (
         <AnimatePresence>
-            {!hide && (
+            {!shouldHide && (
                 <motion.div 
                     initial={{ y: -50, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}

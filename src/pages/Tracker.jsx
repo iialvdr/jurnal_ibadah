@@ -1,6 +1,6 @@
 // src/pages/Tracker.jsx
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '@/store/AppContext';
 import { db } from '@/config/firebase';
 import { doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
@@ -261,6 +261,35 @@ export default function Tracker() {
 
     const { grid: calendarGrid, perfectDays } = renderCalendar();
 
+    const tabSliderContent = (
+        <>
+            <div className="absolute inset-1.5 flex pointer-events-none">
+                <div className="w-1/2 h-full transition-transform duration-300 ease-in-out" 
+                     style={{ transform: activeTab === 'daily' ? 'translateX(0)' : 'translateX(100%)' }}>
+                    <div className="w-full h-full bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700"></div>
+                </div>
+            </div>
+            <button onClick={() => setActiveTab('daily')} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'daily' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Harian</button>
+            <button onClick={() => setActiveTab('history')} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'history' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Riwayat</button>
+        </>
+    );
+
+    const { setBottomNavExtraNode } = useApp();
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.pathname !== '/tracker') {
+            setBottomNavExtraNode(null);
+            return;
+        }
+        setBottomNavExtraNode(
+            <div className="md:hidden flex w-full relative">
+                {tabSliderContent}
+            </div>
+        );
+        return () => setBottomNavExtraNode(null);
+    }, [activeTab, setBottomNavExtraNode, location.pathname]);
+
     return (
         <div className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
             <div className="fixed top-0 left-0 right-0 h-64 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
@@ -276,21 +305,14 @@ export default function Tracker() {
             />
             <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
-            <div className="relative z-10 px-5 pt-4 pb-28 md:pb-10 md:px-8 w-full max-w-7xl mx-auto md:grid md:grid-cols-12 md:gap-6 md:items-start">
+            <div className="relative z-10 px-5 pt-4 pb-40 md:pb-10 md:px-8 w-full max-w-7xl mx-auto md:grid md:grid-cols-12 md:gap-6 md:items-start">
                 
                 {/* Left Column */}
                 <div className="md:col-span-7 lg:col-span-8 flex flex-col gap-4">
                     
-                    {/* Tabs */}
-                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2.5rem)] max-w-md z-[120] md:static md:translate-x-0 md:w-full md:max-w-none bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-1.5 rounded-full flex shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-white/50 dark:border-slate-700/50">
-                        <div className="absolute inset-1.5 flex pointer-events-none">
-                            <div className="w-1/2 h-full transition-transform duration-300 ease-in-out" 
-                                 style={{ transform: activeTab === 'daily' ? 'translateX(0)' : 'translateX(100%)' }}>
-                                <div className="w-full h-full bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700"></div>
-                            </div>
-                        </div>
-                        <button onClick={() => setActiveTab('daily')} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'daily' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Harian</button>
-                        <button onClick={() => setActiveTab('history')} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'history' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Riwayat</button>
+                    {/* Tabs (Desktop Inline) */}
+                    <div className="hidden md:flex bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-1.5 rounded-full shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-white/50 dark:border-slate-700/50 relative">
+                        {tabSliderContent}
                     </div>
 
                     {/* Content Container */}

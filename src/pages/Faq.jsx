@@ -167,7 +167,7 @@ export default function Faq() {
             />
             <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
-            <div className="relative z-10 px-5 pt-5 pb-10 w-full max-w-7xl mx-auto md:px-8">
+            <div className="relative z-10 px-5 pt-5 pb-32 md:pb-12 w-full max-w-7xl mx-auto md:px-8">
                 
                 {/* Hero Banner */}
                 <div className="mb-5 relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 p-5 shadow-lg shadow-emerald-500/20">

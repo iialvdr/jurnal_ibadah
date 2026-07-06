@@ -7,6 +7,7 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { useApp } from '@/store/AppContext';
 import { motion } from 'framer-motion';
+import TopNavConfig from '@/components/TopNavConfig';
 
 export default function Changelog() {
     const navigate = useNavigate();
@@ -52,21 +53,19 @@ export default function Changelog() {
 
     return (
         <div className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
-            <div className="fixed top-0 left-0 right-0 h-80 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
-
-            <div className="sticky top-0 z-[100] px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6">
-                <div className="flex items-center justify-between p-2 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto">
-                    <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
+            <TopNavConfig 
+                leftNode={
+                    <button onClick={() => { if(navigator.vibrate) navigator.vibrate(10); navigate(-1); }} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
                     </button>
-                    <motion.h2 layoutId="navbar-title" className="text-sm font-bold text-slate-800 dark:text-white tracking-tight text-center flex-1 truncate px-2 animate-nav-title">
-                        Riwayat Pembaruan
-                    </motion.h2>
-                    <div className="w-10" />
-                </div>
-            </div>
+                }
+                titleNode="Riwayat Pembaruan"
+            />
+            <div className="fixed top-0 left-0 right-0 h-80 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
-            <div className="relative z-10 px-5 pt-4 pb-12 w-full max-w-7xl mx-auto md:px-8">
+            <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
+
+            <div className="relative z-10 px-5 pt-0 pb-32 md:pb-12 w-full max-w-7xl mx-auto md:px-8">
                 
                 {/* Hero Banner */}
                 <div className="mb-5 relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 p-5 shadow-lg shadow-emerald-500/20">
@@ -90,10 +89,10 @@ export default function Changelog() {
                     class="block"
                 >
                 {loading ? (
-                    <div className="space-y-6 md:space-y-8 ml-3 border-l-2 border-slate-200 dark:border-slate-800 pl-8 relative">
+                    <div className="space-y-6 md:space-y-8 ml-6 border-l-2 border-slate-200 dark:border-slate-800 pl-8 relative">
                         {[1, 2].map(i => (
                             <div key={i} className="space-y-4">
-                                <div className="absolute -left-[1.4rem] w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-slate-100 dark:border-slate-950 animate-pulse"></div>
+                                <div className="absolute -left-5 w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-slate-100 dark:border-slate-950 animate-pulse"></div>
                                 <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse"></div>
                                 <div className="h-28 w-full bg-white/50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-200 dark:border-slate-800 animate-pulse"></div>
                             </div>
@@ -107,7 +106,7 @@ export default function Changelog() {
                         <p className="text-[10px] font-black uppercase tracking-[0.2em]">Belum ada riwayat update.</p>
                     </div>
                 ) : (
-                    <div className="relative border-l-2 border-emerald-500/20 dark:border-emerald-500/10 ml-3 space-y-8 md:space-y-10 pb-10">
+                    <div className="relative border-l-2 border-emerald-500/20 dark:border-emerald-500/10 ml-6 space-y-8 md:space-y-10 pb-10">
                         {changelogs.map((data, index) => {
                             const dateStr = data.date ? data.date.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
                             const isLatest = index === 0;
@@ -118,8 +117,8 @@ export default function Changelog() {
                                 : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700 ring-4 ring-slate-100 dark:ring-slate-950';
 
                             return (
-                                <div key={data.id} className="relative pl-8 animate-fade-in-up" style={{ animationDelay: `${index * 100}ms` }}>
-                                    <div className={`absolute -left-[1.4rem] top-0 w-10 h-10 rounded-full ${iconBg} flex items-center justify-center z-10 transition-transform duration-300`}>
+                                <div key={data.id} className="relative pl-8 sm:pl-10 animate-fade-in-up" style={{ animationDelay: `${index * 100}ms` }}>
+                                    <div className={`absolute -left-5 top-0 w-10 h-10 rounded-full ${iconBg} flex items-center justify-center z-10 transition-transform duration-300`}>
                                         {isLatest ? <Sparkles className="w-4 h-4" /> : <GitCommit className="w-4 h-4" />}
                                     </div>
 

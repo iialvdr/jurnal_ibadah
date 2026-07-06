@@ -1,11 +1,12 @@
 // src/pages/AsmaulHusna.jsx
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { ArrowLeft, Search, Volume2, Info, Share2, X, AlertCircle, ChevronRight, ChevronLeft } from 'lucide-react';
 import "@aejkatappaja/phantom-ui";
 import TopNavConfig from '@/components/TopNavConfig';
 import { useApp } from '@/store/AppContext';
+import useSwipe from '@/hooks/useSwipe';
 
 export default function AsmaulHusna() {
     const navigate = useNavigate();
@@ -18,6 +19,7 @@ export default function AsmaulHusna() {
     const searchVisibleRef = useRef(true);
     const [selectedIdx, setSelectedIdx] = useState(null);
     const [showModal, setShowModal] = useState(false);
+    const dragControls = useDragControls();
 
     // Handle back button for Modal
     useEffect(() => {
@@ -257,19 +259,36 @@ export default function AsmaulHusna() {
             </div>
 
             {/* Modal - Bottom Sheet */}
-            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center pointer-events-none">
-                <div
-                    className={`absolute inset-0 bg-slate-950/60 backdrop-blur-md ${showModal ? 'opacity-100 pointer-events-auto' : 'opacity-0'}`}
-                    onClick={closeModal}
-                    style={{ transition: 'opacity 0.5s ease-in-out' }}
-                ></div>
+            <AnimatePresence>
+            {showModal && (
+                <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
+                        className={`absolute inset-0 bg-slate-950/60 backdrop-blur-md`}
+                        onClick={closeModal}
+                    ></motion.div>
 
-                <div
-                    className={`relative w-full sm:w-[95%] md:max-w-2xl max-h-[90vh] md:max-h-[85vh] flex flex-col bg-white dark:bg-slate-950 rounded-t-[3rem] sm:rounded-[3rem] shadow-2xl border-t border-white/20 dark:border-slate-800 md:border md:border-slate-200 dark:md:border-slate-800 transform ${showModal ? 'translate-y-0 sm:scale-100 opacity-100 pointer-events-auto' : 'translate-y-full sm:translate-y-10 sm:scale-95 opacity-0'} overflow-hidden`}
-                    style={{ transition: 'all 0.5s cubic-bezier(0.32,0.72,0,1)' }}
-                >
-                    {/* Handle */}
-                    <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mt-6 mb-2 shrink-0 md:hidden"></div>
+                    <motion.div
+                        initial={{ y: "100%", opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: "100%", opacity: 0 }}
+                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                        drag="y"
+                        dragConstraints={{ top: 0, bottom: 1000 }}
+                        dragElastic={0}
+                        onDragEnd={(e, info) => {
+                            if (info.offset.y > 100 || info.velocity.y > 500) {
+                                closeModal();
+                            }
+                        }}
+                        className={`relative w-full sm:w-[95%] md:max-w-2xl max-h-[90vh] md:max-h-[85vh] flex flex-col bg-white dark:bg-slate-950 rounded-t-[3rem] sm:rounded-[3rem] shadow-2xl border-t border-white/20 dark:border-slate-800 md:border md:border-slate-200 dark:md:border-slate-800 overflow-hidden pointer-events-auto`}
+                    >
+                        {/* Handle */}
+                        <div 
+                            className="w-full flex justify-center pb-4 pt-6 md:hidden touch-none cursor-grab active:cursor-grabbing shrink-0"
+                        >
+                            <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto shrink-0"></div>
+                        </div>
 
                     {/* Close button */}
                     <div className="absolute top-5 right-6 z-20">
@@ -280,7 +299,10 @@ export default function AsmaulHusna() {
 
                     {/* Content */}
                     {selected && (
-                        <div className="flex-1 overflow-y-auto p-6 md:p-10 no-scrollbar relative flex flex-col items-center">
+                        <div 
+                            className="flex-1 overflow-y-auto p-6 md:p-10 no-scrollbar relative flex flex-col items-center"
+                            onPointerDown={(e) => e.stopPropagation()}
+                        >
                             {/* Glow bg */}
                             <div className="absolute top-4 left-1/2 -translate-x-1/2 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -327,8 +349,10 @@ export default function AsmaulHusna() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             </div>
+            )}
+            </AnimatePresence>
         </div>
     );
 }

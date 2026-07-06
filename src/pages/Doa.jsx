@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, BookHeart, Search, ArrowLeft, X, Filter, Check, Tag, ChevronDown, ChevronRight, Info } from 'lucide-react';
 import "@aejkatappaja/phantom-ui";
 import { useApp } from '@/store/AppContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
 
 export default function Doa() {
@@ -16,6 +16,7 @@ export default function Doa() {
     const [showSearch, setShowSearch] = useState(true);
     const lastScrollY = useRef(0);
     const searchVisibleRef = useRef(true);
+    const dragControls = useDragControls();
     
     // Filter states
     const [category, setCategory] = useState('');
@@ -322,19 +323,36 @@ export default function Doa() {
             </div>
 
             {/* Modal - Bottom Sheet */}
-            <div className={`fixed inset-0 z-[200] flex items-end sm:items-center justify-center pointer-events-none`}>
-                <div
-                    className={`absolute inset-0 bg-slate-950/60 backdrop-blur-md ${showModal ? 'opacity-100 pointer-events-auto' : 'opacity-0'}`}
-                    onClick={closeModal}
-                    style={{ transition: 'opacity 0.4s ease-out' }}
-                ></div>
+            <AnimatePresence>
+            {showModal && (
+                <div className={`fixed inset-0 z-[200] flex items-end sm:items-center justify-center`}>
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
+                        className={`absolute inset-0 bg-slate-950/60 backdrop-blur-md`}
+                        onClick={closeModal}
+                    ></motion.div>
 
-                <div
-                    className={`relative w-full sm:w-[95%] md:max-w-6xl h-[85vh] flex flex-col bg-white dark:bg-slate-950 rounded-t-[3rem] sm:rounded-[3rem] shadow-2xl border-t border-white/20 dark:border-slate-800 md:border md:border-slate-200 dark:md:border-slate-800 overflow-hidden ${showModal ? 'opacity-100 translate-y-0 sm:scale-100 pointer-events-auto' : 'opacity-0 translate-y-full sm:translate-y-10 sm:scale-95'}`}
-                    style={{ transition: 'all 0.5s cubic-bezier(0.32,0.72,0,1)' }}
-                >
-                    {/* Handle */}
-                    <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mt-6 mb-2 shrink-0 md:hidden"></div>
+                    <motion.div
+                        initial={{ y: "100%", opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: "100%", opacity: 0 }}
+                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                        drag="y"
+                        dragConstraints={{ top: 0, bottom: 1000 }}
+                        dragElastic={0}
+                        onDragEnd={(e, info) => {
+                            if (info.offset.y > 100 || info.velocity.y > 500) {
+                                closeModal();
+                            }
+                        }}
+                        className={`relative w-full sm:w-[95%] md:max-w-6xl h-[85vh] flex flex-col bg-white dark:bg-slate-950 rounded-t-[3rem] sm:rounded-[3rem] shadow-2xl border-t border-white/20 dark:border-slate-800 md:border md:border-slate-200 dark:md:border-slate-800 overflow-hidden pointer-events-auto`}
+                    >
+                        {/* Handle */}
+                        <div 
+                            className="w-full flex justify-center pb-4 pt-6 md:hidden touch-none cursor-grab active:cursor-grabbing"
+                        >
+                            <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto shrink-0"></div>
+                        </div>
 
                     {/* Header */}
                     <div className="px-8 py-4 md:py-6 flex justify-between items-center shrink-0 border-b border-slate-50 dark:border-slate-900/30 bg-white dark:bg-slate-950 z-10">
@@ -355,7 +373,10 @@ export default function Doa() {
                             </div>
 
                             {/* Latin + translation */}
-                            <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 no-scrollbar bg-white dark:bg-slate-950">
+                            <div 
+                                className="flex-1 overflow-y-auto p-6 md:p-8 no-scrollbar bg-slate-50/50 dark:bg-slate-900/50"
+                                onPointerDown={(e) => e.stopPropagation()}
+                            >
                                 <div className="space-y-8">
                                     <div className="bg-slate-50 dark:bg-slate-900/50 p-6 md:p-8 rounded-[2.5rem] border border-white dark:border-slate-800">
                                         <div>
@@ -385,8 +406,11 @@ export default function Doa() {
                             </div>
                         </div>
                     )}
-                </div>
+                </motion.div>
             </div>
+            )}
+            </AnimatePresence>
+
         </div>
     );
 }

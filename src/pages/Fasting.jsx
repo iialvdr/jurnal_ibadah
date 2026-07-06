@@ -1,83 +1,73 @@
 // src/pages/Fasting.jsx
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '@/store/AppContext';
-import { ArrowLeft, Search, X, UtensilsCrossed, ChevronRight, Layers, ShieldCheck, Repeat, CalendarHeart, Bookmark, SearchX } from 'lucide-react';
+import { UtensilsCrossed, ArrowLeft, ChevronRight, X, Search, SearchX, ShieldCheck, Layers, CalendarHeart, Bookmark, Repeat } from 'lucide-react';
+import useSwipe from '@/hooks/useSwipe';
 import { getFastingInfo, getUpcomingFasting, NIAT_DATA, NIAT_CATALOG, COLOR_MAP, CATEGORY_LABELS } from '@/modules/fasting';
 import { getHijriDate, fetchHijriDateAPI } from '@/utils/dateUtils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
 
 function NiatModal({ niatKey, onClose }) {
-    const [activeKey, setActiveKey] = useState(niatKey || 'senin'); 
-    const [shouldRender, setShouldRender] = useState(!!niatKey);
-    const [isAnimating, setIsAnimating] = useState(false);
-
+    const [prevKey, setPrevKey] = useState('senin'); 
+    
     useEffect(() => {
         if (niatKey) {
-            setActiveKey(niatKey);
-            setShouldRender(true);
-            // Double rAF: pastikan browser sudah melukis frame awal (posisi tersembunyi)
-            // baru trigger class transisi agar animasi berjalan mulus
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => setIsAnimating(true));
-            });
-        } else if (shouldRender) {
-            // Parent set niatKey to null (e.g. from back button)
-            setIsAnimating(false);
-            const timer = setTimeout(() => {
-                setShouldRender(false);
-            }, 450);
-            return () => clearTimeout(timer);
+            setPrevKey(niatKey);
         }
     }, [niatKey]);
 
-    // Tutup: jalankan animasi keluar dulu, BARU panggil onClose di parent
-    const handleClose = () => {
-        setIsAnimating(false);
-        setTimeout(() => {
-            setShouldRender(false);
-            onClose();
-        }, 450);
-    };
-
-    if (!shouldRender) return null;
-
+    const dragControls = useDragControls();
+    
+    const activeKey = niatKey || prevKey;
     const niat = NIAT_DATA[activeKey] || NIAT_DATA['senin'];
     const catalog = NIAT_CATALOG[activeKey] || NIAT_CATALOG['senin'];
     const isWajib = catalog?.category === 'wajib';
 
     return (
+        <AnimatePresence>
+        {!!niatKey && (
         <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
-            <div 
+            <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
                 className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
-                style={{ 
-                    opacity: isAnimating ? 1 : 0,
-                    transition: 'opacity 400ms ease'
-                }}
-                onClick={handleClose} 
+                onClick={onClose} 
             />
-            <div 
-                className="relative w-full sm:w-[90%] sm:max-w-md max-h-[85vh] flex flex-col bg-white dark:bg-slate-950 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl border-t border-white/20 dark:border-slate-800 overflow-hidden pb-[env(safe-area-inset-bottom)]"
-                style={{ 
-                    willChange: 'transform, opacity',
-                    transform: isAnimating ? 'translateY(0) scale(1)' : 'translateY(100%)',
-                    opacity: isAnimating ? 1 : 0,
-                    transition: 'transform 480ms cubic-bezier(0.25, 1, 0.5, 1), opacity 300ms ease'
+            <motion.div 
+                initial={{ y: "100%", opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: "100%", opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 1000 }}
+                dragElastic={0}
+                onDragEnd={(e, info) => {
+                    if (info.offset.y > 100 || info.velocity.y > 500) {
+                        onClose();
+                    }
                 }}
+                className="relative w-full sm:w-[90%] sm:max-w-md max-h-[85vh] flex flex-col bg-white dark:bg-slate-950 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl border-t border-white/20 dark:border-slate-800 overflow-hidden pb-[env(safe-area-inset-bottom)] pointer-events-auto"
                 onClick={e => e.stopPropagation()}
             >
-                <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mt-4 mb-2 shrink-0" />
-                <div className="px-6 py-4 flex justify-between items-center shrink-0">
+                <div 
+                    className="w-full sm:hidden flex justify-center pb-4 pt-4 touch-none cursor-grab active:cursor-grabbing"
+                >
+                    <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto shrink-0" />
+                </div>
+                <div className="px-6 py-4 sm:pt-8 flex justify-between items-center shrink-0">
                     <div>
                         <h3 className="text-lg font-black text-slate-800 dark:text-white">Bacaan Niat</h3>
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Disunnahkan sebelum fajar</p>
                     </div>
-                    <button onClick={handleClose} className="w-9 h-9 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-500 active:scale-90 shrink-0 transition hover:bg-slate-200 dark:hover:bg-slate-700">
+                    <button onClick={onClose} className="w-9 h-9 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-500 active:scale-90 shrink-0 transition hover:bg-slate-200 dark:hover:bg-slate-700">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4 pb-8 space-y-4 no-scrollbar">
+                <div 
+                    className="flex-1 overflow-y-auto p-4 pb-8 space-y-4 no-scrollbar"
+                    onPointerDown={(e) => e.stopPropagation()}
+                >
                     <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
                         <div className="flex items-center justify-between mb-2">
                             <h4 className="text-sm font-black text-slate-800 dark:text-white">{niat.judul}</h4>
@@ -99,8 +89,10 @@ function NiatModal({ niatKey, onClose }) {
                         </div>
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </div>
+        )}
+        </AnimatePresence>
     );
 }
 
@@ -185,8 +177,54 @@ export default function Fasting() {
         return true;
     });
 
+    const swipeHandlers = useSwipe({
+        onSwipeLeft: () => {
+            if (activeTab === 'jadwal') {
+                setActiveTab('niat');
+                return true;
+            }
+            return false;
+        },
+        onSwipeRight: () => {
+            if (activeTab === 'niat') {
+                setActiveTab('jadwal');
+                return true;
+            }
+            return false;
+        }
+    });
+
+    const tabSliderContent = (
+        <>
+            <div className="absolute inset-1.5 flex pointer-events-none">
+                <div className="w-1/2 h-full transition-transform duration-300 ease-in-out" 
+                        style={{ transform: activeTab === 'jadwal' ? 'translateX(0)' : 'translateX(100%)' }}>
+                    <div className="w-full h-full bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700"></div>
+                </div>
+            </div>
+            <button onClick={() => setActiveTab('jadwal')} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'jadwal' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Jadwal Puasa</button>
+            <button onClick={() => setActiveTab('niat')} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'niat' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Kamus Niat</button>
+        </>
+    );
+
+    const { setBottomNavExtraNode } = useApp();
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.pathname !== '/fasting') {
+            setBottomNavExtraNode(null);
+            return;
+        }
+        setBottomNavExtraNode(
+            <div className="md:hidden flex w-full relative">
+                {tabSliderContent}
+            </div>
+        );
+        return () => setBottomNavExtraNode(null);
+    }, [activeTab, setBottomNavExtraNode, location.pathname]);
+
     return (
-        <div className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
+        <div {...swipeHandlers} className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
             
             {/* Background Gradient Ornamen */}
             <div className="fixed top-0 left-0 right-0 h-80 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
@@ -203,18 +241,11 @@ export default function Fasting() {
             />
             <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
-            <div className="relative z-10 px-5 pt-4 pb-28 md:pb-10 w-full max-w-7xl mx-auto flex flex-col gap-4 md:gap-5">
+            <div className="relative z-10 px-5 pt-4 pb-40 md:pb-10 w-full max-w-7xl mx-auto flex flex-col gap-4 md:gap-5">
                 
-                {/* Tabs - Jurnal Harian Style */}
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2.5rem)] max-w-md z-[120] md:static md:translate-x-0 md:w-full md:max-w-none bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-1.5 rounded-full flex shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-white/50 dark:border-slate-700/50">
-                    <div className="absolute inset-1.5 flex pointer-events-none">
-                        <div className="w-1/2 h-full transition-transform duration-300 ease-in-out" 
-                                style={{ transform: activeTab === 'jadwal' ? 'translateX(0)' : 'translateX(100%)' }}>
-                            <div className="w-full h-full bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700"></div>
-                        </div>
-                    </div>
-                    <button onClick={() => setActiveTab('jadwal')} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'jadwal' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Jadwal Puasa</button>
-                    <button onClick={() => setActiveTab('niat')} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'niat' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Kamus Niat</button>
+                {/* Desktop Tabs - Jurnal Harian Style */}
+                <div className="hidden md:flex w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-1.5 rounded-full border border-white/50 dark:border-slate-700/50 relative">
+                    {tabSliderContent}
                 </div>
                 
                 {activeTab === 'jadwal' && (
@@ -397,7 +428,7 @@ export default function Fasting() {
             </div>
 
             {/* Modal Pop-up Niat Puasa */}
-            {selectedNiatKey && <NiatModal niatKey={selectedNiatKey} onClose={closeNiatModal} />}
+            <NiatModal niatKey={selectedNiatKey} onClose={closeNiatModal} />
         </div>
     );
 }

@@ -2,8 +2,10 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, BookOpen, RotateCcw, Vibrate, X } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
+import { useApp } from '@/store/AppContext';
+import useSwipe from '@/hooks/useSwipe';
 
 const TASBIH_PRESETS = [
     { label: 'Subhanallah', arabic: 'سُبْحَانَ اللَّهِ', latin: 'Subhanallah', target: 33 },
@@ -21,6 +23,8 @@ export default function Tasbih() {
     const [selectedDhikr, setSelectedDhikr] = useState(null);
     const [vibroOn, setVibroOn] = useState(true);
     const [showMenu, setShowMenu] = useState(false);
+    const { setModalOpen } = useApp();
+    const dragControls = useDragControls();
 
     // Handle back button for Modal
     useEffect(() => {
@@ -45,6 +49,12 @@ export default function Tasbih() {
             }
         };
     }, [showMenu]);
+    
+    // Sync global modalOpen flag
+    useEffect(() => {
+        setModalOpen(showMenu);
+        return () => setModalOpen(false);
+    }, [showMenu, setModalOpen]);
     
     // Ripple Effect state
     const [ripple, setRipple] = useState(false);
@@ -112,7 +122,7 @@ export default function Tasbih() {
             <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
             {/* Content Area */}
-            <div className="relative z-10 px-5 pt-4 pb-6 md:px-8 w-full max-w-7xl mx-auto md:grid md:grid-cols-12 md:gap-8 md:items-start animate-[fadeIn_0.35s_ease-out]">
+            <div className="relative z-10 px-5 pt-4 pb-32 md:pb-12 md:px-8 w-full max-w-7xl mx-auto md:grid md:grid-cols-12 md:gap-8 md:items-start animate-[fadeIn_0.35s_ease-out]">
                 
                 {/* Left/Top: Tap Area */}
                 <div className="md:col-span-7 lg:col-span-8 flex flex-col items-center justify-center py-6 md:py-12 relative z-10">
@@ -167,8 +177,11 @@ export default function Tasbih() {
                                 <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 italic tracking-wide">{selectedDhikr.latin}</p>
                             </div>
                         )}
-
-                        <div className="flex flex-col gap-2 pt-5 relative z-10">
+                        {/* Content */}
+                        <div 
+                            className="flex flex-col flex-1 shrink-0 px-6 sm:px-0"
+                            onPointerDown={(e) => e.stopPropagation()}
+                        >
                             <button onClick={() => setShowMenu(true)} className="w-full py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-emerald-600 transition-all border border-transparent hover:border-emerald-500/20 active:scale-95 shadow-sm">
                                 {selectedDhikr ? 'Ganti Bacaan' : 'Pilih Bacaan'}
                             </button>
@@ -193,21 +206,38 @@ export default function Tasbih() {
             </div>
 
             {/* Dhikr Selection Modal */}
-            <div className={`fixed inset-0 z-[200] flex items-end sm:items-center justify-center pointer-events-none`}>
-                {/* Backdrop */}
-                <div 
-                    className={`absolute inset-0 bg-slate-950/60 backdrop-blur-md ${showMenu ? 'opacity-100 pointer-events-auto' : 'opacity-0'}`} 
-                    onClick={() => setShowMenu(false)}
-                    style={{ transition: 'opacity 0.4s ease-out' }}
-                ></div>
-                
-                {/* Modal Content */}
-                <div 
-                    className={`relative w-full sm:w-[92%] sm:max-w-lg bg-white dark:bg-slate-950 p-6 sm:p-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl border-t border-white/20 dark:border-slate-800 h-[85vh] sm:h-[80vh] flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom)] ${showMenu ? 'opacity-100 translate-y-0 sm:scale-100 pointer-events-auto' : 'opacity-0 translate-y-full sm:translate-y-10 sm:scale-95'}`}
-                    style={{ transition: 'all 0.5s cubic-bezier(0.32,0.72,0,1)' }}
-                >
-                    <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-6 shrink-0"></div>
-                    <div className="flex justify-between items-start mb-6 shrink-0">
+            <AnimatePresence>
+            {showMenu && (
+                <div className={`fixed inset-0 z-[200] flex items-end sm:items-center justify-center`}>
+                    {/* Backdrop */}
+                    <motion.div 
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
+                        className={`absolute inset-0 bg-slate-950/60 backdrop-blur-md`} 
+                        onClick={() => setShowMenu(false)}
+                    ></motion.div>
+                    
+                    {/* Modal Content */}
+                    <motion.div 
+                        initial={{ y: "100%", opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: "100%", opacity: 0 }}
+                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                        drag="y"
+                        dragConstraints={{ top: 0, bottom: 1000 }}
+                        dragElastic={0}
+                        onDragEnd={(e, info) => {
+                            if (info.offset.y > 100 || info.velocity.y > 500) {
+                                setShowMenu(false);
+                            }
+                        }}
+                        className={`relative w-full sm:w-[92%] sm:max-w-lg bg-white dark:bg-slate-950 p-6 sm:p-8 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl border-t border-white/20 dark:border-slate-800 h-[85vh] sm:h-[80vh] flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom)] pointer-events-auto`}
+                    >
+                        <div 
+                            className="w-full sm:hidden flex justify-center pb-5 pt-2 -mt-2 touch-none cursor-grab active:cursor-grabbing shrink-0"
+                        >
+                            <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto sm:mb-2 shrink-0"></div>
+                        </div>
+                    <div className="flex justify-between items-center mb-6 px-1 shrink-0">
                         <div>
                             <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Pilih Bacaan</h3>
                             <p className="text-[10px] text-slate-400 font-medium mt-1">Pilih dzikir dengan target otomatis</p>
@@ -232,8 +262,10 @@ export default function Tasbih() {
                         ))}
                         <div className="h-6"></div>
                     </div>
-                </div>
+                </motion.div>
             </div>
+            )}
+            </AnimatePresence>
             
         </div>
     );

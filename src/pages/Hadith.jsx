@@ -1,10 +1,12 @@
 // src/pages/Hadith.jsx
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useApp } from '@/store/AppContext';
 import { ArrowLeft, RefreshCw, Quote, BookOpenCheck, ChevronLeft, ChevronRight, Search, Star, Info, BookOpen } from 'lucide-react';
 import "@aejkatappaja/phantom-ui";
 import { motion } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
+import useSwipe from '@/hooks/useSwipe';
 
 const API_BASE = 'https://api.myquran.com/v3/hadis/enc';
 
@@ -94,8 +96,68 @@ export default function Hadith() {
         fetchById(id);
     };
 
+    const tabSliderContent = (
+        <>
+            <div className="absolute inset-1.5 flex pointer-events-none">
+                <div className="w-1/3 h-full transition-transform duration-300 ease-in-out" 
+                     style={{ transform: activeTab === 'random' ? 'translateX(0)' : activeTab === 'browse' ? 'translateX(100%)' : 'translateX(200%)' }}>
+                    <div className="w-full h-full bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700"></div>
+                </div>
+            </div>
+            <button onClick={() => { setActiveTab('random'); setMode('random'); fetchRandom(); }} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'random' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Acak</button>
+            <button onClick={() => { setActiveTab('browse'); setMode('browse'); if(!browseData) fetchBrowse(1); }} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'browse' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Jelajahi</button>
+            <button onClick={() => { setActiveTab('search'); setMode(browseData?.hadis && searchKeyword ? 'search_results' : 'search'); }} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'search' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Cari</button>
+        </>
+    );
+
+    const { setBottomNavExtraNode } = useApp();
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.pathname !== '/hadith') {
+            setBottomNavExtraNode(null);
+            return;
+        }
+        setBottomNavExtraNode(
+            <div className="md:hidden flex w-full relative">
+                {tabSliderContent}
+            </div>
+        );
+        return () => setBottomNavExtraNode(null);
+    }, [activeTab, setBottomNavExtraNode, location.pathname]);
+
+    const swipeHandlers = useSwipe({
+        onSwipeLeft: () => {
+            if (activeTab === 'random') {
+                setActiveTab('browse');
+                setMode('browse');
+                if(!browseData) fetchBrowse(1);
+                return true;
+            } else if (activeTab === 'browse') {
+                setActiveTab('search');
+                setMode(browseData?.hadis && searchKeyword ? 'search_results' : 'search');
+                return true;
+            }
+            return false;
+        },
+        onSwipeRight: () => {
+            if (activeTab === 'search') {
+                setActiveTab('browse');
+                setMode('browse');
+                if(!browseData) fetchBrowse(1);
+                return true;
+            } else if (activeTab === 'browse') {
+                setActiveTab('random');
+                setMode('random');
+                fetchRandom();
+                return true;
+            }
+            return false;
+        }
+    });
+
     return (
-        <div className="app-view active flex flex-col h-full bg-slate-100 dark:bg-slate-950 no-scrollbar overflow-y-auto relative">
+        <div {...swipeHandlers} className="app-view active flex flex-col h-full bg-slate-100 dark:bg-slate-950 no-scrollbar overflow-y-auto relative">
             {/* Background Gradient */}
             <div className="fixed top-0 left-0 right-0 h-64 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
@@ -117,17 +179,9 @@ export default function Hadith() {
 
             <div className="relative z-10 px-5 pt-4 pb-28 md:pb-10 w-full max-w-2xl mx-auto flex flex-col gap-4 md:gap-6">
                 
-                {/* Tabs Navigation */}
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2.5rem)] max-w-md z-[120] md:static md:translate-x-0 md:w-full md:max-w-none bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-1.5 rounded-full flex shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-white/50 dark:border-slate-700/50">
-                    <div className="absolute inset-1.5 flex pointer-events-none">
-                        <div className="w-1/3 h-full transition-transform duration-300 ease-in-out" 
-                             style={{ transform: activeTab === 'random' ? 'translateX(0)' : activeTab === 'browse' ? 'translateX(100%)' : 'translateX(200%)' }}>
-                            <div className="w-full h-full bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700"></div>
-                        </div>
-                    </div>
-                    <button onClick={() => { setActiveTab('random'); setMode('random'); fetchRandom(); }} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'random' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Acak</button>
-                    <button onClick={() => { setActiveTab('browse'); setMode('browse'); if(!browseData) fetchBrowse(1); }} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'browse' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Jelajahi</button>
-                    <button onClick={() => { setActiveTab('search'); setMode(browseData?.hadis && searchKeyword ? 'search_results' : 'search'); }} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'search' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Cari</button>
+                {/* Tabs Navigation (Desktop Inline) */}
+                <div className="hidden md:flex bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-1.5 rounded-full shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-white/50 dark:border-slate-700/50 relative">
+                    {tabSliderContent}
                 </div>
 
                 {/* Search Mode */}
