@@ -9,6 +9,14 @@
       "destination": "/api/proxy?sourceId=:sourceId"
     },
     {
+      "source": "/api/artikel-islam/:path*",
+      "destination": "/api/artikel-islam?path=:path*"
+    },
+    {
+      "source": "/api/artikel-islam",
+      "destination": "/api/artikel-islam"
+    },
+    {
       "source": "/artikel/:sourceId/:articleId",
       "destination": "/api/artikel-og"
     }
