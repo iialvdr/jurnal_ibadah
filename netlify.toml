@@ -4,7 +4,7 @@
 
 [[redirects]]
   from = "/proxy/*"
-  to = "/.netlify/functions/proxy"
+  to = "/.netlify/functions/proxy/:splat"
   status = 200
   force = true
 

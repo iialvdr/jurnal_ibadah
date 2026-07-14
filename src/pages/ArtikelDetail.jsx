@@ -580,11 +580,30 @@ export default function ArtikelDetail() {
             if (decodedOriginalUrl) {
                 // Bypass backend API for ALL sources to prevent stripped html tags
                 // Use proxy to avoid CORS
-                let proxyUrl = `/proxy/${sourceId}${new URL(decodedOriginalUrl).pathname}`;
+                let parsedArticleUrl;
+                try {
+                    parsedArticleUrl = new URL(decodedOriginalUrl);
+                } catch {
+                    throw new Error('URL Artikel tidak valid');
+                }
+
+                // Build proxy URL: /proxy/{sourceId}/{pathname}{search}
+                let proxyUrl = `/proxy/${sourceId}${parsedArticleUrl.pathname}`;
+                if (parsedArticleUrl.search) {
+                    proxyUrl += parsedArticleUrl.search;
+                }
                 
-                // timeout dikembalikan ke 15 detik karena proxy lokal sangat cepat
-                const res = await fetchWithTimeout(proxyUrl, 15000);
-                if (!res.ok) throw new Error('Gagal mengambil artikel dari sumber asli');
+                // 20 detik timeout - serverless functions di Netlify/Vercel memerlukan waktu lebih lama
+                const res = await fetchWithTimeout(proxyUrl, 20000);
+                if (!res.ok) {
+                    const errBody = await res.text().catch(() => '');
+                    let errMsg = `Gagal mengambil artikel (HTTP ${res.status})`;
+                    try {
+                        const parsed = JSON.parse(errBody);
+                        if (parsed.error) errMsg = parsed.error;
+                    } catch {}
+                    throw new Error(errMsg);
+                }
                 const html = await res.text();
                 
                 const doc = new DOMParser().parseFromString(html, 'text/html');

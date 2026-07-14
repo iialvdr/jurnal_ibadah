@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/proxy/:sourceId/:path*",
+      "destination": "/api/proxy?sourceId=:sourceId&path=:path*"
+    },
+    {
+      "source": "/proxy/:sourceId",
+      "destination": "/api/proxy?sourceId=:sourceId"
+    },
+    {
       "source": "/artikel/:sourceId/:articleId",
       "destination": "/api/artikel-og"
     }

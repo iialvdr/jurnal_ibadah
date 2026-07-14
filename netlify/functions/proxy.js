@@ -1,67 +1,121 @@
+/**
+ * Netlify Serverless Function: proxy
+ * 
+ * Handles requests forwarded from the /proxy/* redirect rule in netlify.toml.
+ * Fetches HTML from source websites to bypass CORS restrictions.
+ * 
+ * URL pattern: /proxy/{sourceId}/{...rest}
+ */
+
+const TARGETS = {
+    'fir': 'https://firanda.com',
+    'rum': 'https://rumaysho.com',
+    'ks': 'https://konsultasisyariah.com',
+    'ms': 'https://muslim.or.id',
+    'msh': 'https://muslimah.or.id',
+    'maf': 'https://muslimafiyah.com',
+    'kj': 'https://khotbahjumat.com',
+};
+
 exports.handler = async (event, context) => {
-    // Determine the original path. Netlify redirects preserve the original path in event.path
-    let path = event.path;
-    if (!path.startsWith('/proxy/')) {
-        // Fallback if event.path is just the function path
-        path = event.rawUrl ? new URL(event.rawUrl).pathname : '';
+    // Netlify passes the ORIGINAL requested URL in event.rawUrl (most reliable)
+    // event.path may be the function's own path after rewrite
+    let rawPath = '';
+    
+    if (event.rawUrl) {
+        try {
+            rawPath = new URL(event.rawUrl).pathname;
+        } catch (e) {
+            rawPath = event.path || '';
+        }
+    } else {
+        rawPath = event.path || '';
     }
 
-    const cleanPath = path.replace(/^\/proxy\//, '');
-    const parts = cleanPath.split('/');
-    const sourceId = parts[0];
-    const restPath = parts.slice(1).join('/');
+    // Extract sourceId and restPath from the URL
+    // Supports both: /proxy/sourceId/rest  AND  /.netlify/functions/proxy/sourceId/rest
+    const proxyMatch = rawPath.match(/(?:\/proxy\/|\/\.netlify\/functions\/proxy\/)([^/]+)(?:\/(.*))?$/);
 
-    // Handle query parameters
+    if (!proxyMatch) {
+        console.error('[proxy] No match for path:', rawPath);
+        return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            body: JSON.stringify({ error: 'Invalid proxy path', path: rawPath }),
+        };
+    }
+
+    const sourceId = proxyMatch[1];
+    const restPath = proxyMatch[2] || '';
+
+    if (!TARGETS[sourceId]) {
+        return {
+            statusCode: 404,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            body: JSON.stringify({ error: 'Source not found', sourceId }),
+        };
+    }
+
+    // Build query string from params (forward them to the target)
     const queryStringParameters = event.queryStringParameters || {};
-    const params = new URLSearchParams(queryStringParameters);
-    const queryString = params.toString() ? `?${params.toString()}` : '';
+    const qs = new URLSearchParams(queryStringParameters).toString();
 
-    const targets = {
-        'fir': 'https://firanda.com',
-        'rum': 'https://rumaysho.com',
-        'ks': 'https://konsultasisyariah.com',
-        'ms': 'https://muslim.or.id',
-        'msh': 'https://muslimah.or.id',
-        'maf': 'https://muslimafiyah.com',
-        'kj': 'https://khotbahjumat.com'
-    };
-
-    if (!targets[sourceId]) {
-        return { statusCode: 404, body: 'Source not found in proxy config' };
-    }
-
-    let targetUrl = targets[sourceId];
-    if (sourceId === 'ms' && restPath === '') {
-        targetUrl += '/';
-    } else if (restPath !== '') {
+    let targetUrl = TARGETS[sourceId];
+    if (restPath) {
         targetUrl += '/' + restPath;
+    } else {
+        targetUrl += '/';
     }
-    targetUrl += queryString;
+    if (qs) {
+        targetUrl += '?' + qs;
+    }
+
+    console.log(`[proxy] ${sourceId} → ${targetUrl}`);
 
     try {
-        const response = await fetch(targetUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
-                'Referer': 'https://www.google.com/',
-                'Origin': 'https://www.google.com'
-            }
-        });
+        // Netlify Functions have a default 10s timeout; use AbortController for safety
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 9000); // 9s to be safe
 
-        // We could proxy binary data, but for scraping we only need text (HTML or JSON)
+        const response = await fetch(targetUrl, {
+            signal: controller.signal,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8',
+                'Referer': 'https://www.google.com/',
+                'Cache-Control': 'no-cache',
+            },
+            redirect: 'follow',
+        });
+        clearTimeout(timeoutId);
+
+        const contentType = response.headers.get('content-type') || 'text/html; charset=utf-8';
         const body = await response.text();
 
         return {
             statusCode: response.status,
             headers: {
                 'Access-Control-Allow-Origin': '*',
-                'Content-Type': response.headers.get('content-type') || 'text/html; charset=utf-8'
+                'Content-Type': contentType,
+                'Cache-Control': 's-maxage=300, stale-while-revalidate=600',
             },
-            body: body
+            body,
         };
     } catch (error) {
+        const isTimeout = error.name === 'AbortError';
+        console.error(`[proxy] ${isTimeout ? 'TIMEOUT' : 'ERROR'}: ${error.message} | url: ${targetUrl}`);
+
         return {
-            statusCode: 500,
-            body: JSON.stringify({ error: error.message, url: targetUrl })
+            statusCode: isTimeout ? 504 : 500,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+            },
+            body: JSON.stringify({
+                error: isTimeout ? 'Proxy timeout: sumber artikel terlalu lambat' : error.message,
+                targetUrl,
+            }),
         };
     }
 };
