@@ -10,13 +10,13 @@
 
 [[redirects]]
   from = "/api/artikel-islam/*"
-  to = "https://artikel-islam.netlify.app/.netlify/functions/api/:splat"
+  to = "/.netlify/functions/artikel-islam/:splat"
   status = 200
   force = true
 
 [[redirects]]
   from = "/api/artikel-islam"
-  to = "https://artikel-islam.netlify.app/.netlify/functions/api"
+  to = "/.netlify/functions/artikel-islam"
   status = 200
   force = true
 

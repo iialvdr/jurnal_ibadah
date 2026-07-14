@@ -1,43 +1,36 @@
 /**
  * Netlify Serverless Function: proxy
- * 
- * Handles requests forwarded from the /proxy/* redirect rule in netlify.toml.
- * Fetches HTML from source websites to bypass CORS restrictions.
- * 
+ *
+ * Menangani request yang diarahkan dari redirect `/proxy/*` di netlify.toml.
+ * Meneruskan request HTML ke situs sumber artikel untuk menghindari CORS.
+ *
  * URL pattern: /proxy/{sourceId}/{...rest}
  */
 
 const TARGETS = {
     'fir': 'https://firanda.com',
     'rum': 'https://rumaysho.com',
-    'ks': 'https://konsultasisyariah.com',
-    'ms': 'https://muslim.or.id',
+    'ks':  'https://konsultasisyariah.com',
+    'ms':  'https://muslim.or.id',
     'msh': 'https://muslimah.or.id',
     'maf': 'https://muslimafiyah.com',
-    'kj': 'https://khotbahjumat.com',
+    'kj':  'https://khotbahjumat.com',
 };
 
-exports.handler = async (event, context) => {
-    // Netlify passes the ORIGINAL requested URL in event.rawUrl (most reliable)
-    // event.path may be the function's own path after rewrite
+export const handler = async (event) => {
+    // Gunakan rawUrl sebagai sumber path paling akurat
     let rawPath = '';
-    
     if (event.rawUrl) {
-        try {
-            rawPath = new URL(event.rawUrl).pathname;
-        } catch (e) {
-            rawPath = event.path || '';
-        }
+        try { rawPath = new URL(event.rawUrl).pathname; } catch { rawPath = event.path || ''; }
     } else {
         rawPath = event.path || '';
     }
 
-    // Extract sourceId and restPath from the URL
-    // Supports both: /proxy/sourceId/rest  AND  /.netlify/functions/proxy/sourceId/rest
+    // Ekstrak sourceId dan restPath
+    // Cocok untuk: /proxy/sourceId/rest  ATAU  /.netlify/functions/proxy/sourceId/rest
     const proxyMatch = rawPath.match(/(?:\/proxy\/|\/\.netlify\/functions\/proxy\/)([^/]+)(?:\/(.*))?$/);
 
     if (!proxyMatch) {
-        console.error('[proxy] No match for path:', rawPath);
         return {
             statusCode: 400,
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -56,26 +49,19 @@ exports.handler = async (event, context) => {
         };
     }
 
-    // Build query string from params (forward them to the target)
+    // Bangun query string
     const queryStringParameters = event.queryStringParameters || {};
     const qs = new URLSearchParams(queryStringParameters).toString();
 
     let targetUrl = TARGETS[sourceId];
-    if (restPath) {
-        targetUrl += '/' + restPath;
-    } else {
-        targetUrl += '/';
-    }
-    if (qs) {
-        targetUrl += '?' + qs;
-    }
+    targetUrl += restPath ? '/' + restPath : '/';
+    if (qs) targetUrl += '?' + qs;
 
     console.log(`[proxy] ${sourceId} → ${targetUrl}`);
 
     try {
-        // Netlify Functions have a default 10s timeout; use AbortController for safety
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 9000); // 9s to be safe
+        const timeoutId = setTimeout(() => controller.abort(), 9000);
 
         const response = await fetch(targetUrl, {
             signal: controller.signal,
@@ -84,7 +70,6 @@ exports.handler = async (event, context) => {
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                 'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8',
                 'Referer': 'https://www.google.com/',
-                'Cache-Control': 'no-cache',
             },
             redirect: 'follow',
         });
@@ -104,14 +89,9 @@ exports.handler = async (event, context) => {
         };
     } catch (error) {
         const isTimeout = error.name === 'AbortError';
-        console.error(`[proxy] ${isTimeout ? 'TIMEOUT' : 'ERROR'}: ${error.message} | url: ${targetUrl}`);
-
         return {
             statusCode: isTimeout ? 504 : 500,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-            },
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
             body: JSON.stringify({
                 error: isTimeout ? 'Proxy timeout: sumber artikel terlalu lambat' : error.message,
                 targetUrl,
