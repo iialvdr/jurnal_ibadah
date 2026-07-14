@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Share2, Tag, Calendar, User, Search, RefreshCw, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Share2, Tag, Calendar, User, Search, RefreshCw, AlertCircle, Clock, BookOpen, ExternalLink } from 'lucide-react';
 import "@aejkatappaja/phantom-ui";
 import TopNavConfig from '@/components/TopNavConfig';
 import { motion } from 'framer-motion';
 
-const API_ROOT = import.meta.env.DEV ? '/api/artikel-islam' : 'https://artikel-islam.netlify.app/.netlify/functions/api';
+const API_ROOT = '/api/artikel-islam';
 
 const SOURCES = [
     { id: 'fir',  name: 'Firanda.com',          url: 'https://firanda.com',           icon: 'F',   iconImg: '/img/firanda.png', accent: '#3b82f6', bg: 'bg-blue-500' },

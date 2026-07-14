@@ -48,7 +48,8 @@ export default function BottomNav() {
 
     const isSurahDetail = location.pathname === '/quran' && searchParams.has('s');
     const isArtikelDetail = location.pathname.startsWith('/artikel/') && location.pathname.split('/').length >= 3;
-    const shouldHide = modalOpen || isSurahDetail || isArtikelDetail;
+    const isQibla = location.pathname === '/qibla';
+    const shouldHide = modalOpen || isSurahDetail || isArtikelDetail || isQibla;
 
     return (
         <div
@@ -76,8 +77,19 @@ export default function BottomNav() {
                             className="w-full relative z-10 shrink-0 overflow-hidden md:hidden"
                         >
                             <div className="w-full shrink-0 bg-white/50 dark:bg-black/30 border border-white/30 dark:border-white/5 rounded-full flex p-1.5 relative shadow-inner" style={{ borderRadius: '9999px' }}>
-                                <div className="relative flex w-full h-full items-center">
-                                    {bottomNavExtraNode}
+                                <div className="relative flex w-full h-full items-center overflow-hidden rounded-full">
+                                    <AnimatePresence mode="popLayout" initial={false}>
+                                        <motion.div
+                                            key={location.pathname}
+                                            initial={{ opacity: 0, y: 15 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -15 }}
+                                            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                                            className="w-full flex"
+                                        >
+                                            {bottomNavExtraNode}
+                                        </motion.div>
+                                    </AnimatePresence>
                                 </div>
                             </div>
                         </motion.div>

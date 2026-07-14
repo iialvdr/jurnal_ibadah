@@ -114,17 +114,12 @@ export default function Hadith() {
     const location = useLocation();
 
     useEffect(() => {
-        if (location.pathname !== '/hadith') {
-            setBottomNavExtraNode(null);
-            return;
-        }
         setBottomNavExtraNode(
             <div className="md:hidden flex w-full relative">
                 {tabSliderContent}
             </div>
         );
-        return () => setBottomNavExtraNode(null);
-    }, [activeTab, setBottomNavExtraNode, location.pathname]);
+    }, [activeTab, setBottomNavExtraNode]);
 
     const swipeHandlers = useSwipe({
         onSwipeLeft: () => {

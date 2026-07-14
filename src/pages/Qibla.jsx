@@ -228,7 +228,7 @@ export default function Qibla() {
             <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
             {/* Main layout — compass dominates, info bar below */}
-            <div className="relative z-10 flex-1 flex flex-col items-center justify-start gap-4 px-5 pt-6 pb-4 md:grid md:grid-cols-2 md:gap-10 md:px-12 md:content-center max-w-7xl mx-auto w-full overflow-hidden">
+            <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-6 px-5 py-8 md:grid md:grid-cols-2 md:gap-10 md:px-12 md:content-center max-w-7xl mx-auto w-full overflow-hidden">
 
                 {/* ── Compass disc ── */}
                 <div className="relative w-full max-w-[min(86vw,380px)] md:max-w-[420px] aspect-square flex items-center justify-center touch-none mx-auto">

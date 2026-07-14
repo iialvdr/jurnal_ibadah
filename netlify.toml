@@ -9,6 +9,18 @@
   force = true
 
 [[redirects]]
+  from = "/api/artikel-islam/*"
+  to = "https://artikel-islam.netlify.app/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/artikel-islam"
+  to = "https://artikel-islam.netlify.app/.netlify/functions/api"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

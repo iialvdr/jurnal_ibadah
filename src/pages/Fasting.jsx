@@ -211,17 +211,12 @@ export default function Fasting() {
     const location = useLocation();
 
     useEffect(() => {
-        if (location.pathname !== '/fasting') {
-            setBottomNavExtraNode(null);
-            return;
-        }
         setBottomNavExtraNode(
             <div className="md:hidden flex w-full relative">
                 {tabSliderContent}
             </div>
         );
-        return () => setBottomNavExtraNode(null);
-    }, [activeTab, setBottomNavExtraNode, location.pathname]);
+    }, [activeTab, setBottomNavExtraNode]);
 
     return (
         <div {...swipeHandlers} className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">

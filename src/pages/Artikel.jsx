@@ -6,7 +6,7 @@ import "@aejkatappaja/phantom-ui";
 import { motion } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
 
-const API_ROOT = import.meta.env.DEV ? '/api/artikel-islam' : 'https://artikel-islam.netlify.app/.netlify/functions/api';
+const API_ROOT = '/api/artikel-islam';
 
 const CACHE_TTL = 10 * 60 * 1000; // 10 menit
 
