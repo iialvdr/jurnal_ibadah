@@ -29,6 +29,7 @@ export default function Quran() {
     const [ayats, setAyats] = useState([]);
     const [loadingAyats, setLoadingAyats] = useState(false);
     const [bookmarked, setBookmarked] = useState(null); 
+    const isFirstMountList = useRef(true);
 
     // Audio & Tafsir States
     const [isPlaying, setIsPlaying] = useState(false);
@@ -46,7 +47,11 @@ export default function Quran() {
     useEffect(() => {
         fetch('https://equran.id/api/v2/surat')
             .then(r => r.json())
-            .then(d => { setSurahList(d.data || []); setLoading(false); })
+            .then(d => { 
+                setSurahList(d.data || []); 
+                setLoading(false); 
+                setTimeout(() => { isFirstMountList.current = false; }, 2000);
+            })
             .catch(() => setLoading(false));
             
         // Fetch Last Read Bookmark
@@ -554,7 +559,7 @@ export default function Quran() {
                                     return (
                                         <div key={ayat.nomorAyat} id={`ayat-${ayat.nomorAyat}`} 
                                              className={`animate-fade-in-up bg-white dark:bg-slate-900 rounded-[1.8rem] p-5 shadow-sm border relative overflow-hidden group transition-all duration-300 ${isAyatPlaying ? 'border-emerald-400 dark:border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200 dark:border-slate-800'}`}
-                                             style={{ animationDelay: `${i * 0.05}s` }}>
+                                             style={{ animationDelay: `${Math.min(i, 15) * 0.05}s` }}>
                                             
                                             {/* Ayat header */}
                                             <div className="flex justify-between items-center mb-6 border-b border-slate-50 dark:border-slate-800/50 pb-3">
@@ -718,11 +723,13 @@ export default function Quran() {
                             filtered.map((surah, index) => {
                                 const isLastRead = bookmarked && bookmarked.surah === surah.nomor;
                                 const borderClass = isLastRead ? 'border-emerald-500 ring-1 ring-emerald-500/20' : 'border-slate-200 dark:border-slate-800';
+                                const animClass = isFirstMountList.current ? 'animate-fade-in-up' : '';
+                                const animStyle = isFirstMountList.current ? { animationDelay: `${Math.min(index, 20) * 0.03}s` } : {};
                                 
                                 return (
                                     <div key={surah.nomor} onClick={() => openSurah(surah, isLastRead ? bookmarked.ayat : null)}
-                                        className={`animate-fade-in-up group bg-white dark:bg-slate-900 p-3.5 md:py-5 md:px-5 rounded-2xl border ${borderClass} shadow-sm active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-between relative overflow-hidden hover:border-emerald-300 dark:hover:border-emerald-700 md:min-h-[90px]`}
-                                        style={{ animationDelay: `${index * 0.03}s` }}>
+                                        className={`${animClass} group bg-white dark:bg-slate-900 p-3.5 md:py-5 md:px-5 rounded-2xl border ${borderClass} shadow-sm active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-between relative overflow-hidden hover:border-emerald-300 dark:hover:border-emerald-700 md:min-h-[90px]`}
+                                        style={animStyle}>
                                         
                                         <div className="flex items-center gap-3.5 md:gap-5 relative z-10 w-full">
                                             <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-bold text-sm md:text-base flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800/50 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300 shadow-sm">

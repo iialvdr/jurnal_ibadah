@@ -682,20 +682,33 @@ export default function Artikel() {
 
                 {/* Content */}
                 {loading ? (
-                    <div className="flex flex-col gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 lg:gap-5">
-                        {[...Array(6)].map((_, i) => (
-                            <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm animate-pulse">
-                                <div className="flex items-start gap-3.5">
-                                    <div className="w-[72px] h-[72px] rounded-xl bg-slate-100 dark:bg-slate-800 shrink-0" />
-                                    <div className="flex-1 space-y-2 py-1">
-                                        <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded-lg w-4/5" />
-                                        <div className="h-3.5 bg-slate-100 dark:bg-slate-800 rounded-lg w-3/5" />
-                                        <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded-lg w-2/5 mt-3" />
+                    <>
+                        {/* Featured Article Skeleton */}
+                        {!searchQuery && (
+                            <div className="mb-3 md:mb-4 lg:mb-5 w-full rounded-[2rem] bg-slate-200 dark:bg-slate-800 min-h-[250px] md:min-h-[400px] animate-pulse border border-slate-100 dark:border-slate-800" />
+                        )}
+                        
+                        {/* Masonry Layout Skeleton */}
+                        <div className="columns-1 md:columns-2 lg:columns-3 gap-3 md:gap-4 lg:gap-5 space-y-3 md:space-y-4 lg:space-y-5">
+                            {[...Array(6)].map((_, i) => (
+                                <div key={i} className="break-inside-avoid">
+                                    <div className="flex flex-col">
+                                        <div className="w-full aspect-[4/3] rounded-[1.5rem] bg-slate-200 dark:bg-slate-800 animate-pulse mb-3" />
+                                        <div className="flex-1 flex flex-col px-1">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
+                                                <div className="h-3 w-12 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
+                                            </div>
+                                            <div className="space-y-2 mt-1">
+                                                <div className="h-4 w-full bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+                                                <div className="h-4 w-4/5 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    </>
                 ) : error ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                         <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
