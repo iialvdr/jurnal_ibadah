@@ -20,11 +20,5 @@
       "source": "/artikel/:sourceId/:articleId",
       "destination": "/api/artikel-og"
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron?secret=jurnalibadah2026rahasia",
-      "schedule": "* * * * *"
-    }
   ]
 }

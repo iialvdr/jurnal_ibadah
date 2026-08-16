@@ -210,6 +210,8 @@ export function usePrayerTimes(currentDate, currentUserForPushRef) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const { latitude, longitude } = position.coords;
+                localStorage.setItem('last_lat', latitude.toString());
+                localStorage.setItem('last_lng', longitude.toString());
                 
                 // Hapus cache kota jika tombol ditekan manual
                 if (manual) localStorage.removeItem('kemenag_kota_cache');
