@@ -1,11 +1,13 @@
 // src/pages/Doa.jsx
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { Heart, BookHeart, Search, ArrowLeft, X, Filter, Check, Tag, ChevronDown, ChevronRight, Info } from 'lucide-react';
 import "@aejkatappaja/phantom-ui";
 import { useApp } from '@/store/AppContext';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
+import LiquidGlass from '@/components/LiquidGlass';
 
 export default function Doa() {
     const navigate = useNavigate();
@@ -13,10 +15,30 @@ export default function Doa() {
     const [allDoa, setAllDoa] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [showSearch, setShowSearch] = useState(true);
-    const lastScrollY = useRef(0);
-    const searchVisibleRef = useRef(true);
+    const [showSearch, setShowSearch] = useState(false);
+    const [searchGlassReady, setSearchGlassReady] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(
+        () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+    );
+    const searchInputRef = useRef(null);
+    const userScrollIntent = useRef(false);
+    const lastScrollTop = useRef(0);
     const dragControls = useDragControls();
+    const handleSearchGlassReady = useCallback(() => setSearchGlassReady(true), []);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(min-width: 768px)');
+        const updateViewport = event => setIsDesktop(event.matches);
+        setIsDesktop(mediaQuery.matches);
+        mediaQuery.addEventListener('change', updateViewport);
+        return () => mediaQuery.removeEventListener('change', updateViewport);
+    }, []);
+
+    useEffect(() => {
+        if (showSearch && !isDesktop) {
+            searchInputRef.current?.focus({ preventScroll: true });
+        }
+    }, [showSearch, isDesktop]);
     
     // Filter states
     const [category, setCategory] = useState('');
@@ -95,44 +117,48 @@ export default function Doa() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Deteksi Scroll untuk Sembunyikan Search
+    // Close the search overlay only when the user intentionally scrolls down.
     useEffect(() => {
         const container = document.getElementById('doaContainer');
         if (!container) return;
 
         let ticking = false;
+        let intentTimeout;
+        const markUserScrollIntent = () => {
+            userScrollIntent.current = true;
+            clearTimeout(intentTimeout);
+            intentTimeout = setTimeout(() => {
+                userScrollIntent.current = false;
+            }, 700);
+        };
         const handleScroll = () => {
-            if (!ticking) {
-                window.requestAnimationFrame(() => {
-                    const currentScrollY = container.scrollTop;
-                    const delta = currentScrollY - lastScrollY.current;
-                    
-                    // Deteksi Scroll Down dengan threshold jarak 10px
-                    if (delta > 10 && currentScrollY > 100) {
-                        if (searchVisibleRef.current !== false) {
-                            searchVisibleRef.current = false;
-                            setShowSearch(false);
-                            setActiveDropdown(null); // Tutup dropdown saat scroll
-                        }
-                        lastScrollY.current = currentScrollY;
-                    } 
-                    // Deteksi Scroll Up dengan threshold jarak 10px atau di puncak
-                    else if (delta < -10 || currentScrollY < 100) {
-                        if (searchVisibleRef.current !== true) {
-                            searchVisibleRef.current = true;
-                            setShowSearch(true);
-                        }
-                        lastScrollY.current = currentScrollY;
-                    }
-                    
-                    ticking = false;
-                });
-                ticking = true;
-            }
+            if (ticking) return;
+            ticking = true;
+            window.requestAnimationFrame(() => {
+                const currentScrollTop = container.scrollTop;
+                const delta = currentScrollTop - lastScrollTop.current;
+                if (showSearch && userScrollIntent.current && delta > 4 && currentScrollTop > 8) {
+                    setShowSearch(false);
+                    setActiveDropdown(null);
+                }
+                lastScrollTop.current = currentScrollTop;
+                ticking = false;
+            });
         };
 
         container.addEventListener('scroll', handleScroll, { passive: true });
-        return () => container.removeEventListener('scroll', handleScroll);
+        container.addEventListener('touchstart', markUserScrollIntent, { passive: true });
+        container.addEventListener('wheel', markUserScrollIntent, { passive: true });
+        return () => {
+            container.removeEventListener('scroll', handleScroll);
+            container.removeEventListener('touchstart', markUserScrollIntent);
+            container.removeEventListener('wheel', markUserScrollIntent);
+            clearTimeout(intentTimeout);
+        };
+    }, [showSearch]);
+
+    useEffect(() => {
+        lastScrollTop.current = 0;
     }, []);
 
     const toggleDropdown = (type) => {
@@ -186,94 +212,25 @@ export default function Doa() {
                     </button>
                 }
                 titleNode="Kumpulan Doa"
-                rightNode={<div className="w-10"></div>}
+                rightNode={
+                    <button
+                        type="button"
+                        onClick={() => {
+                            userScrollIntent.current = false;
+                            if (!showSearch) setSearchGlassReady(false);
+                            setShowSearch(isOpen => !isOpen);
+                        }}
+                        aria-label={showSearch ? 'Tutup pencarian doa' : 'Cari doa'}
+                        aria-expanded={showSearch}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90"
+                    >
+                        {showSearch ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+                    </button>
+                }
             />
             <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
             <div className="flex-1 relative z-10">
-                <div className="px-5 pt-2 md:px-8 md:max-w-7xl md:mx-auto md:w-full">
-                    <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Cari berdasarkan judul doa, lalu gunakan filter bila perlu.</p>
-                </div>
-                
-                {/* Search & Filters container */}
-                <div className="sticky top-[85px] z-40 px-5 pt-3 pb-4 md:px-8 max-w-7xl mx-auto pointer-events-none">
-                    <div 
-                        className="pointer-events-auto transform origin-top flex flex-col space-y-4"
-                        style={{
-                            transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                            transform: showSearch ? 'translateY(0px) scale(1)' : 'translateY(-24px) scale(0.97)',
-                            opacity: showSearch ? 1 : 0,
-                            pointerEvents: showSearch ? 'auto' : 'none'
-                        }}
-                    >
-                        <div className="relative group">
-                            <div className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-[1.8rem] border border-white dark:border-slate-800 flex items-center px-5 py-4 transition-all duration-300 group-focus-within:ring-4 group-focus-within:ring-emerald-500/10 shadow-sm">
-                                <Search className="w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
-                                <input
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
-                                    placeholder="Cari doa sehari-hari..."
-                                    className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 ml-4 outline-none"
-                                />
-                                {search && (
-                                    <button onClick={() => setSearch('')}>
-                                        <X className="w-4 h-4 text-slate-400" />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Filter Dropdowns (Grid 2 cols like old design) */}
-                        <div className="grid grid-cols-2 gap-3 relative z-30" ref={filterRef}>
-                            {/* Kategori Dropdown */}
-                            <div className="relative">
-                                <button onClick={() => toggleDropdown('grup')} 
-                                    className={`w-full backdrop-blur-sm text-[11px] font-bold py-3.5 px-5 rounded-2xl flex justify-between items-center outline-none active:scale-95 transition border ${category ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/50' : 'bg-white/60 dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 border-white/50 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-800'}`}>
-                                    <span className="truncate mr-2">{category || 'Kategori'}</span>
-                                    <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-300 ${category ? 'text-emerald-500' : 'text-slate-400'} ${activeDropdown === 'grup' ? 'rotate-180' : ''}`} />
-                                </button>
-                                
-                                {/* Dropdown Menu */}
-                                <div className={`absolute top-full left-0 right-0 mt-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white dark:border-slate-800 rounded-2xl shadow-2xl z-50 max-h-64 overflow-y-auto p-2 origin-top transition-all duration-300 no-scrollbar ${activeDropdown === 'grup' ? 'opacity-100 scale-100 block' : 'opacity-0 scale-95 hidden'}`}>
-                                    <div onClick={() => selectFilter('grup', '')} className="px-4 py-3 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:bg-emerald-500 hover:text-white rounded-xl cursor-pointer transition-all flex items-center justify-between group mb-1 last:mb-0">
-                                        <span>Semua Kategori</span>
-                                        {category === '' && <Check className="w-3 h-3" />}
-                                    </div>
-                                    {categories.map(c => (
-                                        <div key={c} onClick={() => selectFilter('grup', c)} className="px-4 py-3 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:bg-emerald-500 hover:text-white rounded-xl cursor-pointer transition-all flex items-center justify-between group mb-1 last:mb-0">
-                                            <span>{c}</span>
-                                            {category === c && <Check className="w-3 h-3" />}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Tagar Dropdown */}
-                            <div className="relative">
-                                <button onClick={() => toggleDropdown('tag')} 
-                                    className={`w-full backdrop-blur-sm text-[11px] font-bold py-3.5 px-5 rounded-2xl flex justify-between items-center outline-none active:scale-95 transition border ${tag ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/50' : 'bg-white/60 dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 border-white/50 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-800'}`}>
-                                    <span className="truncate mr-2">{tag || 'Tagar'}</span>
-                                    <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-300 ${tag ? 'text-emerald-500' : 'text-slate-400'} ${activeDropdown === 'tag' ? 'rotate-180' : ''}`} />
-                                </button>
-                                
-                                {/* Dropdown Menu */}
-                                <div className={`absolute top-full left-0 right-0 mt-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white dark:border-slate-800 rounded-2xl shadow-2xl z-50 max-h-64 overflow-y-auto p-2 origin-top transition-all duration-300 no-scrollbar ${activeDropdown === 'tag' ? 'opacity-100 scale-100 block' : 'opacity-0 scale-95 hidden'}`}>
-                                    <div onClick={() => selectFilter('tag', '')} className="px-4 py-3 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:bg-emerald-500 hover:text-white rounded-xl cursor-pointer transition-all flex items-center justify-between group mb-1 last:mb-0">
-                                        <span>Semua Tagar</span>
-                                        {tag === '' && <Check className="w-3 h-3" />}
-                                    </div>
-                                    {tags.map(t => (
-                                        <div key={t} onClick={() => selectFilter('tag', t)} className="px-4 py-3 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:bg-emerald-500 hover:text-white rounded-xl cursor-pointer transition-all flex items-center justify-between group mb-1 last:mb-0">
-                                            <span>{t}</span>
-                                            {tag === t && <Check className="w-3 h-3" />}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 {/* Doa list */}
                 <phantom-ui
                     loading={loading ? '' : undefined}
@@ -321,6 +278,108 @@ export default function Doa() {
                     <div className="h-4 md:col-span-3"></div>
                 </phantom-ui>
             </div>
+
+            {createPortal(
+                <AnimatePresence initial={false}>
+                    {showSearch && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: searchGlassReady ? 1 : 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.16, ease: 'easeOut' }}
+                            className="fixed top-[calc(env(safe-area-inset-top)+4.5rem)] md:top-[calc(env(safe-area-inset-top)+6rem)] left-0 right-0 z-[200] px-5 md:px-8 max-w-7xl mx-auto pointer-events-none"
+                        >
+                            <div className="pointer-events-auto origin-top">
+                                <LiquidGlass
+                                    tier="regular"
+                                    displacementScale={85}
+                                    refractionBlur={2}
+                                    interactive={false}
+                                    overflowVisible
+                                    cornerRadius="rounded-[1.8rem]"
+                                    onRefractionReady={handleSearchGlassReady}
+                                    className="group px-5 py-4 shadow-sm focus-within:ring-4 focus-within:ring-emerald-500/10"
+                                >
+                                    <div className="relative z-10">
+                                        <div className="flex items-center">
+                                            <span className="flex shrink-0">
+                                                <Search className="w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                                            </span>
+                                            <input
+                                                ref={searchInputRef}
+                                                value={search}
+                                                onChange={event => setSearch(event.target.value)}
+                                                placeholder="Cari doa sehari-hari..."
+                                                aria-label="Cari doa"
+                                                className="ml-4 w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 outline-none"
+                                            />
+                                            {search && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSearch('')}
+                                                    aria-label="Hapus pencarian"
+                                                    className="ml-2 text-slate-400 hover:text-slate-600"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="mt-4 grid grid-cols-2 gap-3 relative z-30" ref={filterRef}>
+                                            <div className="relative">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleDropdown('grup')}
+                                                    className={`w-full backdrop-blur-sm text-[11px] font-bold py-3.5 px-4 rounded-2xl flex justify-between items-center outline-none active:scale-95 transition border ${category ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/50' : 'bg-white/60 dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 border-white/50 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-800'}`}
+                                                >
+                                                    <span className="truncate mr-2">{category || 'Kategori'}</span>
+                                                    <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-300 ${category ? 'text-emerald-500' : 'text-slate-400'} ${activeDropdown === 'grup' ? 'rotate-180' : ''}`} />
+                                                </button>
+                                                <div className={`absolute top-full left-0 right-0 mt-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white dark:border-slate-800 rounded-2xl shadow-2xl z-50 max-h-64 overflow-y-auto p-2 origin-top transition-all duration-300 no-scrollbar ${activeDropdown === 'grup' ? 'opacity-100 scale-100 block' : 'opacity-0 scale-95 hidden'}`}>
+                                                    <div onClick={() => selectFilter('grup', '')} className="px-4 py-3 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:bg-emerald-500 hover:text-white rounded-xl cursor-pointer transition-all flex items-center justify-between group mb-1 last:mb-0">
+                                                        <span>Semua Kategori</span>
+                                                        {category === '' && <Check className="w-3 h-3" />}
+                                                    </div>
+                                                    {categories.map(item => (
+                                                        <div key={item} onClick={() => selectFilter('grup', item)} className="px-4 py-3 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:bg-emerald-500 hover:text-white rounded-xl cursor-pointer transition-all flex items-center justify-between group mb-1 last:mb-0">
+                                                            <span>{item}</span>
+                                                            {category === item && <Check className="w-3 h-3" />}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="relative">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleDropdown('tag')}
+                                                    className={`w-full backdrop-blur-sm text-[11px] font-bold py-3.5 px-4 rounded-2xl flex justify-between items-center outline-none active:scale-95 transition border ${tag ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/50' : 'bg-white/60 dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 border-white/50 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-800'}`}
+                                                >
+                                                    <span className="truncate mr-2">{tag || 'Tagar'}</span>
+                                                    <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-300 ${tag ? 'text-emerald-500' : 'text-slate-400'} ${activeDropdown === 'tag' ? 'rotate-180' : ''}`} />
+                                                </button>
+                                                <div className={`absolute top-full left-0 right-0 mt-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white dark:border-slate-800 rounded-2xl shadow-2xl z-50 max-h-64 overflow-y-auto p-2 origin-top transition-all duration-300 no-scrollbar ${activeDropdown === 'tag' ? 'opacity-100 scale-100 block' : 'opacity-0 scale-95 hidden'}`}>
+                                                    <div onClick={() => selectFilter('tag', '')} className="px-4 py-3 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:bg-emerald-500 hover:text-white rounded-xl cursor-pointer transition-all flex items-center justify-between group mb-1 last:mb-0">
+                                                        <span>Semua Tagar</span>
+                                                        {tag === '' && <Check className="w-3 h-3" />}
+                                                    </div>
+                                                    {tags.map(item => (
+                                                        <div key={item} onClick={() => selectFilter('tag', item)} className="px-4 py-3 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:bg-emerald-500 hover:text-white rounded-xl cursor-pointer transition-all flex items-center justify-between group mb-1 last:mb-0">
+                                                            <span>{item}</span>
+                                                            {tag === item && <Check className="w-3 h-3" />}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </LiquidGlass>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
 
             {/* Modal - Bottom Sheet */}
             <AnimatePresence>

@@ -100,6 +100,7 @@ export default function Credits() {
                         {[
                                 { title: 'EQuran.id API', desc: 'Al-Qur\'an & Doa', icon: BookOpen, color: 'emerald', url: 'https://equran.id' },
                                 { title: 'MyQuran Hadis API', desc: 'Ensiklopedia Hadis', icon: Quote, color: 'rose', url: 'https://myquran.com' },
+                                { title: 'MyQuran Hijriah API', desc: 'Konversi tanggal Hijriah', icon: Clock, color: 'teal', url: 'https://api.myquran.com/v3/cal/hijr' },
                                 { title: 'Kemenag API', desc: 'Jadwal Sholat Resmi', icon: Clock, color: 'amber', url: 'https://bimasislam.kemenag.go.id' },
                                 { title: 'BigDataCloud', desc: 'Satelit Geocoder', icon: MapPin, color: 'blue', url: 'https://www.bigdatacloud.com' },
                                 { title: 'Adhan.js', desc: 'Jadwal (Offline)', icon: Clock, color: 'indigo', url: 'https://github.com/batoulapps/adhan-js' },
@@ -123,6 +124,13 @@ export default function Credits() {
                                 );
                             })}
 
+                        </div>
+
+                        <div className="flex items-start gap-3 rounded-2xl border border-teal-100 bg-teal-50/70 p-4 dark:border-teal-900/40 dark:bg-teal-950/20">
+                            <Info className="mt-0.5 h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" />
+                            <p className="text-[10px] leading-relaxed text-slate-600 dark:text-slate-400">
+                                Tanggal Hijriah menggunakan konversi MyQuran API. Tanggal dapat berbeda sekitar satu hari dari kalender setempat yang mengikuti rukyat.
+                            </p>
                         </div>
 
                         <div className="mt-4 pt-6 text-center border-t border-slate-200 dark:border-slate-800">

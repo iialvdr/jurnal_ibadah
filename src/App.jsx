@@ -33,6 +33,7 @@ const Faq = lazy(() => import('@/pages/Faq'));
 const Hadith = lazy(() => import('@/pages/Hadith'));
 const Artikel = lazy(() => import('@/pages/Artikel'));
 const ArtikelDetail = lazy(() => import('@/pages/ArtikelDetail'));
+const TanyaQuran = lazy(() => import('@/pages/TanyaQuran'));
 
 function SplashScreen({ visible }) {
   return (
@@ -120,7 +121,7 @@ function AppShell() {
 
   const { setBottomNavExtraNode } = useApp();
   useEffect(() => {
-    const routesWithExtraNode = ['/tracker', '/fasting', '/zakat', '/hadith'];
+    const routesWithExtraNode = ['/tracker', '/fasting', '/zakat', '/hadith', '/tasbih'];
     if (!routesWithExtraNode.includes(location.pathname)) {
       setBottomNavExtraNode(null);
     }
@@ -252,6 +253,7 @@ function AppShell() {
                   <Route path="/hadith" element={<ProtectedRoute><PageWrapper><Hadith /></PageWrapper></ProtectedRoute>} />
                   <Route path="/artikel" element={<ProtectedRoute><PageWrapper><Artikel /></PageWrapper></ProtectedRoute>} />
                   <Route path="/artikel/:sourceId/:articleId" element={<ProtectedRoute><PageWrapper><ArtikelDetail /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/tanya-quran" element={<ProtectedRoute><PageWrapper><TanyaQuran /></PageWrapper></ProtectedRoute>} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </AnimatePresence>

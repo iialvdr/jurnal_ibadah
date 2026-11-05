@@ -1,10 +1,12 @@
 // src/pages/AsmaulHusna.jsx
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { ArrowLeft, Search, Volume2, Info, Share2, X, AlertCircle, ChevronRight, ChevronLeft } from 'lucide-react';
 import "@aejkatappaja/phantom-ui";
 import TopNavConfig from '@/components/TopNavConfig';
+import LiquidGlass from '@/components/LiquidGlass';
 import { useApp } from '@/store/AppContext';
 import useSwipe from '@/hooks/useSwipe';
 
@@ -14,12 +16,32 @@ export default function AsmaulHusna() {
     const [asmaList, setAsmaList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [showSearch, setShowSearch] = useState(true);
-    const lastScrollY = useRef(0);
-    const searchVisibleRef = useRef(true);
+    const [showSearch, setShowSearch] = useState(false);
+    const [searchGlassReady, setSearchGlassReady] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(
+        () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+    );
+    const searchInputRef = useRef(null);
+    const userScrollIntent = useRef(false);
+    const lastScrollTop = useRef(0);
+    const handleSearchGlassReady = useCallback(() => setSearchGlassReady(true), []);
     const [selectedIdx, setSelectedIdx] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const dragControls = useDragControls();
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(min-width: 768px)');
+        const updateViewport = event => setIsDesktop(event.matches);
+        setIsDesktop(mediaQuery.matches);
+        mediaQuery.addEventListener('change', updateViewport);
+        return () => mediaQuery.removeEventListener('change', updateViewport);
+    }, []);
+
+    useEffect(() => {
+        if (showSearch && !isDesktop) {
+            searchInputRef.current?.focus({ preventScroll: true });
+        }
+    }, [showSearch, isDesktop]);
 
     // Handle back button for Modal
     useEffect(() => {
@@ -87,44 +109,44 @@ export default function AsmaulHusna() {
             });
     }, []);
 
-    // Deteksi Scroll untuk Sembunyikan Search
+    // Close the search overlay only when the user intentionally scrolls down.
     useEffect(() => {
         const container = document.getElementById('asmaulHusnaView');
         if (!container) return;
 
         let ticking = false;
+        let intentTimeout;
+        const markUserScrollIntent = () => {
+            userScrollIntent.current = true;
+            clearTimeout(intentTimeout);
+            intentTimeout = setTimeout(() => {
+                userScrollIntent.current = false;
+            }, 700);
+        };
         const handleScroll = () => {
-            if (!ticking) {
-                window.requestAnimationFrame(() => {
-                    const currentScrollY = container.scrollTop;
-                    const delta = currentScrollY - lastScrollY.current;
-                    
-                    // Deteksi Scroll Down dengan threshold jarak 10px
-                    if (delta > 10 && currentScrollY > 100) {
-                        if (searchVisibleRef.current !== false) {
-                            searchVisibleRef.current = false;
-                            setShowSearch(false);
-                        }
-                        lastScrollY.current = currentScrollY;
-                    } 
-                    // Deteksi Scroll Up dengan threshold jarak 10px atau di puncak
-                    else if (delta < -10 || currentScrollY < 100) {
-                        if (searchVisibleRef.current !== true) {
-                            searchVisibleRef.current = true;
-                            setShowSearch(true);
-                        }
-                        lastScrollY.current = currentScrollY;
-                    }
-                    
-                    ticking = false;
-                });
-                ticking = true;
-            }
+            if (ticking) return;
+            ticking = true;
+            window.requestAnimationFrame(() => {
+                const currentScrollTop = container.scrollTop;
+                const delta = currentScrollTop - lastScrollTop.current;
+                if (showSearch && userScrollIntent.current && delta > 4 && currentScrollTop > 8) {
+                    setShowSearch(false);
+                }
+                lastScrollTop.current = currentScrollTop;
+                ticking = false;
+            });
         };
 
         container.addEventListener('scroll', handleScroll, { passive: true });
-        return () => container.removeEventListener('scroll', handleScroll);
-    }, []);
+        container.addEventListener('touchstart', markUserScrollIntent, { passive: true });
+        container.addEventListener('wheel', markUserScrollIntent, { passive: true });
+        return () => {
+            container.removeEventListener('scroll', handleScroll);
+            container.removeEventListener('touchstart', markUserScrollIntent);
+            container.removeEventListener('wheel', markUserScrollIntent);
+            clearTimeout(intentTimeout);
+        };
+    }, [showSearch]);
 
     // Keyboard navigation
     useEffect(() => {
@@ -177,44 +199,29 @@ export default function AsmaulHusna() {
                     </button>
                 }
                 titleNode="Asmaul Husna"
-                rightNode={<div className="w-10"></div>}
+                rightNode={
+                    <button
+                        type="button"
+                        onClick={() => {
+                            userScrollIntent.current = false;
+                            lastScrollTop.current = document.getElementById('asmaulHusnaView')?.scrollTop || 0;
+                            if (!showSearch) setSearchGlassReady(false);
+                            setShowSearch(isOpen => !isOpen);
+                        }}
+                        aria-label={showSearch ? 'Tutup pencarian Asmaul Husna' : 'Cari Asmaul Husna'}
+                        aria-expanded={showSearch}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90"
+                    >
+                        {showSearch ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+                    </button>
+                }
             />
             <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
             <div className="relative z-10 w-full mx-auto">
                 
-                {/* Search bar with scroll animation */}
-                <div className="sticky top-[85px] z-40 px-5 pt-2 pb-4 md:px-8 md:max-w-7xl md:mx-auto md:w-full pointer-events-none">
-                    <div 
-                        className="pointer-events-auto transform origin-top flex flex-col space-y-4"
-                        style={{
-                            transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                            transform: showSearch ? 'translateY(0px) scale(1)' : 'translateY(-24px) scale(0.97)',
-                            opacity: showSearch ? 1 : 0,
-                            pointerEvents: showSearch ? 'auto' : 'none'
-                        }}
-                    >
-                        <div className="relative group">
-                            <div className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-[1.8rem] border border-white dark:border-slate-800 flex items-center px-5 py-4 transition-all duration-300 group-focus-within:ring-4 group-focus-within:ring-emerald-500/10 shadow-sm">
-                                <Search className="w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
-                                <input
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
-                                    placeholder="Cari nama Allah..."
-                                    className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 ml-4 outline-none"
-                                />
-                                {search && (
-                                    <button onClick={() => setSearch('')}>
-                                        <X className="w-4 h-4 text-slate-400" />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 {/* List Container */}
-                <div className="px-5 pb-4 scroll-smooth no-scrollbar md:px-8 max-w-7xl mx-auto">
+                <div className="px-5 pb-40 scroll-smooth no-scrollbar md:px-8 md:pb-8 max-w-7xl mx-auto">
                     <phantom-ui
                         loading={loading ? '' : undefined}
                         count={12}
@@ -257,6 +264,55 @@ export default function AsmaulHusna() {
                 </div>
                 <div className="h-8"></div>
             </div>
+
+            {createPortal(
+                <AnimatePresence initial={false}>
+                    {showSearch && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: searchGlassReady ? 1 : 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.16, ease: 'easeOut' }}
+                            className="fixed top-[calc(env(safe-area-inset-top)+4.5rem)] md:top-[calc(env(safe-area-inset-top)+6rem)] left-0 right-0 z-[200] px-5 md:px-8 max-w-7xl mx-auto pointer-events-none"
+                        >
+                            <div className="pointer-events-auto origin-top">
+                                <LiquidGlass
+                                    tier="regular"
+                                    displacementScale={85}
+                                    refractionBlur={2}
+                                    interactive={false}
+                                    cornerRadius="rounded-full"
+                                    onRefractionReady={handleSearchGlassReady}
+                                    className="group flex items-center px-5 py-4 shadow-sm focus-within:ring-4 focus-within:ring-emerald-500/10"
+                                >
+                                    <span className="relative z-10 flex shrink-0">
+                                        <Search className="w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                                    </span>
+                                    <input
+                                        ref={searchInputRef}
+                                        value={search}
+                                        onChange={event => setSearch(event.target.value)}
+                                        placeholder="Cari nama Allah..."
+                                        aria-label="Cari Asmaul Husna"
+                                        className="relative z-10 ml-4 w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 outline-none"
+                                    />
+                                    {search && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSearch('')}
+                                            aria-label="Hapus pencarian"
+                                            className="relative z-10 ml-2 text-slate-400 hover:text-slate-600"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </LiquidGlass>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
 
             {/* Modal - Bottom Sheet */}
             <AnimatePresence>

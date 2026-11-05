@@ -14,6 +14,8 @@ import { getHijriDate, fetchHijriDateAPI, formatDateKey } from '@/utils/dateUtil
 import { getFastingInfo } from '@/modules/fasting';
 import { motion } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
+import useSwipe from '@/hooks/useSwipe';
+import TabSlider from '@/components/TabSlider';
 
 const PRAYER_CONFIG = [
     { id: 'Subuh', type: 'wajib', icon: Sunrise, bgGradient: 'from-sky-400 to-blue-500', activeBg: 'bg-sky-50 dark:bg-sky-900/20', activeBorder: 'border-sky-200 dark:border-sky-800', textActive: 'text-sky-700 dark:text-sky-300' },
@@ -261,32 +263,49 @@ export default function Tracker() {
 
     const { grid: calendarGrid, perfectDays } = renderCalendar();
 
-    const tabSliderContent = (
-        <>
-            <div className="absolute inset-1.5 flex pointer-events-none">
-                <div className="w-1/2 h-full transition-transform duration-300 ease-in-out" 
-                     style={{ transform: activeTab === 'daily' ? 'translateX(0)' : 'translateX(100%)' }}>
-                    <div className="w-full h-full bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700"></div>
-                </div>
-            </div>
-            <button onClick={() => setActiveTab('daily')} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'daily' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Harian</button>
-            <button onClick={() => setActiveTab('history')} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'history' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Riwayat</button>
-        </>
-    );
+    const swipeHandlers = useSwipe({
+        threshold: 30,
+        onSwipeLeft: () => {
+            if (activeTab === 'daily') {
+                if (navigator.vibrate) navigator.vibrate(8);
+                setActiveTab('history');
+                return true;
+            }
+            return false;
+        },
+        onSwipeRight: () => {
+            if (activeTab === 'history') {
+                if (navigator.vibrate) navigator.vibrate(8);
+                setActiveTab('daily');
+                return true;
+            }
+            return false;
+        }
+    });
+
+    const TRACKER_TABS = [
+        { id: 'daily', label: 'Harian' },
+        { id: 'history', label: 'Riwayat' },
+    ];
 
     const { setBottomNavExtraNode } = useApp();
     const location = useLocation();
 
     useEffect(() => {
-        setBottomNavExtraNode(
-            <div className="md:hidden flex w-full relative">
-                {tabSliderContent}
-            </div>
-        );
-    }, [activeTab, setBottomNavExtraNode]);
+        if (location.pathname === '/tracker') {
+            setBottomNavExtraNode(
+                <TabSlider
+                    tabs={TRACKER_TABS}
+                    activeTab={activeTab}
+                    onChange={setActiveTab}
+                    className="md:hidden"
+                />
+            );
+        }
+    }, [activeTab, location.pathname, setBottomNavExtraNode]);
 
     return (
-        <div className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
+        <div {...swipeHandlers} className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
             <div className="fixed top-0 left-0 right-0 h-64 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
 
             <TopNavConfig 
@@ -306,8 +325,8 @@ export default function Tracker() {
                 <div className="md:col-span-7 lg:col-span-8 flex flex-col gap-4">
                     
                     {/* Tabs (Desktop Inline) */}
-                    <div className="hidden md:flex bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-1.5 rounded-full shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-white/50 dark:border-slate-700/50 relative">
-                        {tabSliderContent}
+                    <div className="hidden md:flex bg-slate-900/5 dark:bg-white/5 backdrop-blur-md rounded-full border border-black/5 dark:border-white/10 relative">
+                        <TabSlider tabs={TRACKER_TABS} activeTab={activeTab} onChange={setActiveTab} />
                     </div>
 
                     {/* Content Container */}

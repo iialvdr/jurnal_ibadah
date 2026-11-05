@@ -9,6 +9,13 @@ const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(undefined); // undefined = loading
+    const [installPromptEvent, setInstallPromptEvent] = useState(null);
+    const [isPwaInstalled, setIsPwaInstalled] = useState(() => Boolean(
+        typeof window !== 'undefined' && (
+            window.matchMedia?.('(display-mode: standalone)')?.matches ||
+            window.navigator.standalone === true
+        )
+    ));
     const [prayerTimes, setPrayerTimes] = useState({
         Subuh: '--:--', Dhuha: '--:--', Dzuhur: '--:--',
         Ashar: '--:--', Maghrib: '--:--', Isya: '--:--', Tahajud: '03:00'
@@ -42,6 +49,42 @@ export function AppProvider({ children }) {
         }
     }, []);
 
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (event) => {
+            event.preventDefault();
+            setInstallPromptEvent(event);
+        };
+        const handleAppInstalled = () => {
+            setIsPwaInstalled(true);
+            setInstallPromptEvent(null);
+        };
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        window.addEventListener('appinstalled', handleAppInstalled);
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener('appinstalled', handleAppInstalled);
+        };
+    }, []);
+
+    const installPwa = useCallback(async () => {
+        if (!installPromptEvent) {
+            return;
+        }
+
+        try {
+            await installPromptEvent.prompt();
+            const { outcome } = await installPromptEvent.userChoice;
+            setInstallPromptEvent(null);
+            if (outcome === 'accepted') {
+                showAppToast('Permintaan instalasi aplikasi diterima.', 'success');
+            }
+        } catch (error) {
+            console.error('Gagal menampilkan prompt instalasi PWA', error);
+            showAppToast('Tidak dapat membuka instalasi. Coba melalui menu browser.', 'error');
+        }
+    }, [installPromptEvent, showAppToast]);
+
     // Auth listener
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -70,6 +113,7 @@ export function AppProvider({ children }) {
         todayRecords, setTodayRecords,
         currentDate, trackerDate, setTrackerDate,
         showAppToast,
+        isPwaInstalled, canInstallPwa: Boolean(installPromptEvent), installPwa,
         modalOpen, setModalOpen,
         bottomNavExtraNode, setBottomNavExtraNode,
     };

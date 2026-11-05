@@ -1,19 +1,27 @@
 // src/pages/Quran.jsx
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useApp } from '@/store/AppContext';
 import { db } from '@/config/firebase';
 import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { createPortal } from 'react-dom';
 import { 
     ArrowLeft, Search, Bookmark, BookmarkCheck, ChevronDown, ChevronUp, X, 
     Play, Pause, Loader2, SkipBack, SkipForward, Volume2, BookOpen, ChevronRight, ChevronLeft 
 } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import "@aejkatappaja/phantom-ui";
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
+import LiquidGlass from '@/components/LiquidGlass';
 
 // In-Memory Cache untuk preload ayat surah
 const ayatCache = {};
+const surahContentVariants = {
+    enter: direction => ({ x: direction * 48 }),
+    center: { x: 0 },
+    exit: direction => ({ x: direction * -48 }),
+};
 
 export default function Quran() {
     const navigate = useNavigate();
@@ -23,13 +31,37 @@ export default function Quran() {
     const [surahList, setSurahList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [showSearch, setShowSearch] = useState(true);
+    const [showSearch, setShowSearch] = useState(false);
+    const [searchGlassReady, setSearchGlassReady] = useState(false);
+    const searchInputRef = useRef(null);
+    const [showFloatingAi, setShowFloatingAi] = useState(true);
+    const [isDesktop, setIsDesktop] = useState(
+        () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+    );
     const lastScrollY = useRef(0);
+    const userScrollIntent = useRef(false);
+    const floatingAiVisibleRef = useRef(true);
     const [selectedSurah, setSelectedSurah] = useState(null);
     const [ayats, setAyats] = useState([]);
     const [loadingAyats, setLoadingAyats] = useState(false);
     const [bookmarked, setBookmarked] = useState(null); 
     const isFirstMountList = useRef(true);
+    const surahDirection = useRef(1);
+    const handleSearchGlassReady = useCallback(() => setSearchGlassReady(true), []);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(min-width: 768px)');
+        const updateViewport = event => setIsDesktop(event.matches);
+        setIsDesktop(mediaQuery.matches);
+        mediaQuery.addEventListener('change', updateViewport);
+        return () => mediaQuery.removeEventListener('change', updateViewport);
+    }, []);
+
+    useEffect(() => {
+        if (showSearch && !isDesktop) {
+            searchInputRef.current?.focus({ preventScroll: true });
+        }
+    }, [showSearch, isDesktop]);
 
     // Audio & Tafsir States
     const [isPlaying, setIsPlaying] = useState(false);
@@ -220,32 +252,41 @@ export default function Quran() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ayats]);
 
-    // Deteksi Scroll untuk Sembunyikan Search
-    const searchVisibleRef = useRef(true);
+    // Hide the floating AI button while scrolling down.
     useEffect(() => {
         const container = document.getElementById('quranDetailContainer');
         if (!container || selectedSurah) return;
 
         let ticking = false;
+        let intentTimeout;
+        const markUserScrollIntent = () => {
+            userScrollIntent.current = true;
+            clearTimeout(intentTimeout);
+            intentTimeout = setTimeout(() => {
+                userScrollIntent.current = false;
+            }, 700);
+        };
         const handleScroll = () => {
             if (!ticking) {
                 window.requestAnimationFrame(() => {
                     const currentScrollY = container.scrollTop;
                     const delta = currentScrollY - lastScrollY.current;
                     
-                    // Deteksi Scroll Down dengan threshold jarak 10px
-                    if (delta > 10 && currentScrollY > 100) {
-                        if (searchVisibleRef.current !== false) {
-                            searchVisibleRef.current = false;
-                            setShowSearch(false);
+                    if (userScrollIntent.current && delta > 4 && currentScrollY > 8) {
+                        setShowSearch(false);
+                    }
+
+                    if (delta > 4 && currentScrollY > 16) {
+                        if (floatingAiVisibleRef.current !== false) {
+                            floatingAiVisibleRef.current = false;
+                            setShowFloatingAi(false);
                         }
                         lastScrollY.current = currentScrollY;
                     } 
-                    // Deteksi Scroll Up dengan threshold jarak 10px atau di puncak
-                    else if (delta < -10 || currentScrollY < 100) {
-                        if (searchVisibleRef.current !== true) {
-                            searchVisibleRef.current = true;
-                            setShowSearch(true);
+                    else if (delta < -24 || currentScrollY < 16) {
+                        if (floatingAiVisibleRef.current !== true) {
+                            floatingAiVisibleRef.current = true;
+                            setShowFloatingAi(true);
                         }
                         lastScrollY.current = currentScrollY;
                     }
@@ -257,14 +298,23 @@ export default function Quran() {
         };
 
         container.addEventListener('scroll', handleScroll, { passive: true });
-        return () => container.removeEventListener('scroll', handleScroll);
+        container.addEventListener('touchstart', markUserScrollIntent, { passive: true });
+        container.addEventListener('wheel', markUserScrollIntent, { passive: true });
+        return () => {
+            container.removeEventListener('scroll', handleScroll);
+            container.removeEventListener('touchstart', markUserScrollIntent);
+            container.removeEventListener('wheel', markUserScrollIntent);
+            clearTimeout(intentTimeout);
+        };
     }, [selectedSurah]);
 
-    // Force show search bar every time we go back to the Surah List
+    // Reset list controls whenever returning from a surah detail.
     useEffect(() => {
         if (!selectedSurah) {
-            setShowSearch(true);
-            searchVisibleRef.current = true;
+            setShowSearch(false);
+            setSearchGlassReady(false);
+            setShowFloatingAi(true);
+            floatingAiVisibleRef.current = true;
         }
     }, [selectedSurah]);
 
@@ -341,6 +391,9 @@ export default function Quran() {
     };
 
     const openSurah = async (surah, scrollToAyat = null, fromUrl = false, replaceHistory = false) => {
+        if (selectedSurah && selectedSurah.nomor !== surah.nomor) {
+            surahDirection.current = surah.nomor > selectedSurah.nomor ? 1 : -1;
+        }
         if (!fromUrl) {
             setSearchParams({ s: surah.nomor }, { replace: replaceHistory });
         }
@@ -411,6 +464,7 @@ export default function Quran() {
         const nextNum = selectedSurah.nomor + delta;
         const nextSurah = surahList.find(s => s.nomor === nextNum);
         if (nextSurah) {
+            surahDirection.current = delta;
             const container = document.getElementById('quranDetailContainer');
             if (container) container.scrollTop = 0;
             openSurah(nextSurah, null, false, true);
@@ -488,7 +542,16 @@ export default function Quran() {
         const hasNext = selectedSurah.nomor < 114;
         
         return (
-            <div id="quranDetailContainer" className="app-view active h-full bg-slate-100 dark:bg-slate-950 no-scrollbar overflow-y-auto absolute inset-0 z-40">
+            <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+                key="surah-detail"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, ease: 'easeInOut' }}
+                id="quranDetailContainer"
+                className="app-view active h-full bg-slate-100 dark:bg-slate-950 no-scrollbar overflow-y-auto absolute inset-0 z-40"
+            >
                 <div className="fixed top-0 left-0 right-0 h-96 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
                 
                 {/* Header Detail Surah */}
@@ -504,11 +567,36 @@ export default function Quran() {
                         </button>
                     }
                     titleNode={selectedSurah.namaLatin}
-                    rightNode={<div className="w-10"></div>}
+                    rightNode={
+                    <button
+                        onClick={() => { if (navigator.vibrate) navigator.vibrate(10); navigate('/tanya-quran'); }}
+                        aria-label="Tanya Al-Qur'an dengan AI"
+                        className="relative group flex w-10 h-10 items-center justify-center rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-500/20 border border-white/20 transition-all active:scale-95 cursor-pointer overflow-hidden"
+                        title="Tanya Al-Qur'an (AI)"
+                    >
+                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+                        <Sparkles className="w-4 h-4 text-amber-200 fill-amber-200/40 animate-pulse" />
+                    </button>
+                }
                 />
                 <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
-                <div className="relative z-10 w-full max-w-4xl mx-auto pt-8">
+                <AnimatePresence mode="wait" initial={false} custom={surahDirection.current}>
+                <motion.div
+                    key={`surah-content-${selectedSurah.nomor}`}
+                    custom={surahDirection.current}
+                    variants={surahContentVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{
+                        type: 'spring',
+                        stiffness: 240,
+                        damping: 28,
+                        mass: 0.85,
+                    }}
+                    className="relative z-10 w-full max-w-4xl mx-auto pt-8"
+                >
                     {/* Bismillah */}
                     {selectedSurah.nomor !== 1 && selectedSurah.nomor !== 9 && (
                         <div className="text-center py-8 mb-6 px-5 md:py-12 animate-fade-in-up stagger-1">
@@ -612,16 +700,87 @@ export default function Quran() {
                                 })
                             )}
                     </phantom-ui>
-                </div>
+                </motion.div>
+                </AnimatePresence>
 
                 {/* Floating Nav Buttons */}
                 <div className="fixed bottom-8 left-5 right-5 flex justify-between gap-4 z-[120] transition-transform duration-500 max-w-lg mx-auto">
-                    <button onClick={() => changeSurah(-1)} disabled={loadingAyats} style={{ display: hasPrev ? 'flex' : 'none' }} className="flex-1 glass-pill bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl p-4 rounded-3xl border border-white/50 dark:border-slate-700 shadow-2xl text-slate-600 dark:text-slate-300 font-bold text-xs items-center justify-center gap-3 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100">
-                        <ChevronLeft className="w-5 h-5 text-emerald-500" /> Sebelumnya
-                    </button>
-                    <button onClick={() => changeSurah(1)} disabled={loadingAyats} style={{ display: hasNext ? 'flex' : 'none' }} className="flex-1 bg-emerald-500 p-4 rounded-3xl shadow-2xl shadow-emerald-500/30 text-white font-bold text-xs items-center justify-center gap-3 active:scale-95 hover:bg-emerald-600 transition-all disabled:opacity-50 disabled:scale-100">
-                        Selanjutnya <ChevronRight className="w-5 h-5" />
-                    </button>
+                    <AnimatePresence initial={false} mode="popLayout">
+                        {hasPrev && (
+                            <motion.div
+                                key="previous-surah"
+                                layout="position"
+                                initial={{ width: '0%', opacity: 0, x: -12 }}
+                                animate={{
+                                    width: hasNext ? 'calc(50% - 0.5rem)' : '100%',
+                                    opacity: 1,
+                                    x: 0,
+                                }}
+                                exit={{ width: '0%', opacity: 0, x: -12 }}
+                                transition={{
+                                    width: { type: 'spring', stiffness: 150, damping: 24, mass: 0.9 },
+                                    x: { type: 'spring', stiffness: 210, damping: 26, mass: 0.85 },
+                                    opacity: { duration: 0.2, ease: 'easeOut' },
+                                }}
+                                className="h-14 min-w-0 flex-none shrink-0 overflow-hidden rounded-3xl"
+                            >
+                                <LiquidGlass
+                                    as="button"
+                                    type="button"
+                                    onClick={() => changeSurah(-1)}
+                                    disabled={loadingAyats}
+                                    tier="regular"
+                                    displacementScale={85}
+                                    refractionBlur={2}
+                                    interactive={false}
+                                    cornerRadius="rounded-3xl"
+                                    className="h-14 min-h-14 w-full shrink-0 whitespace-nowrap px-4 py-0 shadow-2xl text-slate-600 dark:text-slate-300 font-bold text-xs items-center justify-center gap-3 active:scale-[0.98] transition-transform duration-200 disabled:opacity-50"
+                                >
+                                    <span className="relative z-10 inline-flex items-center justify-center gap-3">
+                                        <ChevronLeft className="w-5 h-5 text-emerald-500" /> Sebelumnya
+                                    </span>
+                                </LiquidGlass>
+                            </motion.div>
+                        )}
+                        {hasNext && (
+                            <motion.div
+                                key="next-surah"
+                                layout="position"
+                                initial={{ width: '0%', opacity: 0, x: 12 }}
+                                animate={{
+                                    width: hasPrev ? 'calc(50% - 0.5rem)' : '100%',
+                                    opacity: 1,
+                                    x: 0,
+                                }}
+                                exit={{ width: '0%', opacity: 0, x: 12 }}
+                                transition={{
+                                    width: { type: 'spring', stiffness: 150, damping: 24, mass: 0.9 },
+                                    x: { type: 'spring', stiffness: 210, damping: 26, mass: 0.85 },
+                                    opacity: { duration: 0.2, ease: 'easeOut' },
+                                }}
+                                style={{ marginLeft: hasPrev ? undefined : 'auto' }}
+                                className="h-14 min-w-0 flex-none shrink-0 overflow-hidden rounded-3xl"
+                            >
+                                <LiquidGlass
+                                    as="button"
+                                    type="button"
+                                    onClick={() => changeSurah(1)}
+                                    disabled={loadingAyats}
+                                    tier="regular"
+                                    displacementScale={85}
+                                    refractionBlur={2}
+                                    interactive={false}
+                                    cornerRadius="rounded-3xl"
+                                    className="h-14 min-h-14 w-full shrink-0 whitespace-nowrap px-4 py-0 shadow-2xl text-emerald-800 dark:text-emerald-200 font-bold text-xs items-center justify-center gap-3 active:scale-[0.98] transition-transform duration-200 disabled:opacity-50"
+                                >
+                                    <span className="absolute inset-0 z-[1] rounded-[inherit] bg-emerald-500/10 dark:bg-emerald-400/10 pointer-events-none" />
+                                    <span className="relative z-10 inline-flex items-center justify-center gap-3">
+                                        Selanjutnya <ChevronRight className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                                    </span>
+                                </LiquidGlass>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
                 {/* Sticky Audio Player */}
@@ -653,12 +812,22 @@ export default function Quran() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </motion.div>
+            </AnimatePresence>
         );
     }
 
     return (
-        <div id="quranDetailContainer" className="app-view active h-full absolute inset-0 z-40 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
+        <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+            key="surah-list"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: 'easeInOut' }}
+            id="quranDetailContainer"
+            className="app-view active h-full absolute inset-0 z-40 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar"
+        >
             <div className="fixed top-0 left-0 right-0 h-80 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
             
             <TopNavConfig 
@@ -668,41 +837,31 @@ export default function Quran() {
                     </button>
                 }
                 titleNode="Al-Qur'an"
-                rightNode={<div className="w-10"></div>}
+                rightNode={
+                    <button
+                        type="button"
+                        onClick={() => {
+                            userScrollIntent.current = false;
+                            if (!showSearch) setSearchGlassReady(false);
+                            setShowSearch(isOpen => !isOpen);
+                        }}
+                        aria-label={showSearch ? 'Tutup pencarian surah' : 'Cari surah'}
+                        aria-expanded={showSearch}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90"
+                    >
+                        {showSearch ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+                    </button>
+                }
             />
             <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
             <div className="relative z-10 w-full mx-auto">
-                {/* Sticky Wrapper - Tidak Boleh Dianimasi! */}
-                <div className="sticky top-[85px] z-40 px-5 pt-2 pb-4 md:px-8 max-w-7xl mx-auto pointer-events-none">
-                    {/* Inner Wrapper - Dikhususkan Untuk Transisi/Animasi via Inline Style untuk garansi 100% mulus */}
-                    <div 
-                        className="pointer-events-auto transform origin-top"
-                        style={{
-                            transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                            transform: showSearch ? 'translateY(0px) scale(1)' : 'translateY(-24px) scale(0.97)',
-                            opacity: showSearch ? 1 : 0,
-                            pointerEvents: showSearch ? 'auto' : 'none'
-                        }}
-                    >
-                        <div className="relative group">
-                            <div className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-[1.8rem] border border-white dark:border-slate-800 flex items-center px-5 py-4 transition-all duration-300 group-focus-within:ring-4 group-focus-within:ring-emerald-500/10 shadow-sm">
-                                <Search className="w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
-                                <input value={search} onChange={e => setSearch(e.target.value)}
-                                    placeholder="Cari surat atau arti..."
-                                    className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 ml-4 outline-none" />
-                                {search && <button onClick={() => setSearch('')} className="absolute right-4 top-1/2 -translate-y-1/2"><X className="w-4 h-4 text-slate-400 hover:text-slate-600" /></button>}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <phantom-ui 
                     loading={loading ? '' : undefined} 
                     count={9} 
                     animation="pulse"
                     id="quranSurahList"
-                    class="px-5 pb-24 space-y-3 md:px-8 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0 max-w-7xl mx-auto block"
+                    class="px-5 pb-28 space-y-3 md:px-8 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0 max-w-7xl mx-auto block"
                 >
                     {loading ? (
                             [...Array(12)].map((_, i) => (
@@ -756,6 +915,80 @@ export default function Quran() {
                         )}
                 </phantom-ui>
             </div>
-        </div>
+
+            {createPortal(
+                <AnimatePresence initial={false}>
+                    {showSearch && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: searchGlassReady ? 1 : 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.16, ease: 'easeOut' }}
+                            className="fixed top-[calc(env(safe-area-inset-top)+4.5rem)] md:top-[calc(env(safe-area-inset-top)+6rem)] left-0 right-0 z-[200] px-5 md:px-8 max-w-7xl mx-auto pointer-events-none"
+                        >
+                            <div className="pointer-events-auto origin-top">
+                                <LiquidGlass
+                                    tier="regular"
+                                    displacementScale={85}
+                                    refractionBlur={2}
+                                    interactive={false}
+                                    cornerRadius="rounded-full"
+                                    onRefractionReady={handleSearchGlassReady}
+                                    className="group flex items-center px-5 py-4 shadow-sm focus-within:ring-4 focus-within:ring-emerald-500/10"
+                                >
+                                    <span className="relative z-10 flex shrink-0">
+                                        <Search className="w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                                    </span>
+                                    <input
+                                        ref={searchInputRef}
+                                        value={search}
+                                        onChange={e => setSearch(e.target.value)}
+                                        placeholder="Cari surat atau arti..."
+                                        className="relative z-10 ml-4 w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 outline-none"
+                                    />
+                                    {search && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSearch('')}
+                                            aria-label="Hapus pencarian"
+                                            className="relative z-10 ml-2 text-slate-400 hover:text-slate-600"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </LiquidGlass>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
+
+            {/* Mobile floats above the nav; desktop docks beside it and stays visible. */}
+            <div
+                className="fixed bottom-[calc(6.5rem+env(safe-area-inset-bottom))] left-1/2 z-30 pointer-events-none md:bottom-[calc(3rem+env(safe-area-inset-bottom))] md:left-[calc(50%+15.25rem)]"
+                style={{
+                    transform: `${isDesktop ? '' : 'translateX(-50%) '}${isDesktop || showFloatingAi ? 'translateY(0) scale(1)' : 'translateY(40px) scale(0.85)'}`,
+                    opacity: isDesktop || showFloatingAi ? 1 : 0,
+                    pointerEvents: isDesktop || showFloatingAi ? 'auto' : 'none',
+                    transition: 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease',
+                }}
+            >
+                <button
+                    onClick={() => {
+                        if (navigator.vibrate) navigator.vibrate(10);
+                        navigate('/tanya-quran');
+                    }}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white shadow-lg shadow-emerald-600/30 border border-white/25 active:scale-95 transition-transform duration-200 cursor-pointer select-none backdrop-blur-md"
+                    title="Tanya AI"
+                >
+                    <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-200 fill-amber-200/50 animate-pulse" />
+                    </div>
+                    <span className="text-xs font-bold tracking-tight pr-0.5">Tanya AI</span>
+                </button>
+            </div>
+        </motion.div>
+        </AnimatePresence>
     );
 }

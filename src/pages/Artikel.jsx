@@ -1,10 +1,12 @@
 // src/pages/Artikel.jsx
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { ArrowLeft, BookOpen, Clock, Search, X, ChevronRight, Loader2, RefreshCw, AlertCircle, CheckCircle2, Tag } from 'lucide-react';
 import "@aejkatappaja/phantom-ui";
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
+import LiquidGlass from '@/components/LiquidGlass';
 
 const API_ROOT = '/api/artikel-islam';
 
@@ -414,6 +416,10 @@ function ArticleCard({ article, onClick, sourceInfo }) {
 
 export default function Artikel() {
     const navigate = useNavigate();
+    const articleScrollRef = useRef(null);
+    const searchInputRef = useRef(null);
+    const userScrollIntent = useRef(false);
+    const lastScrollTop = useRef(0);
     
     // Gunakan tab terakhir yang dibuka, atau default ke SOURCES[0].id
     const [sourceId, setSourceId] = useState(() => {
@@ -429,8 +435,66 @@ export default function Artikel() {
     const [hasMore, setHasMore] = useState(() => cachedInitial ? cachedInitial.hasMore : true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [showSearch, setShowSearch] = useState(false);
+    const [searchGlassReady, setSearchGlassReady] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(
+        () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+    );
     const searchDebounce = useRef(null);
     const latestSourceRef = useRef(sourceId);
+    const handleSearchGlassReady = useCallback(() => setSearchGlassReady(true), []);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(min-width: 768px)');
+        const updateViewport = event => setIsDesktop(event.matches);
+        setIsDesktop(mediaQuery.matches);
+        mediaQuery.addEventListener('change', updateViewport);
+        return () => mediaQuery.removeEventListener('change', updateViewport);
+    }, []);
+
+    useEffect(() => {
+        if (showSearch && !isDesktop) {
+            searchInputRef.current?.focus({ preventScroll: true });
+        }
+    }, [showSearch, isDesktop]);
+
+    useEffect(() => {
+        const container = articleScrollRef.current;
+        if (!container) return;
+
+        let ticking = false;
+        let intentTimeout;
+        const markUserScrollIntent = () => {
+            userScrollIntent.current = true;
+            clearTimeout(intentTimeout);
+            intentTimeout = setTimeout(() => {
+                userScrollIntent.current = false;
+            }, 700);
+        };
+        const handleScroll = () => {
+            if (ticking) return;
+            ticking = true;
+            window.requestAnimationFrame(() => {
+                const currentScrollTop = container.scrollTop;
+                const delta = currentScrollTop - lastScrollTop.current;
+                if (showSearch && userScrollIntent.current && delta > 4 && currentScrollTop > 8) {
+                    setShowSearch(false);
+                }
+                lastScrollTop.current = currentScrollTop;
+                ticking = false;
+            });
+        };
+
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        container.addEventListener('touchstart', markUserScrollIntent, { passive: true });
+        container.addEventListener('wheel', markUserScrollIntent, { passive: true });
+        return () => {
+            container.removeEventListener('scroll', handleScroll);
+            container.removeEventListener('touchstart', markUserScrollIntent);
+            container.removeEventListener('wheel', markUserScrollIntent);
+            clearTimeout(intentTimeout);
+        };
+    }, [showSearch]);
 
     useEffect(() => { 
         latestSourceRef.current = sourceId; 
@@ -588,7 +652,7 @@ export default function Artikel() {
     };
 
     return (
-        <div className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-50 dark:bg-slate-950 no-scrollbar">
+        <div ref={articleScrollRef} className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-50 dark:bg-slate-950 no-scrollbar">
             {/* Background gradient */}
             <div className="fixed top-0 left-0 right-0 h-72 bg-gradient-to-b from-emerald-500/8 via-emerald-500/4 to-transparent pointer-events-none z-0" />
 
@@ -603,7 +667,21 @@ export default function Artikel() {
                     </button>
                 }
                 titleNode="Artikel Islami"
-                rightNode={<div className="w-10" />}
+                rightNode={
+                    <button
+                        type="button"
+                        onClick={() => {
+                            userScrollIntent.current = false;
+                            if (!showSearch) setSearchGlassReady(false);
+                            setShowSearch(isOpen => !isOpen);
+                        }}
+                        aria-label={showSearch ? 'Tutup pencarian artikel' : 'Cari artikel'}
+                        aria-expanded={showSearch}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90"
+                    >
+                        {showSearch ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+                    </button>
+                }
             />
             {/* Spacer for global TopNav */}
             <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
@@ -641,26 +719,6 @@ export default function Artikel() {
                             </button>
                         );
                     })}
-                </div>
-
-                {/* Search */}
-                <div className="relative mb-6 group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
-                    <input
-                        type="text"
-                        placeholder={`Cari artikel di ${activeSource.name}...`}
-                        value={searchQuery}
-                        onChange={e => handleSearch(e.target.value)}
-                        className="w-full pl-11 pr-10 py-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 shadow-sm transition-all"
-                    />
-                    {searchQuery && (
-                        <button
-                            onClick={() => handleSearch('')}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition"
-                        >
-                            <X className="w-4 h-4" />
-                        </button>
-                    )}
                 </div>
 
                 {/* Label */}
@@ -793,6 +851,54 @@ export default function Artikel() {
                     </p>
                 </div>
             </div>
+
+            {createPortal(
+                <AnimatePresence initial={false}>
+                    {showSearch && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: searchGlassReady ? 1 : 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.16, ease: 'easeOut' }}
+                            className="fixed top-[calc(env(safe-area-inset-top)+4.5rem)] md:top-[calc(env(safe-area-inset-top)+6rem)] left-0 right-0 z-[200] px-5 md:px-8 max-w-7xl mx-auto pointer-events-none"
+                        >
+                            <div className="pointer-events-auto origin-top">
+                                <LiquidGlass
+                                    tier="regular"
+                                    displacementScale={85}
+                                    refractionBlur={2}
+                                    interactive={false}
+                                    cornerRadius="rounded-full"
+                                    onRefractionReady={handleSearchGlassReady}
+                                    className="group flex items-center px-5 py-4 shadow-sm focus-within:ring-4 focus-within:ring-emerald-500/10"
+                                >
+                                    <span className="relative z-10 flex shrink-0">
+                                        <Search className="w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                                    </span>
+                                    <input
+                                        ref={searchInputRef}
+                                        value={searchQuery}
+                                        onChange={event => handleSearch(event.target.value)}
+                                        placeholder={`Cari artikel di ${activeSource.name}...`}
+                                        className="relative z-10 ml-4 w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 outline-none"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSearch('')}
+                                            aria-label="Hapus pencarian"
+                                            className="relative z-10 ml-2 text-slate-400 hover:text-slate-600"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </LiquidGlass>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </div>
     );
 }

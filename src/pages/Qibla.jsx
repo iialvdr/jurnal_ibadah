@@ -7,6 +7,7 @@ import TopNavConfig from '@/components/TopNavConfig';
 const KAABA_LAT = 21.422487;
 const KAABA_LNG = 39.826206;
 const TOLERANCE = 3;
+const COMPASS_PERMISSION_KEY = 'qibla_compass_permission';
 
 function toRad(deg) { return deg * (Math.PI / 180); }
 function toDeg(rad) { return rad * (180 / Math.PI); }
@@ -43,7 +44,12 @@ export default function Qibla() {
     const [qiblaAngle, setQiblaAngle] = useState(null);
     const [distance, setDistance] = useState(null);
     const [error, setError] = useState(null);
-    const [permissionState, setPermissionState] = useState('granted');
+    const [isCompassReady, setIsCompassReady] = useState(false);
+    const [permissionState, setPermissionState] = useState(() => {
+        const orientationEvent = window.DeviceOrientationEvent;
+        if (typeof orientationEvent?.requestPermission !== 'function') return 'granted';
+        return localStorage.getItem(COMPASS_PERMISSION_KEY) === 'granted' ? 'granted' : 'idle';
+    });
     const [apiVerified, setApiVerified] = useState(false);
     const [isAligned, setIsAligned] = useState(false);
 
@@ -141,20 +147,23 @@ export default function Qibla() {
         let hasAbsolute = false;
 
         const absoluteHandler = (e) => {
-            if (e.alpha === null) return;
+            if (!Number.isFinite(e.alpha)) return;
             hasAbsolute = true;
             // deviceorientationabsolute: alpha is degrees from geographic/magnetic north
             rawHeadingRef.current = (360 - e.alpha) % 360;
+            setIsCompassReady(true);
         };
 
         const relativeHandler = (e) => {
             // Only use relative if we never got an absolute event
             if (hasAbsolute) return;
             // webkitCompassHeading is iOS-specific, already a true compass heading
-            if (e.webkitCompassHeading != null) {
+            if (Number.isFinite(e.webkitCompassHeading)) {
                 rawHeadingRef.current = e.webkitCompassHeading;
-            } else if (e.alpha !== null) {
+                setIsCompassReady(true);
+            } else if (Number.isFinite(e.alpha)) {
                 rawHeadingRef.current = (360 - e.alpha) % 360;
+                setIsCompassReady(true);
             }
         };
 
@@ -178,9 +187,12 @@ export default function Qibla() {
             if (typeof DeviceOrientationEvent?.requestPermission === 'function') {
                 const result = await DeviceOrientationEvent.requestPermission();
                 if (result === 'granted') {
+                    localStorage.setItem(COMPASS_PERMISSION_KEY, 'granted');
+                    setError(null);
                     setPermissionState('granted');
                     startListening();
                 } else {
+                    localStorage.removeItem(COMPASS_PERMISSION_KEY);
                     setPermissionState('idle');
                     setError('Izin kompas ditolak.');
                 }
@@ -197,7 +209,12 @@ export default function Qibla() {
     useEffect(() => {
         const check = async () => {
             if (typeof DeviceOrientationEvent?.requestPermission === 'function') {
-                setPermissionState('idle');
+                if (localStorage.getItem(COMPASS_PERMISSION_KEY) === 'granted') {
+                    setPermissionState('granted');
+                    startListening();
+                } else {
+                    setPermissionState('idle');
+                }
             } else {
                 setPermissionState('granted');
                 startListening();
@@ -231,6 +248,7 @@ export default function Qibla() {
             <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-6 px-5 py-8 md:grid md:grid-cols-2 md:gap-10 md:px-12 md:content-center max-w-7xl mx-auto w-full overflow-hidden">
 
                 {/* ── Compass disc ── */}
+                {isCompassReady && qiblaAngle !== null ? (
                 <div className="relative w-full max-w-[min(86vw,380px)] md:max-w-[420px] aspect-square flex items-center justify-center touch-none mx-auto">
                     {/* Outer decorative ring */}
                     <div className={`absolute inset-0 rounded-full border-2 opacity-30 transition-colors duration-1000 ${isAligned ? 'border-white' : 'border-slate-300 dark:border-slate-700'}`}></div>
@@ -286,6 +304,14 @@ export default function Qibla() {
                         </div>
                     </div>
                 </div>
+                ) : (
+                    <div className="w-full max-w-[min(86vw,380px)] md:max-w-[420px] aspect-square flex flex-col items-center justify-center gap-3 mx-auto text-slate-400 dark:text-slate-500">
+                        <Compass className="w-8 h-8 animate-pulse text-emerald-500/70" />
+                        <p className="text-xs font-semibold">
+                            {permissionState === 'idle' ? 'Izinkan akses untuk menyiapkan kompas' : 'Menyiapkan kompas...'}
+                        </p>
+                    </div>
+                )}
 
                 {/* ── Info bar ── */}
                 <div className="w-full md:max-w-sm mx-auto">

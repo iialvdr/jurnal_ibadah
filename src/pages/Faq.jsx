@@ -1,13 +1,15 @@
 // src/pages/Faq.jsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { 
-    ArrowLeft, Search, ChevronDown, ChevronUp, HelpCircle, 
+    ArrowLeft, Search, X, ChevronDown, ChevronUp, HelpCircle,
     Sparkles, Shield, Calculator, ListChecks, BookOpenCheck, Clock3 
 } from 'lucide-react';
 import DOMPurify from 'dompurify';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
+import LiquidGlass from '@/components/LiquidGlass';
 
 const FAQ_CATEGORIES = [
     {
@@ -105,9 +107,70 @@ function FaqItem({ item, isOpen, onClick }) {
 export default function Faq() {
     const navigate = useNavigate();
     const [search, setSearch] = useState('');
+    const [showSearch, setShowSearch] = useState(false);
+    const [searchGlassReady, setSearchGlassReady] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(
+        () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+    );
     const [filter, setFilter] = useState('all'); // 'all', 'akun', 'ibadah', etc.
     const [openItems, setOpenItems] = useState({});
     const [isAllOpen, setIsAllOpen] = useState(false);
+    const searchInputRef = useRef(null);
+    const userScrollIntent = useRef(false);
+    const lastScrollTop = useRef(0);
+    const handleSearchGlassReady = useCallback(() => setSearchGlassReady(true), []);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(min-width: 768px)');
+        const updateViewport = event => setIsDesktop(event.matches);
+        setIsDesktop(mediaQuery.matches);
+        mediaQuery.addEventListener('change', updateViewport);
+        return () => mediaQuery.removeEventListener('change', updateViewport);
+    }, []);
+
+    useEffect(() => {
+        if (showSearch && !isDesktop) {
+            searchInputRef.current?.focus({ preventScroll: true });
+        }
+    }, [showSearch, isDesktop]);
+
+    useEffect(() => {
+        const container = document.getElementById('faqView');
+        if (!container) return;
+
+        let ticking = false;
+        let intentTimeout;
+        const markUserScrollIntent = () => {
+            userScrollIntent.current = true;
+            clearTimeout(intentTimeout);
+            intentTimeout = setTimeout(() => {
+                userScrollIntent.current = false;
+            }, 700);
+        };
+        const handleScroll = () => {
+            if (ticking) return;
+            ticking = true;
+            window.requestAnimationFrame(() => {
+                const currentScrollTop = container.scrollTop;
+                const delta = currentScrollTop - lastScrollTop.current;
+                if (showSearch && userScrollIntent.current && delta > 4 && currentScrollTop > 8) {
+                    setShowSearch(false);
+                }
+                lastScrollTop.current = currentScrollTop;
+                ticking = false;
+            });
+        };
+
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        container.addEventListener('touchstart', markUserScrollIntent, { passive: true });
+        container.addEventListener('wheel', markUserScrollIntent, { passive: true });
+        return () => {
+            container.removeEventListener('scroll', handleScroll);
+            container.removeEventListener('touchstart', markUserScrollIntent);
+            container.removeEventListener('wheel', markUserScrollIntent);
+            clearTimeout(intentTimeout);
+        };
+    }, [showSearch]);
 
     // Filter Logic
     const displayData = useMemo(() => {
@@ -163,7 +226,22 @@ export default function Faq() {
                     </button>
                 }
                 titleNode="Pusat Bantuan"
-                rightNode={<div className="w-10" />}
+                rightNode={
+                    <button
+                        type="button"
+                        onClick={() => {
+                            userScrollIntent.current = false;
+                            lastScrollTop.current = document.getElementById('faqView')?.scrollTop || 0;
+                            if (!showSearch) setSearchGlassReady(false);
+                            setShowSearch(isOpen => !isOpen);
+                        }}
+                        aria-label={showSearch ? 'Tutup pencarian bantuan' : 'Cari bantuan'}
+                        aria-expanded={showSearch}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90"
+                    >
+                        {showSearch ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+                    </button>
+                }
             />
             <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
@@ -186,38 +264,24 @@ export default function Faq() {
 
                 {/* Filter Chips */}
                 <div className="mb-4 -mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto no-scrollbar flex gap-2 pb-1">
-                    <button onClick={() => setFilter('all')} 
+                    <button onClick={() => setFilter('all')}
                         className={`shrink-0 px-4 py-2 rounded-full text-[11px] font-bold tracking-wide transition-colors ${filter === 'all' ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800'}`}>Semua</button>
-                    <button onClick={() => setFilter('akun')} 
+                    <button onClick={() => setFilter('akun')}
                         className={`shrink-0 px-4 py-2 rounded-full text-[11px] font-bold tracking-wide transition-colors ${filter === 'akun' ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800'}`}>Akun</button>
-                    <button onClick={() => setFilter('ibadah')} 
+                    <button onClick={() => setFilter('ibadah')}
                         className={`shrink-0 px-4 py-2 rounded-full text-[11px] font-bold tracking-wide transition-colors ${filter === 'ibadah' ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800'}`}>Ibadah</button>
-                    <button onClick={() => setFilter('zakat')} 
+                    <button onClick={() => setFilter('zakat')}
                         className={`shrink-0 px-4 py-2 rounded-full text-[11px] font-bold tracking-wide transition-colors ${filter === 'zakat' ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800'}`}>Zakat</button>
-                    <button onClick={() => setFilter('quran')} 
+                    <button onClick={() => setFilter('quran')}
                         className={`shrink-0 px-4 py-2 rounded-full text-[11px] font-bold tracking-wide transition-colors ${filter === 'quran' ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800'}`}>Al-Qur'an & Hadits</button>
-                    <button onClick={() => setFilter('jadwal')} 
+                    <button onClick={() => setFilter('jadwal')}
                         className={`shrink-0 px-4 py-2 rounded-full text-[11px] font-bold tracking-wide transition-colors ${filter === 'jadwal' ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800'}`}>Jadwal</button>
                 </div>
 
-                {/* Search Bar */}
-                <div className="mb-6 md:mb-8">
-                    <div className="relative bento-card bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-[1.6rem] border border-white dark:border-slate-800 flex items-center px-5 py-4 transition-all duration-300 shadow-sm focus-within:ring-4 focus-within:ring-emerald-500/10">
-                        <Search className="w-5 h-5 text-slate-400 focus-within:text-emerald-500" />
-                        <input 
-                            type="text" 
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Cari pertanyaan atau kata kunci..." 
-                            className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 ml-4 outline-none" 
-                        />
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3 px-2">
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Ketik untuk memfilter pertanyaan.</p>
+                <div className="mb-6 md:mb-8 flex justify-end px-2">
                         <button onClick={toggleAll} className="px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-black uppercase tracking-widest active:scale-95 transition">
                             {isAllOpen ? 'Tutup Semua' : 'Buka Semua'}
                         </button>
-                    </div>
                 </div>
 
                 {/* FAQ List Content */}
@@ -289,6 +353,56 @@ export default function Faq() {
                 </div>
                 <div className="h-4"></div>
             </div>
+
+            {createPortal(
+                <AnimatePresence initial={false}>
+                    {showSearch && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: searchGlassReady ? 1 : 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.16, ease: 'easeOut' }}
+                            className="fixed top-[calc(env(safe-area-inset-top)+4.5rem)] md:top-[calc(env(safe-area-inset-top)+6rem)] left-0 right-0 z-[200] px-5 md:px-8 max-w-7xl mx-auto pointer-events-none"
+                        >
+                            <div className="pointer-events-auto origin-top">
+                                <LiquidGlass
+                                    tier="regular"
+                                    displacementScale={85}
+                                    refractionBlur={2}
+                                    interactive={false}
+                                    cornerRadius="rounded-[1.8rem]"
+                                    onRefractionReady={handleSearchGlassReady}
+                                    className="group px-5 py-4 shadow-sm focus-within:ring-4 focus-within:ring-emerald-500/10"
+                                >
+                                    <div className="relative z-10 flex items-center">
+                                        <Search className="w-5 h-5 shrink-0 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                                        <input
+                                            ref={searchInputRef}
+                                            type="text"
+                                            value={search}
+                                            onChange={event => setSearch(event.target.value)}
+                                            placeholder="Cari pertanyaan atau kata kunci..."
+                                            aria-label="Cari pertanyaan bantuan"
+                                            className="ml-4 w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 outline-none"
+                                        />
+                                        {search && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setSearch('')}
+                                                aria-label="Hapus pencarian"
+                                                className="ml-2 text-slate-400 hover:text-slate-600"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                </LiquidGlass>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </div>
     );
 }

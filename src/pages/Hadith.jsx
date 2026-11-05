@@ -7,6 +7,7 @@ import "@aejkatappaja/phantom-ui";
 import { motion } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
 import useSwipe from '@/hooks/useSwipe';
+import TabSlider from '@/components/TabSlider';
 
 const API_BASE = 'https://api.myquran.com/v3/hadis/enc';
 
@@ -96,60 +97,49 @@ export default function Hadith() {
         fetchById(id);
     };
 
-    const tabSliderContent = (
-        <>
-            <div className="absolute inset-1.5 flex pointer-events-none">
-                <div className="w-1/3 h-full transition-transform duration-300 ease-in-out" 
-                     style={{ transform: activeTab === 'random' ? 'translateX(0)' : activeTab === 'browse' ? 'translateX(100%)' : 'translateX(200%)' }}>
-                    <div className="w-full h-full bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700"></div>
-                </div>
-            </div>
-            <button onClick={() => { setActiveTab('random'); setMode('random'); fetchRandom(); }} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'random' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Acak</button>
-            <button onClick={() => { setActiveTab('browse'); setMode('browse'); if(!browseData) fetchBrowse(1); }} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'browse' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Jelajahi</button>
-            <button onClick={() => { setActiveTab('search'); setMode(browseData?.hadis && searchKeyword ? 'search_results' : 'search'); }} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'search' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Cari</button>
-        </>
-    );
+    const HADITH_TABS = [
+        { id: 'random', label: 'Acak' },
+        { id: 'browse', label: 'Jelajahi' },
+        { id: 'search', label: 'Cari' },
+    ];
+
+    const handleTabChange = (id) => {
+        if (id === activeTab) return;
+        setActiveTab(id);
+        if (id === 'random') { setMode('random'); fetchRandom(); }
+        else if (id === 'browse') { setMode('browse'); if (!browseData) fetchBrowse(1); }
+        else { setMode(browseData?.hadis && searchKeyword ? 'search_results' : 'search'); }
+    };
+
+    const swipeHandlers = useSwipe({
+        threshold: 30,
+        onSwipeLeft: () => {
+            if (activeTab === 'random') { if (navigator.vibrate) navigator.vibrate(8); handleTabChange('browse'); return true; }
+            else if (activeTab === 'browse') { if (navigator.vibrate) navigator.vibrate(8); handleTabChange('search'); return true; }
+            return false;
+        },
+        onSwipeRight: () => {
+            if (activeTab === 'search') { if (navigator.vibrate) navigator.vibrate(8); handleTabChange('browse'); return true; }
+            else if (activeTab === 'browse') { if (navigator.vibrate) navigator.vibrate(8); handleTabChange('random'); return true; }
+            return false;
+        }
+    });
 
     const { setBottomNavExtraNode } = useApp();
     const location = useLocation();
 
     useEffect(() => {
-        setBottomNavExtraNode(
-            <div className="md:hidden flex w-full relative">
-                {tabSliderContent}
-            </div>
-        );
-    }, [activeTab, setBottomNavExtraNode]);
-
-    const swipeHandlers = useSwipe({
-        onSwipeLeft: () => {
-            if (activeTab === 'random') {
-                setActiveTab('browse');
-                setMode('browse');
-                if(!browseData) fetchBrowse(1);
-                return true;
-            } else if (activeTab === 'browse') {
-                setActiveTab('search');
-                setMode(browseData?.hadis && searchKeyword ? 'search_results' : 'search');
-                return true;
-            }
-            return false;
-        },
-        onSwipeRight: () => {
-            if (activeTab === 'search') {
-                setActiveTab('browse');
-                setMode('browse');
-                if(!browseData) fetchBrowse(1);
-                return true;
-            } else if (activeTab === 'browse') {
-                setActiveTab('random');
-                setMode('random');
-                fetchRandom();
-                return true;
-            }
-            return false;
+        if (location.pathname === '/hadith') {
+            setBottomNavExtraNode(
+                <TabSlider
+                    tabs={HADITH_TABS}
+                    activeTab={activeTab}
+                    onChange={handleTabChange}
+                    className="md:hidden"
+                />
+            );
         }
-    });
+    }, [activeTab, location.pathname, setBottomNavExtraNode]);
 
     return (
         <div {...swipeHandlers} className="app-view active flex flex-col h-full bg-slate-100 dark:bg-slate-950 no-scrollbar overflow-y-auto relative">
@@ -172,24 +162,36 @@ export default function Hadith() {
             />
             <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
-            <div className="relative z-10 px-5 pt-4 pb-28 md:pb-10 w-full max-w-2xl mx-auto flex flex-col gap-4 md:gap-6">
+            <div className="relative z-10 px-3 pt-4 pb-40 md:px-6 md:pb-12 w-full max-w-3xl mx-auto flex flex-col gap-5 md:gap-6">
                 
                 {/* Tabs Navigation (Desktop Inline) */}
-                <div className="hidden md:flex bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-1.5 rounded-full shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-white/50 dark:border-slate-700/50 relative">
-                    {tabSliderContent}
+                <div className="hidden md:flex bg-slate-900/5 dark:bg-white/5 backdrop-blur-md rounded-full border border-black/5 dark:border-white/10 relative">
+                    <TabSlider tabs={HADITH_TABS} activeTab={activeTab} onChange={handleTabChange} />
+                </div>
+
+                <div className="px-1">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
+                        Ensiklopedia hadis
+                    </p>
+                    <h1 className="mt-1 text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                        {mode === 'browse' ? 'Jelajahi Hadis' : mode === 'search' || mode === 'search_results' ? 'Cari Hadis' : 'Hadis Pilihan'}
+                    </h1>
+                    <p className="mt-1 text-xs md:text-sm text-slate-500 dark:text-slate-400">
+                        Baca hadis, pahami maknanya, dan telusuri sumbernya.
+                    </p>
                 </div>
 
                 {/* Search Mode */}
                 {(mode === 'search' || mode === 'search_results') && (
                     <div className="animate-fade-in-up">
-                        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-                            <div className="flex-1 flex items-center gap-2 bg-white dark:bg-slate-900 rounded-2xl border border-white dark:border-slate-800 px-4 py-3 shadow-sm">
+                        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 rounded-[1.4rem] border border-slate-200/80 bg-white/90 p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+                            <div className="flex min-w-0 flex-1 items-center gap-2 px-2">
                                 <Search className="w-4 h-4 text-slate-400 shrink-0" />
                                 <input type="text" value={searchInput} onChange={e => setSearchInput(e.target.value)}
                                     placeholder="Cari kata (misal: kiamat) atau ID (misal: 12)"
-                                    className="flex-1 text-xs font-bold text-slate-800 dark:text-white bg-transparent focus:outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600" />
+                                    className="flex-1 min-w-0 py-2 text-xs font-semibold text-slate-800 dark:text-white bg-transparent focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500" />
                             </div>
-                            <button type="submit" disabled={browseLoading || loading} className="px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl text-[11px] font-black active:scale-95 transition disabled:opacity-50 shadow-sm flex items-center gap-1.5 shrink-0">
+                            <button type="submit" disabled={browseLoading || loading} className="px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold active:scale-95 transition disabled:opacity-50 shadow-sm flex items-center gap-1.5 shrink-0">
                                 {(browseLoading || loading) ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />} Cari
                             </button>
                         </form>
@@ -226,20 +228,20 @@ export default function Hadith() {
                                     const isTextString = typeof h.text === 'string';
                                     return (
                                         <button key={h.id} onClick={() => goToHadith(h.id)}
-                                            className="w-full text-left bg-white dark:bg-slate-900 rounded-[2rem] border border-white dark:border-slate-800 p-6 hover:border-emerald-500/30 transition-all active:scale-[0.98] shadow-sm group">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">#{h.id}</span>
-                                                {h.grade && <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full flex items-center gap-1"><Star className="w-3 h-3" /> {h.grade}</span>}
+                                            className="group w-full rounded-[1.6rem] border border-slate-200/80 bg-white p-5 text-left shadow-sm transition-all hover:border-emerald-500/30 hover:shadow-md active:scale-[0.99] dark:border-slate-800 dark:bg-slate-900">
+                                            <div className="mb-4 flex items-center justify-between gap-3">
+                                                <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">Hadis #{h.id}</span>
+                                                {h.grade && <span className="flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"><Star className="w-3 h-3" /> {h.grade}</span>}
                                             </div>
                                             {!isTextString && h.text?.ar && (
-                                                <p className="text-right font-quran text-lg text-slate-800 dark:text-white leading-[2.2] mb-3 line-clamp-2" dir="rtl">{h.text.ar}</p>
+                                                <p className="mb-4 rounded-2xl bg-slate-50 px-4 py-3 text-right font-quran text-lg leading-[2.1] text-slate-800 dark:bg-slate-800/70 dark:text-white" dir="rtl">{h.text.ar}</p>
                                             )}
-                                            <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3">
-                                                "{isTextString ? h.text : h.text?.id}"
+                                            <p className="text-sm leading-7 text-slate-600 dark:text-slate-300">
+                                                {isTextString ? h.text : h.text?.id}
                                             </p>
                                             {h.focus && h.focus.length > 0 && (
-                                                <div className="mt-3 bg-emerald-50 dark:bg-emerald-900/10 p-3 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                                                    <p className="text-[11px] font-medium text-emerald-800 dark:text-emerald-300 italic line-clamp-2">
+                                                <div className="mt-4 rounded-xl border-l-2 border-emerald-500 bg-emerald-50/70 px-3 py-2.5 dark:bg-emerald-900/10">
+                                                    <p className="text-xs leading-relaxed text-emerald-800 dark:text-emerald-300">
                                                         {h.focus[0]}
                                                     </p>
                                                 </div>
@@ -247,7 +249,7 @@ export default function Hadith() {
                                             {h.takhrij && (
                                                 <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-start gap-2">
                                                     <BookOpen className="w-3 h-3 text-slate-400 mt-0.5 shrink-0" />
-                                                    <p className="text-[10px] font-bold text-slate-400 italic line-clamp-1">{h.takhrij}</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 italic">{h.takhrij}</p>
                                                 </div>
                                             )}
                                         </button>
@@ -316,26 +318,22 @@ export default function Hadith() {
                                 </div>
                             </div>
                         ) : hadith ? (
-                            <div className="bento-card bg-white dark:bg-slate-900 border border-white dark:border-slate-800 p-6 md:p-8 rounded-[2rem] relative overflow-hidden shadow-sm animate-fade-in-up">
-                                {/* Decorative elements */}
-                                <div className="absolute -right-8 -top-8 w-40 h-40 bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
-                                <div className="absolute right-4 top-4 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
-                                    <Quote className="w-32 h-32 text-emerald-900 dark:text-emerald-100" />
-                                </div>
+                            <div className="relative overflow-hidden rounded-[1.8rem] border border-slate-200/80 bg-white p-4 shadow-sm animate-fade-in-up dark:border-slate-800 dark:bg-slate-900 md:p-7">
+                                <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-emerald-400/10 blur-3xl dark:bg-emerald-400/5"></div>
                                 
                                 <div className="relative z-10">
                                     {/* Header */}
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-sm border border-emerald-100 dark:border-emerald-800/30">
-                                            <BookOpenCheck className="w-5 h-5" />
+                                    <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                            <BookOpenCheck className="h-5 w-5" />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] mb-0.5">Ensiklopedia Hadis</p>
-                                            <p className="text-[10px] font-bold text-slate-400">ID #{hadith.id}</p>
+                                            <p className="text-sm font-bold text-slate-800 dark:text-white">Hadis pilihan</p>
+                                            <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">Nomor {hadith.id}</p>
                                         </div>
                                         {hadith.grade && (
-                                            <span className="flex items-center gap-1.5 text-[10px] font-black text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-full border border-amber-100 dark:border-amber-800/30 shadow-sm">
-                                                <Star className="w-3 h-3" />
+                                            <span className="flex max-w-[42%] items-center gap-1.5 rounded-full border border-amber-200/80 bg-amber-50 px-2.5 py-1.5 text-[10px] font-bold leading-tight text-amber-700 dark:border-amber-800/50 dark:bg-amber-900/20 dark:text-amber-300">
+                                                <Star className="h-3 w-3 shrink-0" />
                                                 {hadith.grade}
                                             </span>
                                         )}
@@ -343,60 +341,60 @@ export default function Hadith() {
 
                                     {/* Arabic text */}
                                     {hadith.text?.ar && (
-                                        <div className="text-right mb-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-5 rounded-[1.5rem]" dir="rtl">
-                                            <p className="font-quran text-2xl md:text-3xl text-slate-800 dark:text-white leading-[2.5]">{hadith.text.ar}</p>
+                                        <div className="mb-5 -mx-2 rounded-2xl border border-emerald-100/70 bg-gradient-to-br from-emerald-50/80 to-slate-50 px-2 py-4 dark:border-emerald-900/30 dark:from-emerald-950/30 dark:to-slate-800/60 md:mx-0 md:p-6" dir="rtl">
+                                            <p className="text-right font-quran text-[1.2rem] text-slate-800 dark:text-slate-100 md:text-2xl">{hadith.text.ar}</p>
                                         </div>
                                     )}
 
                                     {/* Indonesian translation */}
                                     {hadith.text?.id && (
-                                        <div className="relative mb-6">
-                                            <Quote className="w-5 h-5 text-emerald-500/20 absolute -left-2 -top-2" />
-                                            <p className="text-sm md:text-base font-medium text-slate-700 dark:text-slate-200 leading-relaxed px-2">"{hadith.text.id}"</p>
+                                        <div className="mb-5 px-1">
+                                            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">Terjemahan</p>
+                                            <p className="text-sm leading-7 text-slate-700 dark:text-slate-200 md:text-base">{hadith.text.id}</p>
                                         </div>
                                     )}
 
                                     <div className="grid grid-cols-1 gap-3 mb-2">
                                         {/* Takhrij */}
                                         {hadith.takhrij && (
-                                            <div className="flex items-start gap-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 p-4 rounded-2xl">
+                                            <div className="flex items-start gap-3 rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
                                                 <div className="w-7 h-7 rounded-xl bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center shrink-0">
                                                     <BookOpen className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                                                 </div>
                                                 <div className="flex-1 mt-0.5">
-                                                    <span className="text-[9px] font-black text-blue-600/70 dark:text-blue-400/70 uppercase tracking-widest block mb-1">Takhrij</span>
-                                                    <p className="text-[11px] font-bold text-blue-800 dark:text-blue-300 leading-relaxed italic">{hadith.takhrij}</p>
+                                                    <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Takhrij</span>
+                                                    <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">{hadith.takhrij}</p>
                                                 </div>
                                             </div>
                                         )}
 
                                         {/* Hikmah */}
                                         {hadith.hikmah && (
-                                            <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 p-4 rounded-2xl">
+                                            <div className="flex items-start gap-3 rounded-2xl border border-amber-100 bg-amber-50/60 p-4 dark:border-amber-900/30 dark:bg-amber-900/10">
                                                 <div className="w-7 h-7 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
                                                     <Info className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                                                 </div>
                                                 <div className="flex-1 mt-0.5">
-                                                    <span className="text-[9px] font-black text-amber-600/70 dark:text-amber-400/70 uppercase tracking-widest block mb-1">Hikmah</span>
-                                                    <p className="text-[12px] font-medium text-amber-800 dark:text-amber-300 leading-relaxed">{hadith.hikmah}</p>
+                                                    <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-amber-700/70 dark:text-amber-400/70">Hikmah</span>
+                                                    <p className="text-xs leading-relaxed text-amber-900 dark:text-amber-200">{hadith.hikmah}</p>
                                                 </div>
                                             </div>
                                         )}
                                     </div>
 
                                     {/* Navigation prev/next */}
-                                    <div className="flex items-center justify-between mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">
+                                    <div className="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
                                         <button onClick={() => hadith.prev && goToHadith(hadith.prev)} disabled={!hadith.prev}
-                                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[10px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest disabled:opacity-30 active:scale-95 transition">
-                                            <ChevronLeft className="w-4 h-4" /> Prev
+                                            className="flex min-w-0 items-center justify-center gap-1 rounded-xl bg-slate-50 px-2 py-3 text-[10px] font-bold text-slate-600 transition hover:bg-slate-100 active:scale-95 disabled:opacity-30 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
+                                            <ChevronLeft className="h-4 w-4 shrink-0" /> Sebelum
                                         </button>
                                         <button onClick={fetchRandom}
-                                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest active:scale-95 transition">
-                                            <RefreshCw className="w-4 h-4" /> Acak
+                                            className="flex min-w-0 items-center justify-center gap-1 rounded-xl bg-emerald-600 px-2 py-3 text-[10px] font-bold text-white transition hover:bg-emerald-700 active:scale-95">
+                                            <RefreshCw className="h-3.5 w-3.5 shrink-0" /> Acak
                                         </button>
                                         <button onClick={() => hadith.next && goToHadith(hadith.next)} disabled={!hadith.next}
-                                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[10px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest disabled:opacity-30 active:scale-95 transition">
-                                            Next <ChevronRight className="w-4 h-4" />
+                                            className="flex min-w-0 items-center justify-center gap-1 rounded-xl bg-slate-50 px-2 py-3 text-[10px] font-bold text-slate-600 transition hover:bg-slate-100 active:scale-95 disabled:opacity-30 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
+                                            Sesudah <ChevronRight className="h-4 w-4 shrink-0" />
                                         </button>
                                     </div>
                                 </div>

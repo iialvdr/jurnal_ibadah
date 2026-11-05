@@ -11,7 +11,7 @@ import { syncPushSubscription } from '@/modules/push';
 import {
     ArrowLeft, Settings2, ShieldCheck, Calendar, MapPin,
     Hourglass, Activity, CheckCircle2, HelpCircle, History,
-    Info, LogOut, X, Palette, Bell, ChevronDown, Check
+    Info, LogOut, X, Palette, Bell, ChevronDown, Check, Download, Share, MoreVertical, Smartphone
 } from 'lucide-react';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { ProfileChart } from '@/components/profile/ProfileChart';
@@ -24,7 +24,7 @@ import useSwipe from '@/hooks/useSwipe';
 
 export default function Profile() {
     const navigate = useNavigate();
-    const { currentUser, showAppToast, setModalOpen } = useApp();
+    const { currentUser, showAppToast, setModalOpen, isPwaInstalled, canInstallPwa, installPwa } = useApp();
     const [streakData, setStreakData] = useState({ current: 0, longest: 0 });
     const [notifEnabled, setNotifEnabled] = useState(false);
     const [pushSupported, setPushSupported] = useState(false);
@@ -33,13 +33,28 @@ export default function Profile() {
     // Modal states
     const [showEditModal, setShowEditModal] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [showInstallGuide, setShowInstallGuide] = useState(false);
     const dragControls = useDragControls();
 
     // Sync global modalOpen flag so BottomNav hides while any modal is open
     useEffect(() => {
-        setModalOpen(showEditModal || showLogoutModal);
+        setModalOpen(showEditModal || showLogoutModal || showInstallGuide);
         return () => setModalOpen(false); // reset on unmount
-    }, [showEditModal, showLogoutModal]);
+    }, [showEditModal, showLogoutModal, showInstallGuide]);
+
+    const installGuidePlatform = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+        ? 'ios'
+        : /Android/i.test(navigator.userAgent)
+            ? 'android'
+            : 'desktop';
+
+    const handleInstallClick = () => {
+        if (canInstallPwa) {
+            installPwa();
+        } else {
+            setShowInstallGuide(true);
+        }
+    };
     
     // Edit Form states
     const [newName, setNewName] = useState('');
@@ -455,7 +470,26 @@ export default function Profile() {
                                         <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Ibadah</span>
                                     </div>
                                 </div>
+
                             </div>
+
+                            {!isPwaInstalled && (
+                                <button
+                                    onClick={handleInstallClick}
+                                    className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-emerald-100/80 bg-gradient-to-r from-emerald-50/90 to-teal-50/60 p-3 text-left transition hover:border-emerald-200 hover:shadow-sm active:scale-[0.99] dark:border-emerald-900/30 dark:from-emerald-900/20 dark:to-teal-900/10 dark:hover:border-emerald-800"
+                                >
+                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                        <Download className="h-4 w-4" />
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                        <span className="block text-[11px] font-black text-slate-800 dark:text-white">Pasang aplikasi</span>
+                                        <span className="mt-0.5 block text-[9px] text-slate-500 dark:text-slate-400">Akses lebih cepat dari perangkat</span>
+                                    </span>
+                                    <span className="shrink-0 rounded-full bg-emerald-600 px-3 py-1.5 text-[9px] font-black text-white shadow-sm">
+                                        Instal
+                                    </span>
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -733,6 +767,89 @@ export default function Profile() {
                 </motion.div>
             </div>
             )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {showInstallGuide && (
+                    <div className="fixed inset-0 z-[210] flex items-end justify-center p-0 sm:items-center sm:p-6">
+                        <motion.button
+                            type="button"
+                            aria-label="Tutup panduan instalasi"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.25 }}
+                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+                            onClick={() => setShowInstallGuide(false)}
+                        />
+                        <motion.div
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="install-guide-title"
+                            initial={{ y: '100%', opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: '100%', opacity: 0 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="relative w-full max-w-lg rounded-t-[2rem] border border-white/20 bg-white p-6 pb-8 shadow-2xl dark:border-slate-800 dark:bg-slate-950 sm:rounded-[2rem] sm:p-8"
+                        >
+                            <div className="mb-5 flex items-start justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                        <Download className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <h3 id="install-guide-title" className="text-base font-black text-slate-800 dark:text-white">Panduan instalasi</h3>
+                                        <p className="mt-0.5 text-[10px] font-medium text-slate-400">Pasang Jurnal Ibadah di perangkatmu</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowInstallGuide(false)}
+                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
+                                    aria-label="Tutup"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+                                <div className="mb-3 flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                                    {installGuidePlatform === 'ios' ? <Share className="h-4 w-4" /> : installGuidePlatform === 'android' ? <MoreVertical className="h-4 w-4" /> : <Smartphone className="h-4 w-4" />}
+                                    <p className="text-[11px] font-black">
+                                        {installGuidePlatform === 'ios' ? 'iPhone / iPad (Safari)' : installGuidePlatform === 'android' ? 'Android' : 'Komputer'}
+                                    </p>
+                                </div>
+                                <ol className="space-y-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                                    {installGuidePlatform === 'ios' ? (
+                                        <>
+                                            <li className="flex gap-3"><span className="font-black text-emerald-600">1.</span><span>Ketuk tombol <strong>Bagikan</strong> di menu Safari.</span></li>
+                                            <li className="flex gap-3"><span className="font-black text-emerald-600">2.</span><span>Pilih <strong>Tambahkan ke Layar Utama</strong>.</span></li>
+                                            <li className="flex gap-3"><span className="font-black text-emerald-600">3.</span><span>Ketuk <strong>Tambah</strong> untuk menyelesaikan.</span></li>
+                                        </>
+                                    ) : installGuidePlatform === 'android' ? (
+                                        <>
+                                            <li className="flex gap-3"><span className="font-black text-emerald-600">1.</span><span>Buka menu browser <strong>⋮</strong> di pojok atas.</span></li>
+                                            <li className="flex gap-3"><span className="font-black text-emerald-600">2.</span><span>Pilih <strong>Instal aplikasi</strong> atau <strong>Tambahkan ke layar utama</strong>.</span></li>
+                                            <li className="flex gap-3"><span className="font-black text-emerald-600">3.</span><span>Ikuti konfirmasi yang muncul.</span></li>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <li className="flex gap-3"><span className="font-black text-emerald-600">1.</span><span>Buka menu browser atau ikon instalasi di bilah alamat.</span></li>
+                                            <li className="flex gap-3"><span className="font-black text-emerald-600">2.</span><span>Pilih <strong>Instal Jurnal Ibadah</strong>, lalu konfirmasi.</span></li>
+                                        </>
+                                    )}
+                                </ol>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowInstallGuide(false)}
+                                className="mt-5 w-full rounded-2xl bg-emerald-500 py-3.5 text-xs font-black text-white shadow-lg shadow-emerald-500/20 transition active:scale-[0.98]"
+                            >
+                                Mengerti
+                            </button>
+                        </motion.div>
+                    </div>
+                )}
             </AnimatePresence>
 
             <LogoutModal 

@@ -6,6 +6,7 @@ import { ArrowLeft, Calculator, Users, Coins, Utensils, CheckCheck, Quote } from
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
 import useSwipe from '@/hooks/useSwipe';
+import TabSlider from '@/components/TabSlider';
 
 const HARGA_EMAS_DEFAULT = 1400000;
 
@@ -118,11 +119,14 @@ export default function Zakat() {
     const tabIndex = activeTab === 'maal' ? 0 : activeTab === 'fitrah' ? 1 : 2;
 
     const swipeHandlers = useSwipe({
+        threshold: 30,
         onSwipeLeft: () => {
             if (activeTab === 'maal') {
+                if (navigator.vibrate) navigator.vibrate(8);
                 setActiveTab('fitrah');
                 return true;
             } else if (activeTab === 'fitrah') {
+                if (navigator.vibrate) navigator.vibrate(8);
                 setActiveTab('fidyah');
                 return true;
             }
@@ -130,9 +134,11 @@ export default function Zakat() {
         },
         onSwipeRight: () => {
             if (activeTab === 'fidyah') {
+                if (navigator.vibrate) navigator.vibrate(8);
                 setActiveTab('fitrah');
                 return true;
             } else if (activeTab === 'fitrah') {
+                if (navigator.vibrate) navigator.vibrate(8);
                 setActiveTab('maal');
                 return true;
             }
@@ -140,30 +146,27 @@ export default function Zakat() {
         }
     });
 
-    const tabSliderContent = (
-        <>
-            <div className="absolute inset-1.5 flex pointer-events-none">
-                <div className="w-[33.333%] h-full transition-transform duration-300 ease-in-out" style={{ transform: `translateX(${tabIndex * 100}%)` }}>
-                    <div className="w-full h-full bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700"></div>
-                </div>
-            </div>
-            
-            <button onClick={() => {if(navigator.vibrate) navigator.vibrate(5); setActiveTab('maal')}} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'maal' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Maal</button>
-            <button onClick={() => {if(navigator.vibrate) navigator.vibrate(5); setActiveTab('fitrah')}} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'fitrah' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Fitrah</button>
-            <button onClick={() => {if(navigator.vibrate) navigator.vibrate(5); setActiveTab('fidyah')}} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'fidyah' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Fidyah</button>
-        </>
-    );
+    const ZAKAT_TABS = [
+        { id: 'maal', label: 'Maal' },
+        { id: 'fitrah', label: 'Fitrah' },
+        { id: 'fidyah', label: 'Fidyah' },
+    ];
 
     const { setBottomNavExtraNode } = useApp();
     const location = useLocation();
 
     useEffect(() => {
-        setBottomNavExtraNode(
-            <div className="md:hidden flex w-full relative">
-                {tabSliderContent}
-            </div>
-        );
-    }, [activeTab, setBottomNavExtraNode]);
+        if (location.pathname === '/zakat') {
+            setBottomNavExtraNode(
+                <TabSlider
+                    tabs={ZAKAT_TABS}
+                    activeTab={activeTab}
+                    onChange={setActiveTab}
+                    className="md:hidden"
+                />
+            );
+        }
+    }, [activeTab, location.pathname, setBottomNavExtraNode]);
 
     return (
         <div {...swipeHandlers} className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
@@ -188,10 +191,10 @@ export default function Zakat() {
                     
                     {/* Tab Navigation */}
                     <div 
-                        className="hidden md:flex w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-1.5 rounded-full border border-white/50 dark:border-slate-700/50 relative"
+                        className="hidden md:flex w-full bg-slate-900/5 dark:bg-white/5 backdrop-blur-md rounded-full border border-black/5 dark:border-white/10 relative"
                         onPointerDown={(e) => e.stopPropagation()}
                     >
-                        {tabSliderContent}
+                        <TabSlider tabs={ZAKAT_TABS} activeTab={activeTab} onChange={setActiveTab} />
                     </div>
 
                     {/* Zakat Maal Form */}

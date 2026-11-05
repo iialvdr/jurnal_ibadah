@@ -1,13 +1,16 @@
 // src/pages/Fasting.jsx
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '@/store/AppContext';
+import { createPortal } from 'react-dom';
 import { UtensilsCrossed, ArrowLeft, ChevronRight, X, Search, SearchX, ShieldCheck, Layers, CalendarHeart, Bookmark, Repeat } from 'lucide-react';
 import useSwipe from '@/hooks/useSwipe';
 import { getFastingInfo, getUpcomingFasting, NIAT_DATA, NIAT_CATALOG, COLOR_MAP, CATEGORY_LABELS } from '@/modules/fasting';
 import { getHijriDate, fetchHijriDateAPI } from '@/utils/dateUtils';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
+import TabSlider from '@/components/TabSlider';
+import LiquidGlass from '@/components/LiquidGlass';
 
 function NiatModal({ niatKey, onClose }) {
     const [prevKey, setPrevKey] = useState('senin'); 
@@ -99,6 +102,10 @@ function NiatModal({ niatKey, onClose }) {
 export default function Fasting() {
     const navigate = useNavigate();
     const { prayerTimes, setModalOpen } = useApp();
+    const scrollContainerRef = useRef(null);
+    const searchInputRef = useRef(null);
+    const userScrollIntent = useRef(false);
+    const lastScrollTop = useRef(0);
     const [todayInfo, setTodayInfo] = useState(null);
     const [upcomingList, setUpcomingList] = useState([]);
     const [isBesok, setIsBesok] = useState(false);
@@ -107,6 +114,72 @@ export default function Fasting() {
     const [category, setCategory] = useState('semua');
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] = useState('jadwal');
+    const [showSearch, setShowSearch] = useState(false);
+    const [searchGlassReady, setSearchGlassReady] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(
+        () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+    );
+    const handleSearchGlassReady = useCallback(() => setSearchGlassReady(true), []);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(min-width: 768px)');
+        const updateViewport = event => setIsDesktop(event.matches);
+        setIsDesktop(mediaQuery.matches);
+        mediaQuery.addEventListener('change', updateViewport);
+        return () => mediaQuery.removeEventListener('change', updateViewport);
+    }, []);
+
+    useEffect(() => {
+        if (showSearch && activeTab === 'niat' && !isDesktop) {
+            searchInputRef.current?.focus({ preventScroll: true });
+        }
+    }, [activeTab, isDesktop, showSearch]);
+
+    useEffect(() => {
+        const container = scrollContainerRef.current;
+        if (!container || activeTab !== 'niat') return;
+
+        let ticking = false;
+        let intentTimeout;
+        const markUserScrollIntent = () => {
+            userScrollIntent.current = true;
+            clearTimeout(intentTimeout);
+            intentTimeout = setTimeout(() => {
+                userScrollIntent.current = false;
+            }, 700);
+        };
+        const handleScroll = () => {
+            if (ticking) return;
+            ticking = true;
+            window.requestAnimationFrame(() => {
+                const currentScrollTop = container.scrollTop;
+                const delta = currentScrollTop - lastScrollTop.current;
+                if (showSearch && userScrollIntent.current && delta > 4 && currentScrollTop > 8) {
+                    setShowSearch(false);
+                }
+                lastScrollTop.current = currentScrollTop;
+                ticking = false;
+            });
+        };
+
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        container.addEventListener('touchstart', markUserScrollIntent, { passive: true });
+        container.addEventListener('wheel', markUserScrollIntent, { passive: true });
+        return () => {
+            container.removeEventListener('scroll', handleScroll);
+            container.removeEventListener('touchstart', markUserScrollIntent);
+            container.removeEventListener('wheel', markUserScrollIntent);
+            clearTimeout(intentTimeout);
+        };
+    }, [activeTab, showSearch]);
+
+    useEffect(() => {
+        if (activeTab !== 'niat') {
+            setShowSearch(false);
+            setSearchGlassReady(false);
+        }
+        lastScrollTop.current = 0;
+    }, [activeTab]);
 
     const openNiatModal = (key) => {
         if (key) {
@@ -178,8 +251,10 @@ export default function Fasting() {
     });
 
     const swipeHandlers = useSwipe({
+        threshold: 30,
         onSwipeLeft: () => {
             if (activeTab === 'jadwal') {
+                if (navigator.vibrate) navigator.vibrate(8);
                 setActiveTab('niat');
                 return true;
             }
@@ -187,6 +262,7 @@ export default function Fasting() {
         },
         onSwipeRight: () => {
             if (activeTab === 'niat') {
+                if (navigator.vibrate) navigator.vibrate(8);
                 setActiveTab('jadwal');
                 return true;
             }
@@ -194,32 +270,29 @@ export default function Fasting() {
         }
     });
 
-    const tabSliderContent = (
-        <>
-            <div className="absolute inset-1.5 flex pointer-events-none">
-                <div className="w-1/2 h-full transition-transform duration-300 ease-in-out" 
-                        style={{ transform: activeTab === 'jadwal' ? 'translateX(0)' : 'translateX(100%)' }}>
-                    <div className="w-full h-full bg-white dark:bg-slate-800 rounded-full shadow-md border border-slate-100 dark:border-slate-700"></div>
-                </div>
-            </div>
-            <button onClick={() => setActiveTab('jadwal')} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'jadwal' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Jadwal Puasa</button>
-            <button onClick={() => setActiveTab('niat')} className={`relative z-10 focus:outline-none flex-1 py-3 md:py-2 rounded-full text-xs font-black tracking-tight transition-colors duration-300 ${activeTab === 'niat' ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'}`}>Kamus Niat</button>
-        </>
-    );
+    const FASTING_TABS = [
+        { id: 'jadwal', label: 'Jadwal Puasa' },
+        { id: 'niat', label: 'Kamus Niat' },
+    ];
 
     const { setBottomNavExtraNode } = useApp();
     const location = useLocation();
 
     useEffect(() => {
-        setBottomNavExtraNode(
-            <div className="md:hidden flex w-full relative">
-                {tabSliderContent}
-            </div>
-        );
-    }, [activeTab, setBottomNavExtraNode]);
+        if (location.pathname === '/fasting') {
+            setBottomNavExtraNode(
+                <TabSlider
+                    tabs={FASTING_TABS}
+                    activeTab={activeTab}
+                    onChange={setActiveTab}
+                    className="md:hidden"
+                />
+            );
+        }
+    }, [activeTab, location.pathname, setBottomNavExtraNode]);
 
     return (
-        <div {...swipeHandlers} className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
+        <div ref={scrollContainerRef} {...swipeHandlers} className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
             
             {/* Background Gradient Ornamen */}
             <div className="fixed top-0 left-0 right-0 h-80 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none z-0"></div>
@@ -232,15 +305,29 @@ export default function Fasting() {
                     </button>
                 }
                 titleNode="Kalender Puasa"
-                rightNode={<div className="w-10"></div>}
+                rightNode={activeTab === 'niat' ? (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            userScrollIntent.current = false;
+                            if (!showSearch) setSearchGlassReady(false);
+                            setShowSearch(isOpen => !isOpen);
+                        }}
+                        aria-label={showSearch ? 'Tutup pencarian niat' : 'Cari niat'}
+                        aria-expanded={showSearch}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90"
+                    >
+                        {showSearch ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+                    </button>
+                ) : <div className="w-10" />}
             />
             <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
             <div className="relative z-10 px-5 pt-4 pb-40 md:pb-10 w-full max-w-7xl mx-auto flex flex-col gap-4 md:gap-5">
                 
                 {/* Desktop Tabs - Jurnal Harian Style */}
-                <div className="hidden md:flex w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-1.5 rounded-full border border-white/50 dark:border-slate-700/50 relative">
-                    {tabSliderContent}
+                <div className="hidden md:flex w-full bg-slate-900/5 dark:bg-white/5 backdrop-blur-md rounded-full border border-black/5 dark:border-white/10 relative">
+                    <TabSlider tabs={FASTING_TABS} activeTab={activeTab} onChange={setActiveTab} />
                 </div>
                 
                 {activeTab === 'jadwal' && (
@@ -294,20 +381,6 @@ export default function Fasting() {
                             <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">Cari dan temukan niat puasa yang kamu butuhkan</p>
                         </div>
                         <span className={`text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full ${filteredNiat.length > 0 ? '' : 'hidden'}`}>{filteredNiat.length} niat</span>
-                    </div>
-
-                    {/* Search Bar */}
-                    <div className="relative group">
-                        <div className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-[1.8rem] border border-white dark:border-slate-800 flex items-center px-5 py-4 transition-all duration-300 group-focus-within:ring-4 group-focus-within:ring-emerald-500/10 shadow-sm">
-                            <Search className="w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors shrink-0" />
-                            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari niat puasa... (cth: senin, ramadhan)"
-                                className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 ml-4 outline-none" />
-                            {search && (
-                                <button onClick={() => setSearch('')} className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 active:scale-90 transition shrink-0 ml-2">
-                                    <X className="w-3.5 h-3.5" />
-                                </button>
-                            )}
-                        </div>
                     </div>
 
                     {/* Category Filter Tabs */}
@@ -421,6 +494,55 @@ export default function Fasting() {
                 </div>
                 )}
             </div>
+
+            {createPortal(
+                <AnimatePresence initial={false}>
+                    {showSearch && activeTab === 'niat' && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: searchGlassReady ? 1 : 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.16, ease: 'easeOut' }}
+                            className="fixed top-[calc(env(safe-area-inset-top)+4.5rem)] md:top-[calc(env(safe-area-inset-top)+6rem)] left-0 right-0 z-[200] px-5 md:px-8 max-w-7xl mx-auto pointer-events-none"
+                        >
+                            <div className="pointer-events-auto origin-top">
+                                <LiquidGlass
+                                    tier="regular"
+                                    displacementScale={85}
+                                    refractionBlur={2}
+                                    interactive={false}
+                                    cornerRadius="rounded-full"
+                                    onRefractionReady={handleSearchGlassReady}
+                                    className="group flex items-center px-5 py-4 shadow-sm focus-within:ring-4 focus-within:ring-emerald-500/10"
+                                >
+                                    <span className="relative z-10 flex shrink-0">
+                                        <Search className="w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                                    </span>
+                                    <input
+                                        ref={searchInputRef}
+                                        value={search}
+                                        onChange={event => setSearch(event.target.value)}
+                                        placeholder="Cari niat puasa... (cth: senin, ramadhan)"
+                                        aria-label="Cari niat puasa"
+                                        className="relative z-10 ml-4 w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-400 outline-none"
+                                    />
+                                    {search && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSearch('')}
+                                            aria-label="Hapus pencarian"
+                                            className="relative z-10 ml-2 text-slate-400 hover:text-slate-600"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </LiquidGlass>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
 
             {/* Modal Pop-up Niat Puasa */}
             <NiatModal niatKey={selectedNiatKey} onClose={closeNiatModal} />

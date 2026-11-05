@@ -1,11 +1,12 @@
 // src/pages/Tasbih.jsx
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, RotateCcw, Vibrate, X } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, BookOpen, RotateCcw, Vibrate, X, Repeat } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import TopNavConfig from '@/components/TopNavConfig';
 import { useApp } from '@/store/AppContext';
 import useSwipe from '@/hooks/useSwipe';
+import TabSlider from '@/components/TabSlider';
 
 const TASBIH_PRESETS = [
     { label: 'Subhanallah', arabic: 'سُبْحَانَ اللَّهِ', latin: 'Subhanallah', target: 33 },
@@ -18,13 +19,35 @@ const TASBIH_PRESETS = [
 
 export default function Tasbih() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [count, setCount] = useState(0);
     const [target, setTarget] = useState(33); // 0 = tak terhingga
     const [selectedDhikr, setSelectedDhikr] = useState(null);
     const [vibroOn, setVibroOn] = useState(true);
     const [showMenu, setShowMenu] = useState(false);
-    const { setModalOpen } = useApp();
+    const { setModalOpen, setBottomNavExtraNode } = useApp();
     const dragControls = useDragControls();
+
+    const targetTabs = [
+        { id: '33', label: '33' },
+        { id: '100', label: '100' },
+        ...(target !== 33 && target !== 100 && target !== 0 ? [{ id: String(target), label: String(target) }] : []),
+        { id: '0', label: <span className="text-sm font-black leading-none">∞</span> },
+    ];
+
+    // Mobile slider in BottomNav extension (like Fasting & Tracker pages)
+    useEffect(() => {
+        if (location.pathname === '/tasbih') {
+            setBottomNavExtraNode(
+                <TabSlider
+                    tabs={targetTabs}
+                    activeTab={String(target)}
+                    onChange={(val) => handleSetTarget(Number(val))}
+                    className="md:hidden"
+                />
+            );
+        }
+    }, [target, location.pathname, setBottomNavExtraNode]);
 
     // Handle back button for Modal
     useEffect(() => {
@@ -80,6 +103,8 @@ export default function Tasbih() {
     const handleReset = () => {
         if (vibroOn && navigator.vibrate) navigator.vibrate([20, 30, 20]);
         setCount(0);
+        setSelectedDhikr(null);
+        setTarget(33);
     };
 
     const handleSetTarget = (t) => {
@@ -95,15 +120,6 @@ export default function Tasbih() {
         setShowMenu(false);
     };
 
-    const removeDhikr = () => {
-        setSelectedDhikr(null);
-        setTarget(33);
-        setCount(0);
-    };
-
-    // Calculate indicator position for target pill
-    const targetIdx = target === 33 ? 0 : target === 100 ? 1 : 2;
-    
     return (
         <div className="app-view active flex flex-col h-full absolute inset-0 z-50 transition-all duration-300 overflow-y-auto bg-slate-100 dark:bg-slate-950 no-scrollbar">
             {/* Background Decor */}
@@ -112,26 +128,50 @@ export default function Tasbih() {
             {/* Header */}
             <TopNavConfig 
                 leftNode={
-                    <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
-                        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
-                    </button>
+                    <div className="w-[5.25rem] shrink-0 flex justify-start">
+                        <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition active:scale-90 group">
+                            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition" />
+                        </button>
+                    </div>
                 }
                 titleNode="Tasbih Digital"
-                rightNode={<div className="w-10"></div>}
+                rightNode={
+                    <div className="w-[5.25rem] shrink-0 flex items-center justify-end gap-1">
+                        <button
+                            type="button"
+                            onClick={() => setVibroOn(value => !value)}
+                            aria-label={`Getar ${vibroOn ? 'aktif' : 'nonaktif'}`}
+                            aria-pressed={vibroOn}
+                            title={`Getar ${vibroOn ? 'aktif' : 'nonaktif'}`}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center transition active:scale-90 ${vibroOn ? 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10' : 'text-slate-400 hover:bg-black/5 dark:hover:bg-white/10'}`}
+                        >
+                            <Vibrate className="w-5 h-5" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleReset}
+                            aria-label="Reset hitungan tasbih"
+                            title="Reset"
+                            className="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition active:scale-90"
+                        >
+                            <RotateCcw className="w-5 h-5" />
+                        </button>
+                    </div>
+                }
             />
             <div className="h-[5.5rem] md:h-[7rem] shrink-0 w-full" />
 
             {/* Content Area */}
-            <div className="relative z-10 px-5 pt-4 pb-32 md:pb-12 md:px-8 w-full max-w-7xl mx-auto md:grid md:grid-cols-12 md:gap-8 md:items-start animate-[fadeIn_0.35s_ease-out]">
+            <div className="relative z-10 px-5 pt-2 pb-24 md:pb-12 md:px-8 w-full max-w-7xl mx-auto md:grid md:grid-cols-12 md:gap-8 md:items-start animate-[fadeIn_0.35s_ease-out]">
                 
                 {/* Left/Top: Tap Area */}
-                <div className="md:col-span-7 lg:col-span-8 flex flex-col items-center justify-center py-6 md:py-12 relative z-10">
+                <div className="md:col-span-7 lg:col-span-8 flex flex-col items-center justify-center py-3 md:py-12 relative z-10">
                     <div className="relative group cursor-pointer active:scale-95 transition-transform duration-150 select-none touch-none" onPointerDown={handleTap}>
                         {/* Glow Behind */}
                         <div className={`absolute inset-4 bg-emerald-500/15 dark:bg-emerald-500/10 rounded-full blur-[60px] transition-all duration-500 ${glow ? 'scale-125 opacity-100' : 'scale-110 opacity-70'}`}></div>
                         
                         {/* Tap Circle */}
-                        <div className="relative w-64 h-64 sm:w-72 sm:h-72 md:w-[380px] md:h-[380px] bg-white/80 dark:bg-slate-900/50 backdrop-blur-2xl rounded-full border-[8px] md:border-[12px] border-white dark:border-slate-800 shadow-2xl flex flex-col items-center justify-center overflow-hidden transition-all duration-300">
+                        <div className="relative w-52 h-52 sm:w-72 sm:h-72 md:w-[380px] md:h-[380px] bg-white/80 dark:bg-slate-900/50 backdrop-blur-2xl rounded-full border-[8px] md:border-[12px] border-white dark:border-slate-800 shadow-2xl flex flex-col items-center justify-center overflow-hidden transition-all duration-300">
                             {/* Inner Ripple */}
                             <div className={`absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-emerald-400/5 to-transparent transition-opacity duration-200 ${ripple ? 'opacity-100' : 'opacity-0'}`}></div>
                             
@@ -142,27 +182,40 @@ export default function Tasbih() {
                             </div>
                         </div>
                     </div>
-                    <p className="mt-8 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest animate-pulse">Ketuk lingkaran untuk menghitung</p>
+                    <p className="mt-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest animate-pulse">Ketuk lingkaran untuk menghitung</p>
                 </div>
 
                 {/* Right/Bottom: Controls */}
-                <div className="md:col-span-5 lg:col-span-4 flex flex-col gap-5 md:sticky md:top-24 h-fit relative z-20 mt-8 md:mt-0">
+                <div className="md:col-span-5 lg:col-span-4 flex flex-col gap-3 md:gap-5 md:sticky md:top-24 h-fit relative z-20 mt-3 md:mt-0">
                     
-                    {/* Target Pill */}
-                    <div>
-                        <div className="relative bg-white/60 dark:bg-slate-900/60 backdrop-blur-md p-1 rounded-full flex w-full shadow-sm border border-white/40 dark:border-slate-700/50 overflow-hidden">
-                            <div className="absolute top-1 bottom-1 w-[calc((100%-0.5rem)/3)] bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 transition-transform duration-300 ease-in-out z-0" style={{ transform: `translateX(calc(${targetIdx * 100}% + ${targetIdx * 0}px))` }}></div>
-                            
-                            <button onClick={() => handleSetTarget(33)} className={`relative z-10 flex-1 py-3 text-xs font-bold transition-all duration-300 ${target === 33 ? 'text-emerald-600 font-black' : 'text-slate-400'}`}>33</button>
-                            <button onClick={() => handleSetTarget(100)} className={`relative z-10 flex-1 py-3 text-xs font-bold transition-all duration-300 ${target === 100 ? 'text-emerald-600 font-black' : 'text-slate-400'}`}>100</button>
-                            <button onClick={() => handleSetTarget(0)} className={`relative z-10 flex-1 py-3 text-xl leading-none pb-2 font-bold transition-all duration-300 ${target === 0 ? 'text-emerald-600 font-black' : 'text-slate-400'}`}>∞</button>
+                    {/* Desktop Target Tabs (Slider) */}
+                    <div className="hidden md:flex flex-col gap-2">
+                        <div className="w-full bg-slate-900/5 dark:bg-white/5 backdrop-blur-md rounded-full border border-black/5 dark:border-white/10 relative p-0.5">
+                            <TabSlider
+                                tabs={targetTabs}
+                                activeTab={String(target)}
+                                onChange={(val) => handleSetTarget(Number(val))}
+                            />
                         </div>
-                        <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center mt-3">∞ = tanpa batas</p>
+                        <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center mt-1">
+                            Pilihan Target • ∞ = tanpa batas
+                        </p>
                     </div>
 
                     {/* Dhikr Area */}
-                    <div className="w-full text-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 rounded-[2.5rem] shadow-xl border border-white/50 dark:border-slate-800 relative overflow-hidden transition-all duration-500">
+                    <div className="w-full text-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-4 md:p-6 rounded-[2rem] md:rounded-[2.5rem] shadow-xl border border-white/50 dark:border-slate-800 relative overflow-hidden transition-all duration-500">
                         <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -mr-8 -mt-8"></div>
+                        {selectedDhikr && (
+                            <button
+                                type="button"
+                                onClick={() => setShowMenu(true)}
+                                aria-label="Ganti bacaan dzikir"
+                                title="Ganti bacaan"
+                                className="absolute top-3 left-3 z-20 w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-emerald-600 transition-all border border-transparent hover:border-emerald-500/20 active:scale-95 shadow-sm"
+                            >
+                                <Repeat className="w-4 h-4" />
+                            </button>
+                        )}
                         
                         {!selectedDhikr ? (
                             <div className="flex flex-col items-center justify-center py-2 relative z-10 transition-all">
@@ -182,25 +235,13 @@ export default function Tasbih() {
                             className="flex flex-col flex-1 shrink-0 px-6 sm:px-0"
                             onPointerDown={(e) => e.stopPropagation()}
                         >
-                            <button onClick={() => setShowMenu(true)} className="w-full py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-emerald-600 transition-all border border-transparent hover:border-emerald-500/20 active:scale-95 shadow-sm">
-                                {selectedDhikr ? 'Ganti Bacaan' : 'Pilih Bacaan'}
-                            </button>
-                            {selectedDhikr && (
-                                <button onClick={removeDhikr} className="w-full py-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-all active:scale-95">
-                                    Hapus Bacaan
+                            {!selectedDhikr && (
+                                <button onClick={() => setShowMenu(true)} className="w-full py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-emerald-600 transition-all border border-transparent hover:border-emerald-500/20 active:scale-95 shadow-sm">
+                                    Pilih Bacaan
                                 </button>
                             )}
                         </div>
-                    </div>
 
-                    {/* Lower Controls */}
-                    <div className="grid grid-cols-2 gap-4 relative z-10">
-                        <button onClick={handleReset} className="flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] bg-white dark:bg-slate-900 border border-white dark:border-slate-800 text-slate-500 font-black text-[9px] uppercase tracking-widest hover:text-rose-500 transition-all active:scale-95 group shadow-sm">
-                            <RotateCcw className="w-5 h-5 group-hover:-rotate-90 transition-transform duration-500" /> RESET
-                        </button>
-                        <button onClick={() => setVibroOn(v => !v)} className={`flex flex-col items-center justify-center gap-2 p-5 rounded-[2rem] border font-black text-[9px] uppercase tracking-widest shadow-sm transition-all active:scale-95 ${vibroOn ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400' : 'bg-white dark:bg-slate-900 border-white dark:border-slate-800 text-slate-400'}`}>
-                            <Vibrate className={`w-5 h-5 ${!vibroOn && 'opacity-50'}`} /> <span>GETAR {vibroOn ? 'ON' : 'OFF'}</span>
-                        </button>
                     </div>
                 </div>
             </div>

@@ -115,7 +115,7 @@ export default function Home() {
                             <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full"></div>
                         </div>
                         <div className="flex flex-col justify-center">
-                            <h1 className="text-sm font-bold text-slate-800 dark:text-white leading-tight truncate max-w-[150px]">
+                            <h1 className="text-sm font-bold text-slate-800 dark:text-white leading-tight truncate max-w-[150px] md:max-w-xs">
                                 {currentUser?.displayName || 'Assalamualaikum'}
                             </h1>
                             <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 leading-tight">{hijriDate || 'Memuat...'}</p>
@@ -193,6 +193,33 @@ export default function Home() {
                 {/* Right Column */}
                 <div className="flex flex-col gap-4 w-full md:col-span-7 lg:col-span-8">
                     <div className="space-y-3 animate-fade-in-up stagger-3">
+                                                {/* Tanya AI Islami Banner Card */}
+                        <div
+                            onClick={() => { vib(); navigate('/tanya-quran'); }}
+                            className="bento-card p-4 md:p-5 rounded-[2rem] bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white cursor-pointer relative overflow-hidden shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all group border border-emerald-400/30"
+                        >
+                            <div className="absolute top-0 right-0 -mr-6 -mt-6 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-125 transition-transform pointer-events-none"></div>
+                            <div className="relative z-10 flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3.5 min-w-0">
+                                    <div className="w-11 h-11 md:w-12 md:h-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center shrink-0 shadow-inner group-hover:rotate-6 transition-transform">
+                                        <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-emerald-100" />
+                                    </div>
+                                    <div className="text-left min-w-0">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-emerald-100">AI Terintegrasi</span>
+                                        </div>
+                                        <h3 className="text-sm md:text-base font-black tracking-tight text-white mt-0.5">Tanya AI Islami</h3>
+                                        <p className="text-[11px] text-emerald-100/90 font-medium line-clamp-1">
+                                            Jawaban dengan rujukan ayat, hadis, tafsir, dan doa
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform">
+                                    <ChevronRight className="w-4 h-4 text-white" />
+                                </div>
+                            </div>
+                        </div>
+
                         <HadithWidget navigate={navigate} />
                         <FastingWidget prayerTimes={prayerTimes} navigate={navigate} />
                         {currentUser && <LastReadCard currentUser={currentUser} navigate={navigate} />}

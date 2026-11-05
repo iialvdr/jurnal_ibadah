@@ -21,6 +21,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/tanya-quran"
+  to = "/.netlify/functions/tanya-quran"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

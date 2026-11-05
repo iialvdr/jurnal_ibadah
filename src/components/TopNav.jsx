@@ -1,8 +1,8 @@
-// src/components/TopNav.jsx
 import { useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { topNavStore } from '@/store/topNavStore';
 import { useApp } from '@/store/AppContext';
+import LiquidGlass from '@/components/LiquidGlass';
 
 export default function TopNav() {
     const { leftNode, titleNode, rightNode, extraNode, className, hide } = useSyncExternalStore(
@@ -20,16 +20,22 @@ export default function TopNav() {
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -50, opacity: 0 }}
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                    className="absolute top-0 left-0 right-0 z-50 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-3 md:px-8 md:pt-6 pointer-events-none"
+                    className="absolute top-0 left-0 right-0 z-50 px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-2 md:px-8 pointer-events-none"
                 >
-                    <div className={`glass-pill pointer-events-auto flex items-center justify-between p-2 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-sm w-full max-w-7xl mx-auto transition-colors duration-300 ${className || ''}`}>
+                    <LiquidGlass
+                        elasticity={false}
+                        displacementScale={85}
+                        refractionBlur={2}
+                        cornerRadius="rounded-full"
+                        className={`pointer-events-auto liquid-glass flex items-center justify-between px-3 py-1.5 md:px-4 md:py-2 rounded-full w-full max-w-2xl md:max-w-7xl mx-auto ${className || ''}`}
+                    >
                         {/* LEFT */}
-                        <div className="flex-shrink-0 flex items-center min-w-[2.5rem] relative z-10">
+                        <div className="shrink-0 flex items-center min-w-8 relative z-10">
                             {leftNode}
                         </div>
                         
                         {/* CENTER */}
-                        <div className="flex-1 flex justify-center items-center overflow-hidden px-2 h-full relative z-10">
+                        <div className="flex-1 flex justify-center items-center overflow-hidden px-2 relative z-10">
                             {typeof titleNode === 'string' ? (
                                 <motion.h2 
                                     key={titleNode}
@@ -46,13 +52,13 @@ export default function TopNav() {
                         </div>
                         
                         {/* RIGHT */}
-                        <div className="flex-shrink-0 flex items-center justify-end min-w-[2.5rem] relative z-10">
+                        <div className="shrink-0 flex items-center justify-end min-w-8 relative z-10">
                             {rightNode}
                         </div>
                         
                         {/* EXTRA (Absolute elements, e.g., progress bar) */}
                         {extraNode}
-                    </div>
+                    </LiquidGlass>
                 </motion.div>
             )}
         </AnimatePresence>

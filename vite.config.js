@@ -1,8 +1,50 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import basicSsl from '@vitejs/plugin-basic-ssl'
+
+function tanyaQuranDevApi() {
+  return {
+    name: 'tanya-quran-dev-api',
+    async configureServer(server) {
+      const env = loadEnv(server.config.mode, process.cwd(), '')
+      if (!process.env.GROQ_API_KEY) {
+        process.env.GROQ_API_KEY = env.GROQ_API_KEY || env.VITE_GROQ_API_KEY
+      }
+
+      const { default: handler } = await import('./api/tanya-quran.js')
+      server.middlewares.use('/api/tanya-quran', async (req, res, next) => {
+        try {
+          const chunks = []
+          for await (const chunk of req) chunks.push(chunk)
+          req.body = chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {}
+        } catch {
+          res.statusCode = 400
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'Format permintaan tidak valid.' }))
+          return
+        }
+
+        res.status = (statusCode) => {
+          res.statusCode = statusCode
+          return res
+        }
+        res.json = (body) => {
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify(body))
+          return res
+        }
+
+        try {
+          await handler(req, res)
+        } catch (error) {
+          next(error)
+        }
+      })
+    }
+  }
+}
 
 const commonProxyConfig = {
   changeOrigin: true,
@@ -36,6 +78,7 @@ export default defineConfig({
     basicSsl(),
     tailwindcss(),
     react(),
+    tanyaQuranDevApi(),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
