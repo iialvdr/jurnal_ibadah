@@ -19,7 +19,7 @@ export default function Zakat() {
     const [activeTab, setActiveTab] = useState('maal');
     const [showModal, setShowModal] = useState(false);
     const [result, setResult] = useState(null);
-    const { setModalOpen } = useApp();
+    const { setModalOpen } = useApp(state => ({ setModalOpen: state.setModalOpen }));
     const dragControls = useDragControls();
 
     // Handle back button for Modal
@@ -152,7 +152,7 @@ export default function Zakat() {
         { id: 'fidyah', label: 'Fidyah' },
     ];
 
-    const { setBottomNavExtraNode } = useApp();
+    const { setBottomNavExtraNode } = useApp(state => ({ setBottomNavExtraNode: state.setBottomNavExtraNode }));
     const location = useLocation();
 
     useEffect(() => {

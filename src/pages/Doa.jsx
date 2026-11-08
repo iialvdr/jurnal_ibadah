@@ -11,7 +11,10 @@ import LiquidGlass from '@/components/LiquidGlass';
 
 export default function Doa() {
     const navigate = useNavigate();
-    const { showAppToast, setModalOpen } = useApp();
+    const { showAppToast, setModalOpen } = useApp(state => ({
+        showAppToast: state.showAppToast,
+        setModalOpen: state.setModalOpen,
+    }));
     const [allDoa, setAllDoa] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');

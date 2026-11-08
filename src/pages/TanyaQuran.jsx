@@ -366,9 +366,16 @@ function formatMarkdown(text) {
     return template.innerHTML;
 }
 
+function canShowReferences(message) {
+    if (message.hasReference === false) return false;
+    const answer = message.content?.normalize('NFKC').toLocaleLowerCase('id-ID') || '';
+    return !answer.includes('maaf, saya adalah asisten khusus') &&
+        !answer.includes('tidak memiliki data rujukan resmi');
+}
+
 export default function TanyaQuran() {
     const navigate = useNavigate();
-    const { showAppToast } = useApp();
+    const { showAppToast } = useApp(state => ({ showAppToast: state.showAppToast }));
     const [messages, setMessages] = useState(() => {
         try {
             const saved = sessionStorage.getItem('jurnal_tanya_quran_chat');
@@ -516,7 +523,7 @@ export default function TanyaQuran() {
         setLoadingStep('Mencari ayat, hadis, dan doa yang relevan...');
 
         try {
-            const history = messages.slice(-4).map(m => ({
+            const history = messages.slice(-8).map(m => ({
                 role: m.role === 'user' ? 'user' : 'assistant',
                 content: m.content
             }));
@@ -533,6 +540,7 @@ export default function TanyaQuran() {
                 id: 'b_' + Date.now(),
                 role: 'assistant',
                 content: result.answer,
+                hasReference: result.hasReference,
                 references: result.references
             };
 
@@ -744,7 +752,7 @@ export default function TanyaQuran() {
                                                 />
 
                                                 {/* Referenced Quran Verses — Collapsible, default collapsed */}
-                                                {msg.references?.ayat && msg.references.ayat.length > 0 && (
+                                                {canShowReferences(msg) && msg.references?.ayat && msg.references.ayat.length > 0 && (
                                                     <div className="pt-2">
                                                         {/* Toggle Header */}
                                                         <button
@@ -848,7 +856,7 @@ export default function TanyaQuran() {
                                                 )}
 
                                                 {/* Referenced Hadith Cards — Collapsible, default collapsed */}
-                                                {msg.references?.hadis && msg.references.hadis.length > 0 && (
+                                                {canShowReferences(msg) && msg.references?.hadis && msg.references.hadis.length > 0 && (
                                                     <div className="pt-1">
                                                         <button
                                                             onClick={() => toggleHadis(msg.id)}
@@ -907,7 +915,7 @@ export default function TanyaQuran() {
                                                 )}
 
                                                 {/* Referenced Doa Cards — Collapsible, default collapsed */}
-                                                {msg.references?.doa && msg.references.doa.length > 0 && (
+                                                {canShowReferences(msg) && msg.references?.doa && msg.references.doa.length > 0 && (
                                                     <div className="pt-1">
                                                         {/* Toggle Header */}
                                                         <button

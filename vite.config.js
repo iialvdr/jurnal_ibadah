@@ -10,7 +10,7 @@ function tanyaQuranDevApi() {
     async configureServer(server) {
       const env = loadEnv(server.config.mode, process.cwd(), '')
       if (!process.env.GROQ_API_KEY) {
-        process.env.GROQ_API_KEY = env.GROQ_API_KEY || env.VITE_GROQ_API_KEY
+        process.env.GROQ_API_KEY = env.GROQ_API_KEY
       }
 
       const { default: handler } = await import('./api/tanya-quran.js')

@@ -26,8 +26,8 @@
   --glass-thick-blur: 24px;
   --glass-saturate: 180%;
   --glass-border: rgba(255, 255, 255, 0.22);
-  --glass-highlight: rgba(255, 255, 255, 0.40);
-  --shadow-color: rgba(60, 70, 140, 0.10);
+  --glass-highlight: rgba(255, 255, 255, 0.4);
+  --shadow-color: rgba(60, 70, 140, 0.1);
 
   /* Motion & Dimensions */
   --radius-sm: 12px;
@@ -40,7 +40,8 @@
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.dark, :root[data-theme="dark"] {
+.dark,
+:root[data-theme="dark"] {
   --surface: #0f172a;
   --surface-solid: rgba(15, 23, 42, 0.96);
   --border-subtle: rgba(255, 255, 255, 0.08);
@@ -51,7 +52,7 @@
   --glass-thick-bg: rgba(15, 23, 42, 0.65);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-highlight: rgba(255, 255, 255, 0.14);
-  --shadow-color: rgba(0, 0, 0, 0.50);
+  --shadow-color: rgba(0, 0, 0, 0.5);
 }
 
 @font-face {
@@ -301,14 +302,24 @@ a.bento-card:active {
   box-shadow:
     inset 0 1px 0 var(--glass-highlight),
     0 8px 32px var(--shadow-color);
-  transition: transform var(--dur-base) var(--ease),
-              background var(--dur-base) var(--ease),
-              box-shadow var(--dur-base) var(--ease);
+  transition:
+    transform var(--dur-base) var(--ease),
+    background var(--dur-base) var(--ease),
+    box-shadow var(--dur-base) var(--ease);
 }
 
-.glass--thin  { --_bg: var(--glass-thin-bg);  --_blur: var(--glass-thin-blur); }
-.glass--regular { --_bg: var(--glass-regular-bg); --_blur: var(--glass-regular-blur); }
-.glass--thick { --_bg: var(--glass-thick-bg); --_blur: var(--glass-thick-blur); }
+.glass--thin {
+  --_bg: var(--glass-thin-bg);
+  --_blur: var(--glass-thin-blur);
+}
+.glass--regular {
+  --_bg: var(--glass-regular-bg);
+  --_blur: var(--glass-regular-blur);
+}
+.glass--thick {
+  --_bg: var(--glass-thick-bg);
+  --_blur: var(--glass-thick-blur);
+}
 
 /* Specular Edge Contour (Section 6.2 - Subtle Apple Optic Edge) */
 .glass-specular-edge {
@@ -324,9 +335,13 @@ a.bento-card:active {
     rgba(255, 255, 255, 0.02) 60%,
     rgba(255, 255, 255, 0.15) 100%
   );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
   mask-composite: exclude;
 }
 
@@ -361,12 +376,19 @@ a.bento-card:active {
 }
 
 /* Scrim for glass over images/visuals (Section 6.4) */
-.has-scrim { position: relative; }
+.has-scrim {
+  position: relative;
+}
 .has-scrim::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.1) 40%, rgba(0, 0, 0, 0.45));
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.35),
+    rgba(0, 0, 0, 0.1) 40%,
+    rgba(0, 0, 0, 0.45)
+  );
   pointer-events: none;
 }
 
@@ -393,18 +415,21 @@ a.bento-card:active {
   background: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.46) 0%,
-    rgba(255, 255, 255, 0.20) 50%,
+    rgba(255, 255, 255, 0.2) 50%,
     rgba(255, 255, 255, 0.38) 100%
   );
-  backdrop-filter: blur(var(--_blur, 16px)) saturate(var(--_saturate, 180%)) contrast(102%) brightness(102%);
-  -webkit-backdrop-filter: blur(var(--_blur, 16px)) saturate(var(--_saturate, 180%)) contrast(102%) brightness(102%);
+  backdrop-filter: blur(var(--_blur, 16px)) saturate(var(--_saturate, 180%))
+    contrast(102%) brightness(102%);
+  -webkit-backdrop-filter: blur(var(--_blur, 16px))
+    saturate(var(--_saturate, 180%)) contrast(102%) brightness(102%);
   border: 1px solid var(--glass-border);
   box-shadow:
     0 10px 28px -6px var(--shadow-color),
     inset 0 1px 1px 0 var(--glass-highlight),
     inset 0 -1px 1px 0 rgba(0, 0, 0, 0.03);
-  transition: transform var(--dur-base) var(--ease),
-              box-shadow var(--dur-base) var(--ease);
+  transition:
+    transform var(--dur-base) var(--ease),
+    box-shadow var(--dur-base) var(--ease);
 }
 
 .dark .liquid-glass {
@@ -414,8 +439,10 @@ a.bento-card:active {
     rgba(30, 41, 59, 0.25) 50%,
     rgba(15, 23, 42, 0.38) 100%
   );
-  backdrop-filter: blur(var(--_blur, 16px)) saturate(var(--_saturate, 180%)) contrast(104%) brightness(104%);
-  -webkit-backdrop-filter: blur(var(--_blur, 16px)) saturate(var(--_saturate, 180%)) contrast(104%) brightness(104%);
+  backdrop-filter: blur(var(--_blur, 16px)) saturate(var(--_saturate, 180%))
+    contrast(104%) brightness(104%);
+  -webkit-backdrop-filter: blur(var(--_blur, 16px))
+    saturate(var(--_saturate, 180%)) contrast(104%) brightness(104%);
   border: 1px solid var(--glass-border);
   box-shadow:
     0 14px 32px -6px rgba(0, 0, 0, 0.5),
@@ -468,7 +495,7 @@ a.bento-card:active {
   border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow:
     inset 0 1px 1px 0 rgba(255, 255, 255, 0.16),
-    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.20),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.2),
     5px 6px 16px rgba(0, 0, 0, 0.22),
     -4px -4px 12px rgba(255, 255, 255, 0.025);
 }
@@ -483,14 +510,18 @@ a.bento-card:active {
 }
 
 /* Accessibility & Browser Fallbacks (Section 10.2) */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass, .liquid-glass {
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .glass,
+  .liquid-glass {
     background: var(--surface-solid) !important;
   }
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .glass, .liquid-glass {
+  .glass,
+  .liquid-glass {
     background: var(--surface-solid) !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
@@ -517,7 +548,8 @@ a.bento-card:active {
 }
 
 @media (prefers-contrast: more) {
-  .glass, .liquid-glass {
+  .glass,
+  .liquid-glass {
     background: var(--surface-solid) !important;
     border-color: currentColor !important;
   }
@@ -529,7 +561,9 @@ a.bento-card:active {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .glass, .liquid-glass, .liquid-glass-indicator {
+  .glass,
+  .liquid-glass,
+  .liquid-glass-indicator {
     transition: none !important;
     animation: none !important;
   }
@@ -543,6 +577,32 @@ a.bento-card:active {
 .animate-spin-slow {
   animation: spin 3s linear infinite;
 }
+
+@media (max-width: 767px) {
+  .login-glass-card,
+  .dark .login-glass-card {
+    display: contents !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .login-glass-card > .glass-specular-edge,
+  .login-glass-card > .liquid-glass-refraction-layer {
+    display: none;
+  }
+
+  .login-tab-track {
+    touch-action: pan-y !important;
+  }
+
+  .login-tab-track button {
+    min-height: 48px;
+  }
+}
+
 @keyframes spin {
   from {
     transform: rotate(0deg);

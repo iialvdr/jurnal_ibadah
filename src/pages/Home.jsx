@@ -1,5 +1,5 @@
 // src/pages/Home.jsx
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/store/AppContext';
 import { db } from '@/config/firebase';
@@ -22,20 +22,64 @@ import { LastReadCard } from '@/components/widgets/LastReadCard';
 import { TodayPrayerGrid } from '@/components/widgets/TodayPrayerGrid';
 import { motion } from 'framer-motion';
 
+function PrayerTimeCard({ currentDate, currentUserForPushRef }) {
+    const { lastCity } = useApp(state => ({ lastCity: state.lastCity }));
+    const { nextPrayer, countdown, refreshLocation } = usePrayerTimes(currentDate, currentUserForPushRef);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const handleRefreshLocation = () => {
+        if (navigator.vibrate) navigator.vibrate(10);
+        setIsRefreshing(true);
+        refreshLocation(true);
+        setTimeout(() => setIsRefreshing(false), 2000);
+    };
+
+    return (
+        <div className="relative w-full animate-fade-in-up stagger-1" onClick={handleRefreshLocation}>
+            <div className="bento-card rounded-[2rem] p-6 text-white border border-slate-800 relative overflow-hidden shadow-xl active:scale-[0.98] transition-transform"
+                 style={{ background: 'linear-gradient(135deg, #0f172a 0%, #022c22 100%)' }}>
+                <div className="absolute top-[-50%] left-[-20%] w-[150%] h-[150%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-500/20 via-emerald-900/10 to-transparent opacity-60"></div>
+                <div className="relative z-10 flex flex-col items-center text-center">
+                    <div className="mb-3 flex items-center gap-2 bg-white/10 px-3 py-0.5 rounded-full backdrop-blur-md border border-white/5 cursor-pointer hover:bg-white/20 transition-colors">
+                        {isRefreshing
+                            ? <RefreshCw className="w-3 h-3 text-emerald-300 animate-spin" />
+                            : <MapPin className="w-3 h-3 text-emerald-300" />
+                        }
+                        <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider truncate max-w-[120px]">
+                            {lastCity || 'Mencari...'}
+                        </span>
+                    </div>
+                    <h2 className="text-4xl font-black tracking-tighter text-white leading-tight py-1">{nextPrayer.name}</h2>
+                    <p className="text-lg font-medium text-emerald-400 font-mono tracking-wide">{nextPrayer.time}</p>
+                    <div className="mt-4 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl flex items-center gap-2">
+                        <Timer className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-xs font-mono font-bold text-emerald-100">{countdown}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function Home() {
     const navigate = useNavigate();
-    const { currentUser, prayerTimes, todayRecords, setTodayRecords, currentDate, showAppToast, lastCity } = useApp();
+    const { currentUser, prayerTimes, todayRecords, setTodayRecords, currentDate, showAppToast } = useApp(state => ({
+        currentUser: state.currentUser,
+        prayerTimes: state.prayerTimes,
+        todayRecords: state.todayRecords,
+        setTodayRecords: state.setTodayRecords,
+        currentDate: state.currentDate,
+        showAppToast: state.showAppToast,
+    }));
     const currentUserForPushRef = useRef(currentUser);
     const { themeMode, toggleDarkMode, syncThemeWithCloud } = useTheme();
-    const { nextPrayer, countdown, refreshLocation } = usePrayerTimes(currentDate, currentUserForPushRef);
     const [hijriDate, setHijriDate] = useState('');
     const [streakData, setStreakData] = useState({ current: 0, longest: 0 });
-    const [isRefreshing, setIsRefreshing] = useState(false);
     const unsubscribeRef = useRef(null);
 
     const vib = () => { if (navigator.vibrate) navigator.vibrate(10); };
 
-    // Hack for accessing currentUser inside useCallback without breaking deps
+    // Keep the latest user available to the prayer notification logic.
     useEffect(() => {
         currentUserForPushRef.current = currentUser;
     }, [currentUser]);
@@ -71,13 +115,6 @@ export default function Home() {
         setStreakData(cached);
         calculateStreak(currentUser.uid).then(data => setStreakData(data)).catch(() => {});
     }, [currentUser]);
-
-    const handleRefreshLocation = () => {
-        vib();
-        setIsRefreshing(true);
-        refreshLocation(true);
-        setTimeout(() => setIsRefreshing(false), 2000);
-    };
 
     const navBtn = (path, label, color, Icon, colSpan = '', height = '') =>
         <button onClick={() => { vib(); navigate(path); }}
@@ -160,29 +197,7 @@ export default function Home() {
                 {/* Left Column */}
                 <div className="flex flex-col gap-4 w-full md:col-span-5 lg:col-span-4 md:sticky md:top-24">
                     {/* Location / Prayer Card */}
-                    <div className="relative w-full animate-fade-in-up stagger-1" onClick={handleRefreshLocation}>
-                        <div className="bento-card rounded-[2rem] p-6 text-white border border-slate-800 relative overflow-hidden shadow-xl active:scale-[0.98] transition-transform"
-                             style={{ background: 'linear-gradient(135deg, #0f172a 0%, #022c22 100%)' }}>
-                            <div className="absolute top-[-50%] left-[-20%] w-[150%] h-[150%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-500/20 via-emerald-900/10 to-transparent opacity-60"></div>
-                            <div className="relative z-10 flex flex-col items-center text-center">
-                                <div className="mb-3 flex items-center gap-2 bg-white/10 px-3 py-0.5 rounded-full backdrop-blur-md border border-white/5 cursor-pointer hover:bg-white/20 transition-colors">
-                                    {isRefreshing
-                                        ? <RefreshCw className="w-3 h-3 text-emerald-300 animate-spin" />
-                                        : <MapPin className="w-3 h-3 text-emerald-300" />
-                                    }
-                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider truncate max-w-[120px]">
-                                        {lastCity || 'Mencari...'}
-                                    </span>
-                                </div>
-                                <h2 className="text-4xl font-black tracking-tighter text-white leading-tight py-1">{nextPrayer.name}</h2>
-                                <p className="text-lg font-medium text-emerald-400 font-mono tracking-wide">{nextPrayer.time}</p>
-                                <div className="mt-4 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl flex items-center gap-2">
-                                    <Timer className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span className="text-xs font-mono font-bold text-emerald-100">{countdown}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <PrayerTimeCard currentDate={currentDate} currentUserForPushRef={currentUserForPushRef} />
 
                     {/* Today Prayer Grid */}
                     <div className="animate-fade-in-up stagger-2">

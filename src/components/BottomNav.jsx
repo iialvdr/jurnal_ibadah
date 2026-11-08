@@ -16,7 +16,11 @@ const navItems = [
 export default function BottomNav() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { currentUser, modalOpen, bottomNavExtraNode } = useApp();
+    const { currentUser, modalOpen, bottomNavExtraNode } = useApp(state => ({
+        currentUser: state.currentUser,
+        modalOpen: state.modalOpen,
+        bottomNavExtraNode: state.bottomNavExtraNode,
+    }));
     const navRef = useRef(null);
     const indicatorRef = useRef(null);
     const [indicatorStyle, setIndicatorStyle] = useState({ x: 0, width: 0, opacity: 0 });

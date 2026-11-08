@@ -24,7 +24,15 @@ import useSwipe from '@/hooks/useSwipe';
 
 export default function Profile() {
     const navigate = useNavigate();
-    const { currentUser, showAppToast, setModalOpen, isPwaInstalled, canInstallPwa, installPwa } = useApp();
+    const { currentUser, setCurrentUser, showAppToast, setModalOpen, isPwaInstalled, canInstallPwa, installPwa } = useApp(state => ({
+        currentUser: state.currentUser,
+        setCurrentUser: state.setCurrentUser,
+        showAppToast: state.showAppToast,
+        setModalOpen: state.setModalOpen,
+        isPwaInstalled: state.isPwaInstalled,
+        canInstallPwa: state.canInstallPwa,
+        installPwa: state.installPwa,
+    }));
     const [streakData, setStreakData] = useState({ current: 0, longest: 0 });
     const [notifEnabled, setNotifEnabled] = useState(false);
     const [pushSupported, setPushSupported] = useState(false);
@@ -199,10 +207,12 @@ export default function Profile() {
     }, [showChangePwd]);
 
     const handleSignOut = async () => {
+        setShowLogoutModal(false);
+        setModalOpen(false);
         try {
             await signOut(auth);
+            setCurrentUser(null);
             showAppToast('Berhasil keluar', 'success');
-            navigate('/login');
         } catch (e) { showAppToast('Gagal logout', 'error'); }
     };
 

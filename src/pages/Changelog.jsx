@@ -11,7 +11,7 @@ import TopNavConfig from '@/components/TopNavConfig';
 
 export default function Changelog() {
     const navigate = useNavigate();
-    const { showAppToast } = useApp();
+    const { showAppToast } = useApp(state => ({ showAppToast: state.showAppToast }));
     const [loading, setLoading] = useState(true);
     const [changelogs, setChangelogs] = useState([]);
     const [openIndex, setOpenIndex] = useState(0);

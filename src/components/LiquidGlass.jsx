@@ -43,6 +43,7 @@ const LiquidGlass = forwardRef(function LiquidGlass(
     const filterId = useId().replace(/:/g, '-');
     const containerRef = useRef(null);
     const refractionLayerRef = useRef(null);
+    const specularEdgeRef = useRef(null);
     useImperativeHandle(ref, () => containerRef.current);
 
     useEffect(() => {
@@ -155,7 +156,7 @@ const LiquidGlass = forwardRef(function LiquidGlass(
     }, [displacementScale, filterId, onRefractionReady, refractionBlur, refractionPreset, style.backdropFilter, style.WebkitBackdropFilter]);
 
     // Damped fluid pointer physics (lerped for viscous liquid realism)
-    const [renderOffset, setRenderOffset] = useState({ x: 0, y: 0 });
+    const renderOffsetRef = useRef({ x: 0, y: 0 });
     const [isPressed, setIsPressed] = useState(false);
     const targetOffset = useRef({ x: 0, y: 0 });
     const currentOffset = useRef({ x: 0, y: 0 });
@@ -173,6 +174,22 @@ const LiquidGlass = forwardRef(function LiquidGlass(
         return () => mq.removeEventListener('change', handler);
     }, []);
 
+    const updateLightAngle = useCallback((offset) => {
+        const lightAngle = Math.round(135 + offset.x * 0.9 + offset.y * 0.4);
+        if (style['--specular-angle'] === undefined) {
+            containerRef.current?.style.setProperty('--specular-angle', `${lightAngle}deg`);
+        }
+        if (specularEdgeRef.current) {
+            specularEdgeRef.current.style.background = `linear-gradient(
+                        ${lightAngle}deg,
+                        rgba(255, 255, 255, 0.32) 0%,
+                        rgba(255, 255, 255, 0.02) 35%,
+                        rgba(255, 255, 255, 0.18) 70%,
+                        rgba(255, 255, 255, 0.01) 100%
+                    )`;
+        }
+    }, [style]);
+
     // Animation loop for smooth spring-like fluid light tracking
     const startAnimationLoop = useCallback(() => {
         if (rafId.current || reducedMotion) return;
@@ -184,23 +201,39 @@ const LiquidGlass = forwardRef(function LiquidGlass(
             currentOffset.current.x += dx * 0.14;
             currentOffset.current.y += dy * 0.14;
 
-            setRenderOffset({
+            renderOffsetRef.current = {
                 x: Math.round(currentOffset.current.x * 100) / 100,
                 y: Math.round(currentOffset.current.y * 100) / 100,
-            });
+            };
+            updateLightAngle(renderOffsetRef.current);
 
             // Rest condition: smoothly halt loop when close to target and not interacting
             if (!isInteracting.current && Math.abs(dx) < 0.04 && Math.abs(dy) < 0.04) {
                 currentOffset.current = { x: 0, y: 0 };
-                setRenderOffset({ x: 0, y: 0 });
+                renderOffsetRef.current = { x: 0, y: 0 };
+                updateLightAngle(renderOffsetRef.current);
                 rafId.current = null;
                 return;
+            }
+
+            if (isInteracting.current) {
+                const settledX = Math.round(targetOffset.current.x * 100) / 100;
+                const settledY = Math.round(targetOffset.current.y * 100) / 100;
+                const settledAngle = Math.round(135 + settledX * 0.9 + settledY * 0.4);
+                const currentAngle = Math.round(
+                    135 + renderOffsetRef.current.x * 0.9 + renderOffsetRef.current.y * 0.4
+                );
+                // Stop when further frames would not change the rendered highlight.
+                if (currentAngle === settledAngle) {
+                    rafId.current = null;
+                    return;
+                }
             }
 
             rafId.current = requestAnimationFrame(tick);
         };
         rafId.current = requestAnimationFrame(tick);
-    }, [reducedMotion]);
+    }, [reducedMotion, updateLightAngle]);
 
     useEffect(() => {
         return () => {
@@ -245,7 +278,7 @@ const LiquidGlass = forwardRef(function LiquidGlass(
     }, [elasticity, onPointerUp]);
 
     // Dynamic light direction (rotates specular highlights smoothly around the rim)
-    const lightAngle = Math.round(135 + renderOffset.x * 0.9 + renderOffset.y * 0.4);
+    const lightAngle = Math.round(135 + renderOffsetRef.current.x * 0.9 + renderOffsetRef.current.y * 0.4);
     // Tier configuration matching Design Tokens (Section 4 & 6.2)
     // Direct pixel lengths ensure 100% valid backdrop-filter across all browser engines
     const tierBlur = blurAmount 
@@ -291,6 +324,7 @@ const LiquidGlass = forwardRef(function LiquidGlass(
             />
             {/* Directional edge highlight keeps the glass contour visible without tinting content. */}
             <span
+                ref={specularEdgeRef}
                 className="glass-specular-edge absolute inset-0 pointer-events-none rounded-[inherit] z-0 opacity-80 dark:opacity-30"
                 style={{
                     padding: '1px',

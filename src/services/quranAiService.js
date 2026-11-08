@@ -18,6 +18,7 @@ export async function askQuranAI({ query, history = [], onStatusChange = () => {
     onStatusChange({ step: 'done', message: 'Selesai' });
     return {
         answer: data.answer,
+        hasReference: data.hasReference === true,
         references: data.references || { ayat: [], doa: [], hadis: [] }
     };
 }

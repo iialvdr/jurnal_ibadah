@@ -79,14 +79,14 @@ function ThemeAwareToaster() {
 }
 
 function ProtectedRoute({ children }) {
-  const { currentUser } = useApp();
+  const { currentUser } = useApp(state => ({ currentUser: state.currentUser }));
   if (currentUser === undefined) return null; // loading
   if (!currentUser) return <Navigate to="/login" replace />;
   return children;
 }
 
 function PublicRoute({ children }) {
-  const { currentUser } = useApp();
+  const { currentUser } = useApp(state => ({ currentUser: state.currentUser }));
   if (currentUser === undefined) return null; // loading
   if (currentUser) return <Navigate to="/" replace />;
   return children;
@@ -107,7 +107,7 @@ function PageWrapper({ children }) {
 }
 
 function AppShell() {
-  const { currentUser } = useApp();
+  const { currentUser } = useApp(state => ({ currentUser: state.currentUser }));
   const [showSplash, setShowSplash] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
@@ -119,7 +119,7 @@ function AppShell() {
     }
   }, [currentUser]);
 
-  const { setBottomNavExtraNode } = useApp();
+  const { setBottomNavExtraNode } = useApp(state => ({ setBottomNavExtraNode: state.setBottomNavExtraNode }));
   useEffect(() => {
     const routesWithExtraNode = ['/tracker', '/fasting', '/zakat', '/hadith', '/tasbih'];
     if (!routesWithExtraNode.includes(location.pathname)) {

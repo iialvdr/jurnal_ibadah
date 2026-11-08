@@ -25,7 +25,10 @@ export default function Tasbih() {
     const [selectedDhikr, setSelectedDhikr] = useState(null);
     const [vibroOn, setVibroOn] = useState(true);
     const [showMenu, setShowMenu] = useState(false);
-    const { setModalOpen, setBottomNavExtraNode } = useApp();
+    const { setModalOpen, setBottomNavExtraNode } = useApp(state => ({
+        setModalOpen: state.setModalOpen,
+        setBottomNavExtraNode: state.setBottomNavExtraNode,
+    }));
     const dragControls = useDragControls();
 
     const targetTabs = [

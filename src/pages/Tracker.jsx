@@ -44,7 +44,12 @@ function getMonthYearString(date) {
 
 export default function Tracker() {
     const navigate = useNavigate();
-    const { currentUser, setTodayRecords, showAppToast, prayerTimes: appPrayerTimes } = useApp();
+    const { currentUser, setTodayRecords, showAppToast, prayerTimes: appPrayerTimes } = useApp(state => ({
+        currentUser: state.currentUser,
+        setTodayRecords: state.setTodayRecords,
+        showAppToast: state.showAppToast,
+        prayerTimes: state.prayerTimes,
+    }));
     
     const [activeTab, setActiveTab] = useState('daily');
     const [viewDate, setViewDate] = useState(new Date());
@@ -288,7 +293,7 @@ export default function Tracker() {
         { id: 'history', label: 'Riwayat' },
     ];
 
-    const { setBottomNavExtraNode } = useApp();
+    const { setBottomNavExtraNode } = useApp(state => ({ setBottomNavExtraNode: state.setBottomNavExtraNode }));
     const location = useLocation();
 
     useEffect(() => {

@@ -1,5 +1,5 @@
 // src/pages/Quran.jsx
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { memo, useCallback, useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useApp } from '@/store/AppContext';
 import { db } from '@/config/firebase';
@@ -23,11 +23,76 @@ const surahContentVariants = {
     exit: direction => ({ x: direction * -48 }),
 };
 
+const AyatCard = memo(function AyatCard({
+    ayat,
+    index,
+    isAyatPlaying,
+    isBookmarked,
+    isBuffering,
+    isPlaying,
+    tafsirText,
+    isLoadingTafsir,
+    onSaveBookmark,
+    onPlayAyat,
+    onToggleTafsir,
+}) {
+    return (
+        <div id={`ayat-${ayat.nomorAyat}`}
+             className={`animate-fade-in-up bg-white dark:bg-slate-900 rounded-[1.8rem] p-5 shadow-sm border relative overflow-hidden group transition-all duration-300 ${isAyatPlaying ? 'border-emerald-400 dark:border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200 dark:border-slate-800'}`}
+             style={{ animationDelay: `${Math.min(index, 15) * 0.05}s` }}>
+            <div className="flex justify-between items-center mb-6 border-b border-slate-50 dark:border-slate-800/50 pb-3">
+                <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 font-bold flex items-center justify-center text-xs border border-emerald-100 dark:border-emerald-800/30">
+                        {ayat.nomorAyat}
+                    </div>
+                    <button onClick={() => onSaveBookmark(ayat)} className="w-9 h-9 rounded-full flex items-center justify-center transition active:scale-90">
+                        <Bookmark className={`w-4 h-4 transition-colors ${isBookmarked ? 'fill-emerald-500 text-emerald-500' : 'text-slate-300 hover:text-emerald-500'}`} />
+                    </button>
+                </div>
+                <button onClick={() => onPlayAyat(ayat)} className={`play-audio-btn w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 active:scale-90 ${isAyatPlaying ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 hover:bg-emerald-500 hover:text-white'}`}>
+                    {isAyatPlaying && isBuffering ? <Loader2 className="w-4 h-4 animate-spin" /> :
+                     isAyatPlaying && isPlaying ? <Pause className="w-3.5 h-3.5 fill-current" /> :
+                     <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
+                </button>
+            </div>
+
+            <div className="text-right mb-6">
+                <p className="font-quran text-[1.7rem] leading-[2.4] text-slate-800 dark:text-white" dir="rtl">{ayat.teksArab}</p>
+            </div>
+
+            <div className="space-y-3 bg-slate-50/50 dark:bg-slate-800/30 -mx-5 -mb-5 p-5 border-t border-slate-100 dark:border-slate-800">
+                <p className="text-emerald-600 text-[10px] font-bold tracking-widest uppercase">Latin</p>
+                <p className="text-slate-500 dark:text-slate-400 text-xs italic mb-2 leading-relaxed">"{ayat.teksLatin}"</p>
+                <p className="text-emerald-600 text-[10px] font-bold tracking-widest uppercase mt-3">Artinya</p>
+                <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">{ayat.teksIndonesia}</p>
+
+                <div className="pt-3 mt-3 border-t border-slate-200/50 dark:border-slate-700/50">
+                    <button onClick={() => onToggleTafsir(ayat.nomorAyat)} className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg hover:text-emerald-600 transition-all active:scale-95">
+                        <BookOpen className="w-3 h-3" /> <span>{tafsirText ? 'Tutup Tafsir' : 'Tafsir'}</span>
+                    </button>
+
+                    {(tafsirText || isLoadingTafsir) && (
+                        <div className="mt-3 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm animate-fade-in">
+                            {isLoadingTafsir
+                                ? <p className="text-xs text-slate-400 flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Memuat tafsir...</p>
+                                : <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed">{tafsirText}</p>
+                            }
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+});
+
 export default function Quran() {
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
-    const { currentUser, showAppToast } = useApp();
+    const { currentUser, showAppToast } = useApp(state => ({
+        currentUser: state.currentUser,
+        showAppToast: state.showAppToast,
+    }));
     const [surahList, setSurahList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -69,6 +134,8 @@ export default function Quran() {
     const [playingAyat, setPlayingAyat] = useState(null);
     const [tafsirData, setTafsirData] = useState({});
     const [loadingTafsir, setLoadingTafsir] = useState({});
+    const quranStateRef = useRef({});
+    quranStateRef.current = { currentUser, selectedSurah, bookmarked, playingAyat, isPlaying, tafsirData };
     const audioRef = useRef(null);       // Audio element aktif (sedang bermain)
     const nextAudioRef = useRef(null);   // Audio element buffer (preload ayat berikutnya)
     const playingAyatRef = useRef(null); // Sinkron dengan playingAyat, bisa dibaca di closure tanpa stale
@@ -318,7 +385,7 @@ export default function Quran() {
         }
     }, [selectedSurah]);
 
-    const playAyat = (ayat) => {
+    const playAyat = useCallback((ayat) => {
         if (navigator.vibrate) navigator.vibrate(10);
         const url = ayat.audio['05'] || ayat.audio['01'];
         if (!url) return;
@@ -326,9 +393,9 @@ export default function Quran() {
         const currentAud = audioRef.current;
         if (!currentAud) return;
 
-        if (playingAyat === ayat.nomorAyat && isPlaying) {
+        if (quranStateRef.current.playingAyat === ayat.nomorAyat && quranStateRef.current.isPlaying) {
             currentAud.pause();
-        } else if (playingAyat === ayat.nomorAyat && !isPlaying) {
+        } else if (quranStateRef.current.playingAyat === ayat.nomorAyat && !quranStateRef.current.isPlaying) {
             currentAud.play().catch(() => {});
         } else {
             // Hentikan audio sebelumnya
@@ -361,7 +428,7 @@ export default function Quran() {
             // Langsung preload ayat berikutnya
             preloadNextAyat(ayat.nomorAyat);
         }
-    };
+    }, []);
 
     const stopAudio = () => {
         if (audioRef.current) { audioRef.current.pause(); }
@@ -471,9 +538,11 @@ export default function Quran() {
         }
     };
 
-    const toggleTafsir = async (ayatNum) => {
+    const toggleTafsir = useCallback(async (ayatNum) => {
         if (navigator.vibrate) navigator.vibrate(10);
-        if (tafsirData[ayatNum] !== undefined) {
+        const activeSurah = quranStateRef.current.selectedSurah;
+        if (!activeSurah) return;
+        if (quranStateRef.current.tafsirData[ayatNum] !== undefined) {
             setTafsirData(prev => {
                 const n = {...prev};
                 delete n[ayatNum];
@@ -484,17 +553,17 @@ export default function Quran() {
 
         setLoadingTafsir(prev => ({...prev, [ayatNum]: true}));
         try {
-            const cacheKey = `tafsir_${selectedSurah.nomor}_${ayatNum}`;
+            const cacheKey = `tafsir_${activeSurah.nomor}_${ayatNum}`;
             const cached = localStorage.getItem(cacheKey);
             if (cached) {
                 setTafsirData(prev => ({...prev, [ayatNum]: cached}));
                 return;
             }
-            const res = await fetch(`https://equran.id/api/v2/tafsir/${selectedSurah.nomor}`);
+            const res = await fetch(`https://equran.id/api/v2/tafsir/${activeSurah.nomor}`);
             const result = await res.json();
             if (result.code === 200 && result.data?.tafsir) {
                 result.data.tafsir.forEach(item => {
-                    localStorage.setItem(`tafsir_${selectedSurah.nomor}_${item.ayat}`, item.teks);
+                    localStorage.setItem(`tafsir_${activeSurah.nomor}_${item.ayat}`, item.teks);
                 });
                 const t = result.data.tafsir.find(x => x.ayat === ayatNum);
                 setTafsirData(prev => ({...prev, [ayatNum]: t ? t.teks : 'Tafsir tidak tersedia.'}));
@@ -504,32 +573,33 @@ export default function Quran() {
         } finally {
             setLoadingTafsir(prev => { const n = {...prev}; delete n[ayatNum]; return n; });
         }
-    };
+    }, [showAppToast]);
 
-    const saveBookmark = async (ayat) => {
-        if (!currentUser || !selectedSurah) return;
+    const saveBookmark = useCallback(async (ayat) => {
+        const { currentUser: activeUser, selectedSurah: activeSurah, bookmarked: activeBookmark } = quranStateRef.current;
+        if (!activeUser || !activeSurah) return;
         
-        const isDeleting = bookmarked && bookmarked.surah === selectedSurah.nomor && bookmarked.ayat === ayat.nomorAyat;
+        const isDeleting = activeBookmark && activeBookmark.surah === activeSurah.nomor && activeBookmark.ayat === ayat.nomorAyat;
         
         try {
             if (isDeleting) {
-                await deleteDoc(doc(db, "users", currentUser.uid, "quran", "last_read"));
+                await deleteDoc(doc(db, "users", activeUser.uid, "quran", "last_read"));
                 setBookmarked(null);
                 showAppToast('Bookmark dihapus', 'success');
             } else {
                 const data = {
-                    surah: selectedSurah.nomor,
+                    surah: activeSurah.nomor,
                     ayat: ayat.nomorAyat,
-                    name: selectedSurah.namaLatin,
+                    name: activeSurah.namaLatin,
                     savedAt: new Date()
                 };
-                await setDoc(doc(db, "users", currentUser.uid, "quran", "last_read"), data);
+                await setDoc(doc(db, "users", activeUser.uid, "quran", "last_read"), data);
                 setBookmarked(data);
-                showAppToast(`Bookmark disimpan - ${selectedSurah.namaLatin} : ${ayat.nomorAyat}`, 'success');
+                showAppToast(`Bookmark disimpan - ${activeSurah.namaLatin} : ${ayat.nomorAyat}`, 'success');
             }
             window.dispatchEvent(new CustomEvent('bookmarkUpdated'));
         } catch { showAppToast('Gagal menyimpan bookmark', 'error'); }
-    };
+    }, [showAppToast]);
 
     const filtered = surahList.filter(s =>
         s.namaLatin?.toLowerCase().includes(search.toLowerCase()) ||
@@ -640,64 +710,22 @@ export default function Quran() {
                                 </div>
                             ))
                             ) : (
-                                ayats.map((ayat, i) => {
-                                    const isAyatPlaying = playingAyat === ayat.nomorAyat;
-                                    const isBookmarked = bookmarked && bookmarked.surah === selectedSurah.nomor && bookmarked.ayat === ayat.nomorAyat;
-                                    
-                                    return (
-                                        <div key={ayat.nomorAyat} id={`ayat-${ayat.nomorAyat}`} 
-                                             className={`animate-fade-in-up bg-white dark:bg-slate-900 rounded-[1.8rem] p-5 shadow-sm border relative overflow-hidden group transition-all duration-300 ${isAyatPlaying ? 'border-emerald-400 dark:border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200 dark:border-slate-800'}`}
-                                             style={{ animationDelay: `${Math.min(i, 15) * 0.05}s` }}>
-                                            
-                                            {/* Ayat header */}
-                                            <div className="flex justify-between items-center mb-6 border-b border-slate-50 dark:border-slate-800/50 pb-3">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 font-bold flex items-center justify-center text-xs border border-emerald-100 dark:border-emerald-800/30">
-                                                        {ayat.nomorAyat}
-                                                    </div>
-                                                    <button onClick={() => saveBookmark(ayat)} className={`w-9 h-9 rounded-full flex items-center justify-center transition active:scale-90`}>
-                                                        <Bookmark className={`w-4 h-4 transition-colors ${isBookmarked ? 'fill-emerald-500 text-emerald-500' : 'text-slate-300 hover:text-emerald-500'}`} />
-                                                    </button>
-                                                </div>
-                                                <button onClick={() => playAyat(ayat)} className={`play-audio-btn w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 active:scale-90 ${isAyatPlaying ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 hover:bg-emerald-500 hover:text-white'}`}>
-                                                    {isAyatPlaying && isBuffering ? <Loader2 className="w-4 h-4 animate-spin" /> : 
-                                                     isAyatPlaying && isPlaying ? <Pause className="w-3.5 h-3.5 fill-current" /> :
-                                                     <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
-                                                </button>
-                                            </div>
-                                            
-                                            {/* Arabic */}
-                                            <div className="text-right mb-6">
-                                                <p className="font-quran text-[1.7rem] leading-[2.4] text-slate-800 dark:text-white" dir="rtl">{ayat.teksArab}</p>
-                                            </div>
-                                            
-                                            {/* Translation & Latin */}
-                                            <div className="space-y-3 bg-slate-50/50 dark:bg-slate-800/30 -mx-5 -mb-5 p-5 border-t border-slate-100 dark:border-slate-800">
-                                                <p className="text-emerald-600 text-[10px] font-bold tracking-widest uppercase">Latin</p>
-                                                <p className="text-slate-500 dark:text-slate-400 text-xs italic mb-2 leading-relaxed">"{ayat.teksLatin}"</p>
-                                                <p className="text-emerald-600 text-[10px] font-bold tracking-widest uppercase mt-3">Artinya</p>
-                                                <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">{ayat.teksIndonesia}</p>
-                                                
-                                                {/* Tafsir Toggle */}
-                                                <div className="pt-3 mt-3 border-t border-slate-200/50 dark:border-slate-700/50">
-                                                    <button onClick={() => toggleTafsir(ayat.nomorAyat)} className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg hover:text-emerald-600 transition-all active:scale-95">
-                                                        <BookOpen className="w-3 h-3" /> <span>{tafsirData[ayat.nomorAyat] ? 'Tutup Tafsir' : 'Tafsir'}</span>
-                                                    </button>
-                                                    
-                                                    {/* Tafsir Content */}
-                                                    {(tafsirData[ayat.nomorAyat] || loadingTafsir[ayat.nomorAyat]) && (
-                                                        <div className="mt-3 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm animate-fade-in">
-                                                            {loadingTafsir[ayat.nomorAyat] 
-                                                                ? <p className="text-xs text-slate-400 flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin"/> Memuat tafsir...</p>
-                                                                : <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed">{tafsirData[ayat.nomorAyat]}</p>
-                                                            }
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })
+                                ayats.map((ayat, index) => (
+                                    <AyatCard
+                                        key={ayat.nomorAyat}
+                                        ayat={ayat}
+                                        index={index}
+                                        isAyatPlaying={playingAyat === ayat.nomorAyat}
+                                        isBookmarked={Boolean(bookmarked && bookmarked.surah === selectedSurah.nomor && bookmarked.ayat === ayat.nomorAyat)}
+                                        isBuffering={playingAyat === ayat.nomorAyat && isBuffering}
+                                        isPlaying={playingAyat === ayat.nomorAyat && isPlaying}
+                                        tafsirText={tafsirData[ayat.nomorAyat] || ''}
+                                        isLoadingTafsir={Boolean(loadingTafsir[ayat.nomorAyat])}
+                                        onSaveBookmark={saveBookmark}
+                                        onPlayAyat={playAyat}
+                                        onToggleTafsir={toggleTafsir}
+                                    />
+                                ))
                             )}
                     </phantom-ui>
                 </motion.div>

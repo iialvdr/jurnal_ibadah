@@ -6,7 +6,12 @@ import * as adhan from 'adhan';
 let lastLoggedKota = null;
 
 export function usePrayerTimes(currentDate, currentUserForPushRef) {
-    const { prayerTimes, setPrayerTimes, lastCity, setLastCity } = useApp();
+    const { prayerTimes, setPrayerTimes, lastCity, setLastCity } = useApp(state => ({
+        prayerTimes: state.prayerTimes,
+        setPrayerTimes: state.setPrayerTimes,
+        lastCity: state.lastCity,
+        setLastCity: state.setLastCity,
+    }));
     const countdownRef = useRef(null);
     const [nextPrayer, setNextPrayer] = useState({ name: '...', time: '--:--' });
     const [countdown, setCountdown] = useState('--:--:--');
@@ -285,7 +290,9 @@ export function usePrayerTimes(currentDate, currentUserForPushRef) {
                 next = times[0];
             }
 
-            setNextPrayer(next);
+            setNextPrayer(previous =>
+                previous.name === next.name && previous.time === next.time ? previous : next
+            );
 
             const hh = Math.floor(minDiff / 3600000);
             const mm = Math.floor((minDiff % 3600000) / 60000);

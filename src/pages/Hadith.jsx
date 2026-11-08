@@ -125,7 +125,7 @@ export default function Hadith() {
         }
     });
 
-    const { setBottomNavExtraNode } = useApp();
+    const { setBottomNavExtraNode } = useApp(state => ({ setBottomNavExtraNode: state.setBottomNavExtraNode }));
     const location = useLocation();
 
     useEffect(() => {

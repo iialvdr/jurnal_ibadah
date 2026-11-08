@@ -22,6 +22,24 @@ const presets = {
         balancedSpecular: true,
     },
 };
+const mapCache = new Map();
+const MAX_CACHED_MAPS = 12;
+
+function getCachedMaps(key, createMaps) {
+    const cached = mapCache.get(key);
+    if (cached) {
+        mapCache.delete(key);
+        mapCache.set(key, cached);
+        return cached;
+    }
+
+    const maps = createMaps();
+    mapCache.set(key, maps);
+    if (mapCache.size > MAX_CACHED_MAPS) {
+        mapCache.delete(mapCache.keys().next().value);
+    }
+    return maps;
+}
 
 function clampByte(value) {
     return Math.max(0, Math.min(255, Math.round(value)));
@@ -177,26 +195,40 @@ export function buildLiquidGlassFilter(id, width, height, radius, presetName = '
     const settings = presets[presetName] || presets.regular;
     const safeRadius = Math.max(2, Math.min(radius, width / 2, height / 2));
     const bezel = Math.max(1, Math.min(settings.bezelWidth, safeRadius - 1, Math.min(width, height) / 2 - 1));
-    const profile = calculateProfile(settings.thickness, bezel, settings.ior);
-    const maxDisplacement = Math.max(...Array.from(profile, Math.abs)) || 1;
     const resolutionScale = Math.min(Math.max(window.devicePixelRatio || 1, 1) * 1.6, 3);
     const mapWidth = Math.ceil(width * resolutionScale);
     const mapHeight = Math.ceil(height * resolutionScale);
-    const displacementMap = createDisplacementMap(
+    const scaledRadius = safeRadius * resolutionScale;
+    const scaledBezel = bezel * resolutionScale;
+    const mapsKey = [
         mapWidth,
         mapHeight,
-        safeRadius * resolutionScale,
-        bezel * resolutionScale,
-        profile,
-        maxDisplacement
-    );
-    const specularMap = createSpecularMap(
-        mapWidth,
-        mapHeight,
-        safeRadius * resolutionScale,
-        bezel * 2.5 * resolutionScale,
-        settings.balancedSpecular
-    );
+        scaledRadius,
+        scaledBezel,
+        presetName,
+    ].join(':');
+    const { displacementMap, specularMap, maxDisplacement } = getCachedMaps(mapsKey, () => {
+        const profile = calculateProfile(settings.thickness, bezel, settings.ior);
+        const maxDisplacement = Math.max(...Array.from(profile, Math.abs)) || 1;
+        return {
+            displacementMap: createDisplacementMap(
+                mapWidth,
+                mapHeight,
+                scaledRadius,
+                scaledBezel,
+                profile,
+                maxDisplacement
+            ),
+            specularMap: createSpecularMap(
+                mapWidth,
+                mapHeight,
+                scaledRadius,
+                bezel * 2.5 * resolutionScale,
+                settings.balancedSpecular
+            ),
+            maxDisplacement,
+        };
+    });
     if (!displacementMap || !specularMap) return null;
 
     const pad = settings.balancedSpecular ? 0.36 : 0;

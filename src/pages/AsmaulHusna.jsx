@@ -12,7 +12,10 @@ import useSwipe from '@/hooks/useSwipe';
 
 export default function AsmaulHusna() {
     const navigate = useNavigate();
-    const { showAppToast, setModalOpen } = useApp();
+    const { showAppToast, setModalOpen } = useApp(state => ({
+        showAppToast: state.showAppToast,
+        setModalOpen: state.setModalOpen,
+    }));
     const [asmaList, setAsmaList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');

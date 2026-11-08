@@ -101,7 +101,10 @@ function NiatModal({ niatKey, onClose }) {
 
 export default function Fasting() {
     const navigate = useNavigate();
-    const { prayerTimes, setModalOpen } = useApp();
+    const { prayerTimes, setModalOpen } = useApp(state => ({
+        prayerTimes: state.prayerTimes,
+        setModalOpen: state.setModalOpen,
+    }));
     const scrollContainerRef = useRef(null);
     const searchInputRef = useRef(null);
     const userScrollIntent = useRef(false);
@@ -275,7 +278,7 @@ export default function Fasting() {
         { id: 'niat', label: 'Kamus Niat' },
     ];
 
-    const { setBottomNavExtraNode } = useApp();
+    const { setBottomNavExtraNode } = useApp(state => ({ setBottomNavExtraNode: state.setBottomNavExtraNode }));
     const location = useLocation();
 
     useEffect(() => {

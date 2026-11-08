@@ -9,7 +9,7 @@ export default function TopNav() {
         topNavStore.subscribe,
         topNavStore.getState
     );
-    const { modalOpen } = useApp();
+    const { modalOpen } = useApp(state => ({ modalOpen: state.modalOpen }));
     const shouldHide = hide || modalOpen;
 
     return (
